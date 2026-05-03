@@ -20,8 +20,42 @@
 # Projektorganisation
 
 ```mermaid
+flowchart TB
+  subgraph Projekthierarchie[Projekthierarchie]
+    direction TB
 
-```
+    subgraph Lehrgangsleitung
+      Lehrgangsleiter[Lehrgangsleiter]
+    end
+
+    subgraph Projektbegleitung
+      direction LR
+      Projektleiter[Projektleiter]
+      Fachdozent[Fachdozent]
+    end
+
+    subgraph Studierender
+      Stud[Marlon Burri]
+    end
+  end
+
+  Lehrgangsleiter <--> Projektleiter
+  Lehrgangsleiter <--> Fachdozent
+  Projektleiter <--> Stud
+  Fachdozent <--> Stud
+
+  linkStyle default stroke:#94a3b8,stroke-width:1.5px;
+  style Projekthierarchie fill:#f8fafc,stroke:#e2e8f0,color:#334155,stroke-width:1px;
+  style Lehrgangsleitung fill:#f8fafc,stroke:#dbe2ea,color:#334155,stroke-width:1px;
+  style Projektbegleitung fill:#f8fafc,stroke:#dbe2ea,color:#334155,stroke-width:1px;
+  style Studierender fill:#f8fafc,stroke:#dbe2ea,color:#334155,stroke-width:1px;
+
+  classDef mentors fill:#f1f5f9,color:#334155,stroke:#cbd5e1,stroke-width:1.5px;
+  classDef student fill:#dcfce7,color:#166534,stroke:#86efac,stroke-width:1.5px;
+
+  class Lehrgangsleiter,Projektleiter,Fachdozent mentors;
+  class Stud student;
+  ```
 
 ## 2.1 Problemstellung
 
