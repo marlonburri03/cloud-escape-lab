@@ -190,11 +190,82 @@ Das Risiko-Level wird in folgende Kategorien eingeteilt:
 
 # 3 Projektplan
 
+Für die Semesterarbeit wurden vier Sprints geplant. Auf einen klassischen Gantt-Plan wurde bewusst verzichtet, da die Umsetzung agil nach dem SCRUM-Framework erfolgt. Stattdessen wurden die Sprints mit fixen Zeitfenstern und klaren Zielen definiert, um den Fortschritt trotzdem strukturiert verfolgen und steuern zu können.
+
+**Der Zeitplan für die Projektsprints sieht wie folgt aus:**
+
+| Sprint   | Titel                              | Zeitraum                | Ziel                                                                                                                  |
+|----------|----------------------------------- |-------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Sprint 0 | Setup und Planung                  | 27.04.2026 – 08.05.2026 | Projektinitialisierung (GitLab, Jira, Azure-Setup, Backlog-Erstellung etc.)                                           |
+| Sprint 1 | Core Platform & Game Engine        | 11.05.2026 – 31.05.2026 | Frontend Grundstruktur, Game Engine (State, Actions), erster Escape Room (Tutorial), einfache Interaktionen |
+| Sprint 2 | Interaktivität & Cloud Integration | 01.06.2026 – 21.06.2026 | Erweiterte Interaktionen, mehrere Räume / Szenarien, Cloud Deployment (erste Version), Microservices einführen            |
+| Sprint 3 | DevOps, Auth & Finalisierung       | 22.06.2026 – 06.07.2026 | Auth mit Microsoft Entra ID, Escape Rooms via GitLab Pipelines starten, Testing, Bugfixing, Dokumentation, Präsentation.                            |
+  
+Die folgende Gantt-Übersicht visualisiert die Sprint-Planung und die zugehörigen Releases (MVP[^34], MLP[^35], MMP[^36]). Das Diagramm wird direkt im README als Mermaid gepflegt und ist konsistent mit der obigen Tabelle.
+
+```mermaid
+gantt
+  title Gantt Chart
+  dateFormat YYYY-MM-DD
+
+  section Sprints
+  Sprint 0 :crit, sprint0, 2025-10-31, 2025-11-06
+  Sprint 1 :sprint1, 2025-11-07, 2025-11-27
+  Sprint 2 :sprint2, 2025-11-28, 2025-12-18
+  Sprint 3 :sprint3, 2025-12-19, 2026-01-08
+  Sprint 4 :sprint4, 2026-01-09, 2026-01-28
+
+  section Releases
+  MVP :crit, mvp, 2025-11-27, 1d
+  MLP :crit, mlp, 2025-12-18, 1d
+  MMP :crit, mmp, 2026-01-08, 1d
+```
+
+*Gantt‑Übersicht der Sprints und Releases*
+
+Datenbasis: siehe [data/Gantt_Chart.csv](data/Gantt_Chart.csv).
+
 ## 3.1 Product Roadmap
+
+Die Product Roadmap zeigt die übergeordnete Planung und Entwicklungsrichtung des Projekts über die gesamte Dauer der Semesterarbeit hinweg.
+Sie dient als Leitfaden für die Umsetzung der definierten Releases (MVP, MLP, MMP) und ist eng an die Sprint-Struktur des SCRUM-Frameworks angelehnt.
+Da das Projekt iterativ aufgebaut ist, können Anpassungen während der Umsetzung jederzeit vorgenommen werden, um flexibel auf neue Erkenntnisse und Herausforderungen zu reagieren.
+
+Sprint 0 und Sprint 4 sind in der Roadmap nicht aufgeführt, da in diesen Sprints kein Produkt bzw. Release entstehen wird.
+
+__Übersicht der Releases:__
+
+| Release                          | Zeitraum (Sprint) | Ziel / Inhalt                | Hauptfokus                                                                                                                  |
+|----------------------------------|-------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| MVP (Minimum Viable Product)     | Sprint 1          | Grundlegende Architektur und Funktionsfähigkeit des automatisierten Bestellprozesses mit Camunda. Einrichtung der Entwicklungsumgebung, Definition der Systemarchitektur und Umsetzung eines lauffähigen Prototyps zur automatisierten Erstellung von Azure Subscriptions. | Funktionsfähigkeit, Architektur, Basisprozess |
+| MLP (Minimum Lovable Product)    | Sprint 2          | Erweiterung des MVP um zusätzliche Funktionalitäten, wie erweiterte Governance-Tags, Prozessoptimierungen und Benutzerfreundlichkeit. Der Prozess soll robust und nachvollziehbar sein und sich leicht erweitern lassen. | Nutzerfreundlichkeit, Stabilität, Governance |
+| MMP (Minimum Marketable Product) | Sprint 3          | Fertigstellung des Projekts mit Fokus auf Einsatzfähigkeit im Betrieb. Finalisierung der Dokumentation, Tests, Optimierung der Endlösung. | Produktionsreife, Abschluss           |
 
 ## 3.2 Definition of Ready (DoR)
 
+Die Definition of Ready[^24] legt fest, welche Voraussetzungen eine User Story erfüllen muss, damit sie ins Sprint Backlog aufgenommen werden kann. Die DoR Kriterien stellen sicher, dass die User Story technisch planbar, fachlich verstanden und innerhalb des Sprint-Zeitrahmens realistisch Umsetzbar ist. Im Rahmen der Semesterarbeit dient die DoR zudem als Qualitätssicherung für die korrekte Vorbereitung jeder User Story.
+
+* __Inhaltliche Anforderungen:__ Die User Story enthält eine klare Beschreibung nach dem im Scrum Framework definierten Schema und beschreibt den fachlichen oder technischen Mehrwert für das Projekt. Die Akzeptanzkriterien wurden definiert und die User Story trägt messbar zu den übergeordneten Zielen der Semesterarbeit bei. 
+
+* __Technische Anforderungen:__ Alle technischen Abhängigkeiten wurden identifiziert. Externe Abhängigkeiten und benötigte Ressourcen sind, falls erforderlich dokumentiert. Potenzielle Risiken und Blocker wurden erkannt und, sofern möglich, vorab behoben.
+
+* __Planbarkeit:__ Die User Story ist so zugeschnitten, dass sie innerhalb eines Sprints abgeschlossen werden kann. Sie wurde bei Bedarf in Tasks oder Subtasks unterteilt, der Aufwand wurde in Story Points geschätzt und die Priorität über das MVP/MLP/MMP-Label definiert. Die Story wurde im Sprint Planning besprochen.
+
+Die Definition of Ready gilt einheitlich für alle User Stories im Projekt und wird nicht individuell in die Beschreibung eingefügt.
+
 ## 3.3 Definition of Done (DoD)
+
+Die Definition of Done[^23] beschreibt die Kriterien, die erfüllt sein müssen, damit eine User Story als vollständig abgeschlossen gilt. Sie stellt sicher, dass alle fachlichen, technischen und dokumentarischen Anforderungen erfüllt sind.
+
+* __Umsetzung der Anforderungen:__ Alle Akzeptanzkriterien der User Story wurden vollständig umgesetzt, die Funktionalität wurde getestet und erfüllt den definierten Zweck.
+
+* __Validierung und Qualitätssicherung:__ Funktionale Tests oder manuelle Überprüfungen wurden durchgeführt. Mögliche Probleme oder Abweichungen wurden analysiert und behoben.
+
+* __Dokumentation und Nachvollziehbarkeit:__ Alle Ergebnisse, Entscheidungen und technischen Schritte sind in der Projektdokumentation festgehalten. Änderungen im Repository sind sauber beschrieben, nachvollziehbar versioniert und mit Jira verknüpft.
+
+* __Abnahme und Integration:__ Die User Story wurde im Rahmen der Sprint Review vorgestellt, akzeptiert und in Jira auf Done gesetzt. Falls relevant, wurde die Lösung in das Gesamtprojekt integriert.
+
+Im Jira-Projekt ist eine Automation Rule hinterlegt, die beim Anlegen neuer User Stories automatisch die DoD-Kriterien in das Beschreibungsfeld einfügt. Dadurch wird sichergestellt, dass alle Stories nach denselben Qualitätsmassstäben umgesetzt und überprüft werden.
 
 ## 3.4 Projekt Sprints
 
