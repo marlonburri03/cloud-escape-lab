@@ -1,27 +1,27 @@
-# Local .terraform directory
+# local .terraform directory
 .terraform/
 
-# Terraform lock file (optional: remove if you want to commit it)
+# terraform lock file (optional: remove if you want to commit it)
 # .terraform.lock.hcl
 
-# Terraform state files
+# terraform state files
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
 
-# Terraform variable files with secrets
+# terraform variable files with secrets
 *.tfvars
 *.tfvars.json
 
-# Crash log files
+# crash log files
 crash.log
 crash.*.log
 
-# Override files
+# override files
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Plan files
+# plan files
 *.tfplan
