@@ -40,11 +40,11 @@ resource "azurerm_user_assigned_identity" "mi_maker" {
 
 # add federated credential to managed identity for GitLab OIDC
 resource "azurerm_federated_identity_credential" "mi_maker_fic" {
-  name      = "${var.managed_identity_name}-fic"
+  name                      = "${var.managed_identity_name}-fic"
   user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
-  issuer    = "https://gitlab.com"
-  subject   = "project_path:<your-gitlab-group>/cloud-escape-lab:ref_type:branch:ref:main"
-  audience  = ["https://gitlab.com"]
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:<your-gitlab-group>/cloud-escape-lab:ref_type:branch:ref:main"
+  audience                  = ["https://gitlab.com"]
 }
 
 # grant managed identity access to read/write Terraform state in storage account
@@ -52,4 +52,12 @@ resource "azurerm_role_assignment" "mi_maker_storage_blob_contributor" {
   scope                = azurerm_storage_account.st_tfstate.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.mi_maker.principal_id
+}
+
+# grant my user access to the tfstate storage account
+resource "azurerm_role_assignment" "user_storage_blob_contributor" {
+  scope                = azurerm_storage_account.st_tfstate.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = var.user_object_id
+  principal_type       = "User"
 }

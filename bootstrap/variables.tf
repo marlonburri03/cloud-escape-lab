@@ -32,3 +32,8 @@ variable "managed_identity_name" {
   description = "Name of the managed identity to create"
   type        = string
 }
+
+variable "user_object_id" {
+  description = "Entra ID object ID of a user"
+  type        = string
+}

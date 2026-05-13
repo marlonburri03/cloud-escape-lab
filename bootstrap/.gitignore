@@ -9,10 +9,6 @@
 *.tfstate.*
 *.tfstate.backup
 
-# terraform variable files with secrets
-*.tfvars
-*.tfvars.json
-
 # crash log files
 crash.log
 crash.*.log
