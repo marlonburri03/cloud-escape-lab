@@ -1,1 +1,1 @@
-# TypeScript frontend
+# frontend
