@@ -1,7 +1,7 @@
-# gloval vars
-tenant_id             = "00000000-0000-0000-0000-000000000001"
-subscription_id       = "00000000-0000-0000-0000-000000000002"
-location              = "northeurope"
+# global vars
+tenant_id       = "00000000-0000-0000-0000-000000000001" # contoso prod tenant
+subscription_id = "00000000-0000-0000-0000-000000000002" # sub-lab-prod-escape
+location        = "northeurope"
 
 # bootstrap vars
 resource_group_name   = "rg-bootstrap-lab-prod-escape"

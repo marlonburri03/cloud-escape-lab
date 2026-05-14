@@ -18,7 +18,6 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-# note: keep .terraform.lock.hcl in version control
 
 # python
 __pycache__/
