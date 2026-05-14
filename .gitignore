@@ -1,0 +1,34 @@
+# ignore docsfolder
+/docs*
+
+# ignore backup files
+*.bkp
+
+# terraform / opentofu
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+*.tfplan
+.terraformrc
+terraform.rc
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# note: keep .terraform.lock.hcl in version control
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# editor / os
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
