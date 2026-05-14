@@ -348,6 +348,62 @@ __Lessons Learned:__
 
 # 4 Lösungsdesign
 
+## 4.1 Deployment-Modell
+
+Beim Aufbau der Plattform möchte ich von Anfang an zwischen der Infrastruktur also Frontend, Datenbank, Netzwerk etc. welches einmalig Aufgebaut wird und dauerhaft läuft und den einzelnen Escape Room Themen Containern unterscheiden. Die Escape Room Themen sollen schnell entstehen können und können sich häufig ändern. Wenn ein neuer Escape Room dazukommt sollte nicht immer die ganze Pipeline der Infrastruktur durchlaufen sondern nur die Pipeline des neuen Escape Rooms. Desshalb möchte ich zwei klar voneinander getrennte Lebenszyklen haben.
+
+Bevor überhaupt eine automatisierte Pipeline laufen kann, müssen zwei elementare Dinge existieren. Ein zentraler Ablageort für den Terraform-State und eine Managed Identity, die GitLab gegenüber Azure verwendet, um sich zu authentifizieren. Diese beiden Ressourcen können nicht von einer Pipeline erzeugt werden, da die Pipeline sie selbst zwingend benötigt, ein klassisches Henne-Ei-Problem. Aus diesem Grund wird der Bootstrap bewusst **einmalig und lokal vom Entwickler** ausgeführt. Er ist damit kein Bestandteil des laufenden Betriebs, sondern eine Vorbedingung, die genau einmal pro Subscription geschaffen wird. Danach übernehmen die automatisierten Pipelines. Falls sich irgendetwas an der Permission der Managed Identity ändern soll wird dies über den bootstrap verändert um das Terraform Statefile konsistent zu halten.
+
+Die Idee des **Theme-Stack** ist, dass jeder Escape Room ein eigenes kleines Deployment-Paket darstellt, das ausschliesslich die Ressourcen umfasst, die nur dieses eine Thema betreffen. Die Container-App, Managed Identity, den Zugriff auf seine spezifischen Secrets im Key Vault und seine eigene Pfadregel auf dem Application Gateway. Alles andere also der Cluster, auf dem die Container-App läuft, die Registry, aus der das Image gezogen wird, oder die Datenbank, mit der gesprochen wird, wird aus dem Infrastruktur-Stack **referenziert**, aber niemals verändert. Diese Trennung wird technisch dadurch erreicht, dass jeder Stack sein eigenes State-File besitzt und Theme-Stacks die benötigten Informationen ausschliesslich einlesen.
+
+### Aufteilung der Verantwortlichkeiten
+
+Die folgende Übersicht fasst zusammen, welche Ressourcen wo angesiedelt sind und in welcher Frequenz mit Änderungen zu rechnen ist.
+
+| Stack | Lebensdauer | Multiplizität | Inhalt |
+|---|---|---|---|
+| **Bootstrap** | Einmalig, lokal | 1× pro Subscription | Storage Account für Terraform State, Managed Identity mit GitLab-OIDC-Trust. Wird ausschliesslich lokal vom Entwickler ausgeführt. |
+| **Infrastruktur-Stack** | Stabil, seltene Änderungen | 1× pro Environment | Netzwerk, App Service Frontend, PostgreSQL, Key Vault, ACR, ACA Environment, Monitoring, Private Endpoints. Liegt in `infra/`. |
+| **Theme-Stack** | Häufige Veränderungen | N× (ein Stack pro Theme) | Nur die Ressourcen eines Themas: Container App, Managed Identity, KV-Secret-Scope, AppGW-Pfadregel. |
+
+
+### Pipelines und Automatisierung
+
+Sobald der Bootstrap einmal lokal durchlaufen ist, soll möglichst nichts mehr von Hand angefasst werden müssen. Genau aus diesem Gedanken heraus entsteht das Pipeline-Modell. Jeder Stack, der regelmässig verändert wird, bekommt eine eigene, klar zuständige Pipeline und diese Pipelines sind so geschnitten, dass sie sich gegenseitig nicht in die Quere kommen können.
+
+Die Infrastruktur-Pipeline ist für alles zuständig, was die gemeinsame Basis ausmacht. Die Infrastruktur, das Frontend sowie die Plattform-API. Wann immer sich in einem dieser Verzeichnisse etwas ändert, startet die Pipeline, führt einen Terraform-Apply auf den Plattform-Stack aus und deployt anschliessend Frontend und API. Da die Plattform bewusst stabil gehalten wird, läuft diese Pipeline vergleichsweise selten und genau das ist beabsichtigt. Ein seltener Lauf bedeutet, dass jede Änderung Aufmerksamkeit verdient, sorgfältig geplant wird und nicht im Rauschen täglicher Theme-Deployments untergeht.
+
+Die zweite Pipeline existiert pro Theme. Ob man sie technisch als eigene Pipeline pro Verzeichnis oder als parametrisierte Matrix-Pipeline umsetzt, ist eine Frage des Geschmacks und der GitLab-Möglichkeiten. Konzeptionell ist sie aber pro Theme zu denken. Die Pipeline beobachtet ausschliesslich Pfade unterhalb von `themes/<name>/` und reagiert auch nur auf Änderungen dort. Sie baut das Theme-Image, pusht es in die Container Registry und führt am Ende einen Terraform-Apply auf den Theme-Stack aus, um die Container App auf das neue Image zu setzen. Was sie dabei nicht tut, ist mindestens so wichtig wie das, was sie tut. Sie fasst die Plattform unter keinen Umständen an. Sie hat dafür weder die RBAC-Berechtigung auf dem Plattform-State-Key noch im Code überhaupt eine Referenz, die Plattformressourcen verändern könnte ein versehentlicher Plattform-Eingriff aus einer Theme-Pipeline heraus ist damit nicht „unwahrscheinlich", sondern technisch ausgeschlossen.
+
+Die Verbindung beider Pipelines zu Azure erfolgt über OIDC. Beide Pipelines tauschen ihr GitLab-Job-Token gegen ein Azure-Token ein, das auf dieselbe User-assigned Managed Identity ausgestellt wird, die im Bootstrap einmalig erzeugt wurde. Statische Service-Principal-Secrets gibt es bewusst nicht.
+
+```mermaid
+flowchart LR
+  DEV[Entwickler<br/>git push]
+
+  subgraph GL[GitLab CI/CD]
+    direction TB
+    PPIPE[platform-pipeline<br/>trigger: infra/, frontend/, backend/]
+    TPIPE[theme-name-pipeline<br/>trigger: themes/name/]
+  end
+
+  OIDC[OIDC Federated<br/>mi-maker]
+
+  PSTACK[Plattform-Stack<br/>terraform apply infra/]
+  TSTACK[Theme-Stack<br/>terraform apply themes/name/]
+
+  DEV --> PPIPE
+  DEV --> TPIPE
+
+  PPIPE --> OIDC
+  TPIPE --> OIDC
+
+  OIDC --> PSTACK
+  OIDC --> TSTACK
+
+  PSTACK -. Outputs<br/>(remote_state) .-> TSTACK
+```
+
 ---
 
 # 5 Umsetzung
