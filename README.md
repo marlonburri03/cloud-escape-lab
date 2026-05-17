@@ -23,15 +23,15 @@ Die Arbeit stützt sich auf das im dritten Semester des Lehrgangs zum dipl. Info
 
 ## 1.1 Behandelte Module
 
-Microservices mit Python
-Relationale Datenbanken
-Datensicherheit
-Containersicherheit
-Netzwerk
-Projektmanagement
-Infrastructure as Code (IaC)
-Function as a Service (FaaS)
-Microsoft Azure Cloud
+- Microservices mit Python
+- Relationale Datenbanken
+- Datensicherheit
+- Containersicherheit
+- Netzwerk
+- Projektmanagement
+- Infrastructure as Code (IaC)
+- Function as a Service (FaaS)
+- Microsoft Azure Cloud
 
 ---
 
@@ -390,7 +390,7 @@ Bevor überhaupt eine automatisierte Pipeline laufen kann, müssen zwei elementa
 
 Die Idee des **Theme-Stack** ist, dass jeder Escape Room ein eigenes kleines Deployment-Paket darstellt, das ausschliesslich die Ressourcen umfasst, die nur dieses eine Thema betreffen. Die Container-App, Managed Identity, den Zugriff auf seine spezifischen Secrets im Key Vault und seine eigene Pfadregel auf dem Application Gateway. Alles andere also der Cluster, auf dem die Container-App läuft, die Registry, aus der das Image gezogen wird, oder die Datenbank, mit der gesprochen wird, wird aus dem Infrastruktur-Stack **referenziert**, aber niemals verändert. Diese Trennung wird technisch dadurch erreicht, dass jeder Stack sein eigenes State-File besitzt und Theme-Stacks die benötigten Informationen ausschliesslich einlesen.
 
-### Aufteilung der Verantwortlichkeiten
+### 4.1.1 Aufteilung der Verantwortlichkeiten
 
 Die folgende Übersicht fasst zusammen, welche Ressourcen wo angesiedelt sind und in welcher Frequenz mit Änderungen zu rechnen ist.
 
@@ -401,7 +401,7 @@ Die folgende Übersicht fasst zusammen, welche Ressourcen wo angesiedelt sind un
 | **Theme-Stack** | Häufige Veränderungen | N× (ein Stack pro Theme) | Nur die Ressourcen eines Themas: Container App, Managed Identity, KV-Secret-Scope, AppGW-Pfadregel. |
 
 
-### Pipelines und Automatisierung
+### 4.1.2 Pipelines und Automatisierung
 
 Sobald der Bootstrap einmal lokal durchlaufen ist, soll möglichst nichts mehr von Hand angefasst werden müssen. Genau aus diesem Gedanken heraus entsteht das Pipeline-Modell. Jeder Stack, der regelmässig verändert wird, bekommt eine eigene, klar zuständige Pipeline und diese Pipelines sind so geschnitten, dass sie sich gegenseitig nicht in die Quere kommen können.
 
@@ -437,6 +437,63 @@ flowchart LR
 
   PSTACK -. Outputs<br/>(remote_state) .-> TSTACK
 ```
+
+# 4.2 Branching Strategie
+
+Für die Versionskontrolle wird eine **feature-basierte Branching-Strategie** nach dem Prinzip von **GitLab Flow (light)** eingesetzt. Da das Projekt nur von einer einzelnen Person umgesetzt wird, wäre ein vollständiges GitFlow mit `develop`- und `release/*`-Branches unnötig komplex. Stattdessen genügt ein schlankes Modell mit einem stabilen Hauptbranch und kurzlebigen Feature-Branches.
+
+## 4.2.1 Branch-Modell
+
+```
+main
+ ├── feature/<beschreibung>     z.B. feature/tutorial-room
+ ├── fix/<beschreibung>         z.B. fix/timer-reset
+ └── hotfix/<beschreibung>      nur für kritische Fehler nach Release
+```
+
+- **`main`** stellt jederzeit den stabilen, lauffähigen und release-fähigen Stand der Plattform dar. Direktes Pushen ist **nicht erlaubt** – `main` ist als *Protected Branch* konfiguriert.
+- **`feature/*`** wird pro neuer Funktionalität erstellt (z.B. `feature/game-state-engine`, `feature/entra-auth`). Jeder Branch entspricht möglichst genau einem Jira-Ticket, um die Nachvollziehbarkeit zwischen Anforderung, Code und Review zu gewährleisten.
+- **`fix/*`** dient der Korrektur nicht-kritischer Fehler im laufenden Sprint.
+- **`hotfix/*`** wird nur verwendet, falls nach einem Release (MVP, MLP, MMP) ein kritischer Fehler im produktiven Stand behoben werden muss.
+
+## 4.2.2 Merge-Request-Prozess
+
+Änderungen gelangen ausschliesslich über **Merge Requests (MR)** in den `main`-Branch. Der Ablauf ist wie folgt:
+
+1. Feature-Branch von `main` abzweigen.
+2. Entwicklung und lokale Tests im Feature-Branch.
+3. Push auf GitLab und Erstellung eines Merge Requests gegen `main`.
+4. Automatische Ausführung der CI/CD-Pipeline (siehe 4.2.3).
+5. Self-Review der Änderungen anhand der MR-Checkliste.
+6. Merge nach `main`, sobald die Pipeline grün ist und alle MR-Threads aufgelöst sind. Anschliessend wird der Feature-Branch gelöscht.
+
+Für Releases werden zusätzlich **Git-Tags** auf `main` gesetzt, die mit den im Projekt definierten Releases korrespondieren:
+
+| Tag              | Release | Ende Sprint |
+|------------------|---------|-------------|
+| `v0.1.0-mvp`     | MVP     | Sprint 1    |
+| `v0.2.0-mlp`     | MLP     | Sprint 2    |
+| `v1.0.0-mmp`     | MMP     | Sprint 3    |
+
+## 4.2.3 Pipeline als Merge-Gate
+
+Jeder Merge Request löst automatisch eine GitLab-CI/CD-Pipeline aus. Erst wenn diese erfolgreich durchläuft, ist ein Merge nach `main` möglich. Die Pipeline besteht aus folgenden Stages:
+
+| Stage   | Aufgabe                                                                |
+|---------|------------------------------------------------------------------------|
+| `lint`  | Statische Code-Analyse (z.B. ESLint, Prettier, Terraform fmt/validate) |
+| `build` | Kompilieren bzw. Bauen der Container-Images                            |
+| `test`  | Ausführung der automatisierten Unit- und Integrationstests             |
+
+Zusätzliche Schutzmechanismen auf `main`:
+
+- **Protected Branch**: kein direkter Push, nur Merge via MR.
+- **Pipeline must succeed**: GitLab verhindert den Merge bei rotem Build.
+- **All threads resolved**: offene Review-Kommentare blockieren den Merge.
+
+Damit ist sichergestellt, dass `main` jederzeit deploybar bleibt und die in Kapitel 4.1 beschriebenen Deployments (Plattform-Stack und Themen-Container) auf einem getesteten und qualitätsgesicherten Stand basieren.
+
+# 4.3 Big Picture
 
 ---
 
