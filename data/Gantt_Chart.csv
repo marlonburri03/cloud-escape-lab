@@ -1,9 +1,0 @@
-Sprint,Titel,Start,Ende,Ziel
-Sprint 0,Setup und Planung,2025-10-31,2025-11-06,Projektinitialisierung (GitLab, Jira, Camunda, Azure-Setup, Backlog-Erstellung)
-Sprint 1,Process Design (BPMN),2025-11-07,2025-11-27,Modellierung des Subscription Order Prozesses in Camunda (BPMN)
-Sprint 2,Azure Integration,2025-11-28,2025-12-18,Integration Camunda ↔ Azure (REST-API/CLI/IaC), Subscription-Erstellung testen
-Sprint 3,End-to-End Workflow,2025-12-19,2026-01-08,E2E-Durchlauf, Logging, Fehlerbehandlung, Stabilisierung
-Sprint 4,Finalisierung und Nachbearbeitung,2026-01-09,2026-01-28,Abschlussarbeiten, Dokumentation, Präsentation, Lessons Learned
-Release,MVP (Sprint 1),2025-11-27,2025-11-27,Meilenstein: Minimum Viable Product abgeschlossen
-Release,MLP (Sprint 2),2025-12-18,2025-12-18,Meilenstein: Minimum Lovable Product abgeschlossen
-Release,MMP (Sprint 3),2026-01-08,2026-01-08,Meilenstein: Minimum Marketable Product abgeschlossen

@@ -241,8 +241,6 @@ gantt
 
 *Gantt‑Übersicht der Sprints und Releases*
 
-Datenbasis: siehe [data/Gantt_Chart.csv](data/Gantt_Chart.csv).
-
 ## 3.1 Product Roadmap
 
 Die Product Roadmap zeigt die übergeordnete Planung und Entwicklungsrichtung des Projekts über die gesamte Dauer der Semesterarbeit hinweg.
@@ -261,54 +259,88 @@ __Übersicht der Releases:__
 
 ## 3.2 Definition of Ready (DoR)
 
-Die Definition of Ready[^24] legt fest, welche Voraussetzungen eine User Story erfüllen muss, damit sie ins Sprint Backlog aufgenommen werden kann. Die DoR Kriterien stellen sicher, dass die User Story technisch planbar, fachlich verstanden und innerhalb des Sprint-Zeitrahmens realistisch Umsetzbar ist. Im Rahmen der Semesterarbeit dient die DoR zudem als Qualitätssicherung für die korrekte Vorbereitung jeder User Story.
+Die Definition of Ready (DoR) legt fest, welche Voraussetzungen eine User Story erfüllen muss, damit sie in ein Sprint Backlog aufgenommen werden kann. Ziel der DoR ist es, sicherzustellen, dass User Stories fachlich verstanden, technisch planbar und innerhalb des Sprint-Zeitrahmens realistisch umsetzbar sind.
 
-* __Inhaltliche Anforderungen:__ Die User Story enthält eine klare Beschreibung nach dem im Scrum Framework definierten Schema und beschreibt den fachlichen oder technischen Mehrwert für das Projekt. Die Akzeptanzkriterien wurden definiert und die User Story trägt messbar zu den übergeordneten Zielen der Semesterarbeit bei. 
+Im Rahmen dieser Semesterarbeit dient die Definition of Ready zusätzlich als Qualitätskontrolle für die Vorbereitung technischer sowie organisatorischer Aufgaben innerhalb der Cloud-basierten Escape-Room-Plattform.
 
-* __Technische Anforderungen:__ Alle technischen Abhängigkeiten wurden identifiziert. Externe Abhängigkeiten und benötigte Ressourcen sind, falls erforderlich dokumentiert. Potenzielle Risiken und Blocker wurden erkannt und, sofern möglich, vorab behoben.
+__Inhaltliche Anforderungen:__
+- Die User Story enthält eine verständliche Beschreibung nach dem Scrum-Framework.
+- Der fachliche oder technische Mehrwert der Story für das Projekt ist klar ersichtlich.
+- Akzeptanzkriterien wurden definiert.
+- Die Story unterstützt die Ziele des jeweiligen Releases (MVP, MLP oder MMP).
 
-* __Planbarkeit:__ Die User Story ist so zugeschnitten, dass sie innerhalb eines Sprints abgeschlossen werden kann. Sie wurde bei Bedarf in Tasks oder Subtasks unterteilt, der Aufwand wurde in Story Points geschätzt und die Priorität über das MVP/MLP/MMP-Label definiert. Die Story wurde im Sprint Planning besprochen.
+__Technische Anforderungen:__
+- Technische Abhängigkeiten sowie benötigte Ressourcen wurden identifiziert.
+- Betroffene Komponenten wie Frontend, Backend, Datenbank oder Cloud-Infrastruktur sind bekannt.
+- Risiken, mögliche Blocker oder offene technische Fragen wurden analysiert.
+- Falls erforderlich, wurden Vorbereitungen für Infrastruktur, Container oder CI/CD vorgenommen.
 
-Die Definition of Ready gilt einheitlich für alle User Stories im Projekt und wird nicht individuell in die Beschreibung eingefügt.
+__Planbarkeit:__
+- Die User Story kann innerhalb eines Sprints realistisch umgesetzt werden.
+- Grössere Aufgaben wurden in Subtasks aufgeteilt.
+- Story Points wurden anhand der Fibonacci-Folge geschätzt.
+- Die Priorisierung der Story wurde festgelegt.
+- Die Story wurde im Sprint Planning besprochen und freigegeben.
+
+Die Definition of Ready gilt einheitlich für sämtliche User Stories des Projekts und wird nicht individuell pro Story angepasst.
 
 ## 3.3 Definition of Done (DoD)
 
-Die Definition of Done[^23] beschreibt die Kriterien, die erfüllt sein müssen, damit eine User Story als vollständig abgeschlossen gilt. Sie stellt sicher, dass alle fachlichen, technischen und dokumentarischen Anforderungen erfüllt sind.
+Die Definition of Done (DoD) beschreibt die Kriterien, welche erfüllt sein müssen, damit eine User Story als vollständig abgeschlossen gilt. Ziel der DoD ist es, eine einheitliche Qualitätssicherung für Entwicklung, Testing, Dokumentation und Deployment sicherzustellen.
 
-* __Umsetzung der Anforderungen:__ Alle Akzeptanzkriterien der User Story wurden vollständig umgesetzt, die Funktionalität wurde getestet und erfüllt den definierten Zweck.
+__Umsetzung der Anforderungen:__
+- Alle definierten Akzeptanzkriterien wurden vollständig umgesetzt.
+- Die Funktionalität erfüllt den vorgesehenen fachlichen oder technischen Zweck.
+- Der Code wurde erfolgreich implementiert und getestet.
 
-* __Validierung und Qualitätssicherung:__ Funktionale Tests oder manuelle Überprüfungen wurden durchgeführt. Mögliche Probleme oder Abweichungen wurden analysiert und behoben.
+__Validierung und Qualitätssicherung:__
+- Funktionale Tests oder manuelle Überprüfungen wurden durchgeführt.
+- Fehler oder technische Probleme wurden analysiert und behoben.
+- Falls relevant, wurden Container, APIs oder Cloud-Ressourcen erfolgreich getestet.
+- Die Lösung funktioniert innerhalb der vorgesehenen Entwicklungs- oder Cloud-Umgebung.
 
-* __Dokumentation und Nachvollziehbarkeit:__ Alle Ergebnisse, Entscheidungen und technischen Schritte sind in der Projektdokumentation festgehalten. Änderungen im Repository sind sauber beschrieben, nachvollziehbar versioniert und mit Jira verknüpft.
+__Dokumentation und Nachvollziehbarkeit:__
+- Wichtige technische Entscheidungen sowie Umsetzungsschritte wurden dokumentiert.
+- Änderungen im GitLab-Repository sind nachvollziehbar versioniert.
+- Die zugehörigen Commits und Merge Requests sind mit Jira verknüpft.
+- Relevante Anpassungen an Infrastruktur oder Deployment-Prozessen wurden dokumentiert.
 
-* __Abnahme und Integration:__ Die User Story wurde im Rahmen der Sprint Review vorgestellt, akzeptiert und in Jira auf Done gesetzt. Falls relevant, wurde die Lösung in das Gesamtprojekt integriert.
+__Integration und Abschluss:__
+- Die User Story wurde erfolgreich in das Gesamtprojekt integriert.
+- Falls relevant, wurde die CI/CD-Pipeline erfolgreich durchlaufen.
+- Die Story wurde im Sprint Review präsentiert und akzeptiert.
+- Der Status der Story wurde in Jira auf Done gesetzt.
 
-Im Jira-Projekt ist eine Automation Rule hinterlegt, die beim Anlegen neuer User Stories automatisch die DoD-Kriterien in das Beschreibungsfeld einfügt. Dadurch wird sichergestellt, dass alle Stories nach denselben Qualitätsmassstäben umgesetzt und überprüft werden.
+Im Jira-Projekt ist eine Automation Rule hinterlegt, welche beim Erstellen neuer User Stories automatisch die wichtigsten DoD-Kriterien ergänzt. Dadurch wird sichergestellt, dass sämtliche Stories nach denselben Qualitätsstandards umgesetzt und überprüft werden.
 
-## 3.4 Projekt Sprints
+## 3.4 Projektsprints und Releases
 
-### 3.4.1 Sprint 0
+### 3.4.2 Sprint 1 – MVP Release
+
+Der Sprint 1 ist der erste produktive Sprint der Semesterarbeit, in dem am Ende ein erster Release in Form des Minimum Viable Product (MVP) erwartet wird. In diesem Sprint beginnt die eigentliche Umsetzung der Cloud-basierten Escape-Room-Plattform, und es werden die ersten zentralen Komponenten des Systems aufgebaut. Dazu gehören insbesondere die Definition der Architektur, die Grundstruktur der Anwendung sowie die Implementierung eines ersten spielbaren Tutorials. Diese Grundlagen bilden die Basis für alle weiteren Sprints.
+
+Das Hauptziel dieses Sprints besteht darin, die grundlegende Plattformstruktur zu entwickeln und einen ersten funktionalen Prototypen bereitzustellen, welcher bereits einfache Interaktionen und ein spielbares Escape-Room-Szenario ermöglicht. Damit wird die technische Grundlage für die weitere Erweiterung der Plattform in den folgenden Sprints geschaffen.
 
 __Sprint Planning:__
+
+Wie vor jedem Sprint mussten zunächst die User Stories aufbereitet werden, damit sie die Definition of Ready (DoR) erfüllen und offiziell in den Sprint aufgenommen werden konnten. Dabei wurden insbesondere technische Abhängigkeiten geprüft, der fachliche Umfang verifiziert und die Stories entsprechend priorisiert.
+
+Anschliessend erfolgte die Schätzung der User Stories anhand der Fibonacci-Zahlen. Ziel dieses Vorgehens ist es, den Umsetzungsaufwand bzw die Komplexität möglichst realistisch einzuschätzen und eine konsistente Grundlage für die Sprint-Planung zu schaffen. Besonders hohe Priorität hatten dabei die Architekturdefinition, die Game Engine sowie der erste spielbare Escape Room, da diese den Kern des MVP bilden.
+
+Der Sprint 1 erstreckt sich vom 11. Mai bis zum 31. Mai 2026 und bildet den ersten produktiven Entwicklungszyklus der Semesterarbeit. Ziel des Sprints ist die Umsetzung eines Minimum Viable Product (MVP), welches die grundlegende Architektur der Plattform sowie einen ersten spielbaren Escape Room enthält.
 
 __Sprint Review:__
 
 Abgeschlossene User Stories:
 
-__Risikoverlauf Sprint 0:__
-
-__Sprint Retrospective:__
-
-__Lessons Learned:__
-
-
-### 3.4.2 Sprint 1
-
-__Sprint Planning:__
-
-__Sprint Review:__
-
-Abgeschlossene User Stories:
+* [S3M-6, Define project structure and architecture]()✅-DONE
+* [S3M-12, Define CI/CD pipeline concept]()✅-DONE
+* [S3M-13, Basic Frontend UI]()✅-DONE
+* [S3M-14, Game State Management]()✅-DONE
+* [S3M-15, Tutorial Escape Room]()✅-DONE
+* [S3M-16, Interaction System]()✅-DONE
+* [S3M-17, Feedback System]()✅-DONE
+* [S3M-19, Define Project Documentation]()✅-DONE
 
 __Risikoverlauf Sprint 1:__
 
@@ -317,7 +349,7 @@ __Sprint Retrospective:__
 __Lessons Learned:__
 
 
-### 3.4.3 Sprint 2
+### 3.4.3 Sprint 2 – MLP Release
 
 __Sprint Planning:__
 
@@ -332,7 +364,7 @@ __Sprint Retrospective:__
 __Lessons Learned:__
 
 
-### 3.4.4 Sprint 3
+### 3.4.4 Sprint 3   – MMP Release
 
 __Sprint Planning:__
 
@@ -345,22 +377,6 @@ __Risikoverlauf Sprint 3:__
 __Sprint Retrospective:__
 
 __Lessons Learned:__
-
-
-### 3.4.5 Sprint 4
-
-__Sprint Planning:__
-
-__Sprint Review:__
-
-Abgeschlossene User Stories:
-
-__Risikoverlauf Sprint 4:__
-
-__Sprint Retrospective:__
-
-__Lessons Learned:__
-
 
 ---
 
