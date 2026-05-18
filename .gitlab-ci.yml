@@ -248,6 +248,7 @@ pages:
   script:
     - pip install --quiet mkdocs mkdocs-material pymdown-extensions
     - cp README.md docs-site/concept.md
+    - mkdir -p docs-site/img && cp -r img/* docs-site/img/ 2>/dev/null || true
     - mkdocs build --strict --site-dir public
   artifacts:
     paths:
