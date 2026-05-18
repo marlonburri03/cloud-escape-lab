@@ -100,12 +100,12 @@ checkov:
     name: bridgecrew/checkov:latest
     entrypoint: [""]
   script:
-    - checkov -d infra --framework terraform --quiet --compact --soft-fail
+    - checkov -d infra --framework terraform --quiet --compact --soft-fail -o cli -o json --output-file-path console,checkov-report.json
     - checkov -d bootstrap --framework terraform --quiet --compact --soft-fail
   artifacts:
     when: always
-    reports:
-      sast: checkov-report.json
+    paths:
+      - checkov-report.json
     expire_in: 1 week
 
 # Filesystem & IaC vulnerability scan (CVEs in deps, misconfigurations)
