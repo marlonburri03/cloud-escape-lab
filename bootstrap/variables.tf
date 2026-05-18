@@ -37,3 +37,8 @@ variable "user_object_id" {
   description = "Entra ID object ID of a user"
   type        = string
 }
+
+variable "gitlab_project_path" {
+  description = "Full GitLab project path (group/subgroup/project) used as OIDC subject"
+  type        = string
+}
