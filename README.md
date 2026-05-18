@@ -544,7 +544,41 @@ Bewusst nicht umgesetzt, aber als nächste Ausbaustufen vorgemerkt:
 - **`driftctl`** als geplanter Job auf `main` – erkennt Out-of-Band-Änderungen, die der Terraform-State nicht kennt.
 - **SBOM-Export** via `syft` im Build-Stage – wird mit der EU Cyber Resilience Act perspektivisch ohnehin verpflichtend.
 
-# 4.3 Big Picture
+# 4.3 Eingesetzte GitLab-Plattform-Features
+
+Über Pipeline und Merge-Request hinaus nutzt das Projekt gezielt weitere GitLab-Features – jedoch nur dort, wo sie für eine **Ein-Personen-Semesterarbeit** echten Mehrwert liefern. Genauso bewusst wurde entschieden, welche Features **nicht** eingesetzt werden, um den Scope realistisch zu halten.
+
+## 4.3.1 Aktiv eingesetzt
+
+| Feature | Wofür | Wo konfiguriert |
+| --- | --- | --- |
+| **Container Registry** | Speichert das Frontend-Image (`$CI_REGISTRY_IMAGE/frontend:<sha>`), das anschliessend von Trivy gescannt und von Azure Container Apps gezogen wird. | `frontend-docker-build` Job, push nur auf `main`. |
+| **Container Registry – Cleanup Policy** | Verhindert, dass die Registry mit jedem Commit unbegrenzt wächst. Behält die letzten 10 Tags sowie alles, was mit `v*` (Release-Tags) beginnt; alles ältere als 30 Tage wird entfernt. | GitLab-UI: *Settings → Packages and Registries → Container Registry → Cleanup policy* (UI-only, kein YAML-Pendant). |
+| **Releases** | Beim Push eines SemVer-Tags (`v0.1.0-mvp`, `v0.2.0-mlp`, `v1.0.0-mmp`) erzeugt der `release`-Job automatisch eine GitLab-Release-Seite mit Pipeline-Link und Image-Referenz. Die Release-Seite ist später der "single source of truth" für die Abnahme. | `.gitlab-ci.yml` → Job `release` mit `release-cli`-Image und `release:`-Keyword. |
+| **Pages (MkDocs Material)** | Veröffentlicht das Konzept als durchsuchbare Doku-Site unter `https://example.gitlab.io/presentation/`. Die `README.md` wird beim Build automatisch nach `docs/concept.md` kopiert – dadurch bleibt es bei genau **einer** Quelle. | `.gitlab-ci.yml` → Job `pages`, Konfiguration in `mkdocs.yml`, Inhalte in `docs/`. |
+| **Protected Environments** | Die `production`-Umgebung (Terraform-Apply) ist als *Protected Environment* markiert. Nur Maintainer dürfen das manuelle Gate auslösen – schützt vor versehentlichem Apply durch fremde Pipeline-Trigger. | GitLab-UI: *Settings → CI/CD → Protected environments*. |
+| **CI/CD-Variablen (Protected, masked wo möglich)** | `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID` als *Protected* gesetzt – nur Pipelines auf geschützten Branches/Tags sehen sie. OIDC bedeutet, dass kein Geheimnis im Repo landet. | GitLab-UI: *Settings → CI/CD → Variables*. |
+
+## 4.3.2 Bewusst **nicht** eingesetzt
+
+| Feature | Begründung |
+| --- | --- |
+| **Feature Flags** | Setzt einen laufenden Unleash-kompatiblen Server voraus und bringt nur Mehrwert, wenn produktiv Nutzer auf einem stabilen `main` arbeiten. Für eine MVP/MLP-Schulungsumgebung Overkill; bei späterer Mehrnutzer-Iteration sinnvoll. |
+| **Model Registry** | Kein ML-Workload im Scope – das Projekt liefert eine Web-App, kein Modelltraining. |
+| **Terraform Module Registry** | Sinnvoll erst, wenn mehrere Projekte ein gemeinsames Modul konsumieren. Im aktuellen Mono-Repo wäre das eine künstliche Verkomplizierung; lokale Module unter `infra/modules/` reichen. |
+| **Package Registry (PyPI/npm)** | Es gibt aktuell keine eigene Python-Library, die wiederverwendet wird – die Anwendung ist ein Endprodukt, kein Paket. |
+| **GitLab-managed Terraform State** | Backend ist bereits Azure Blob Storage (`sttfstatescape`). Ein Zurückwechseln auf GitLab-State würde das Bootstrap unnötig an den GitLab-Provider koppeln. |
+
+## 4.3.3 Erkenntnisse
+
+- **Pages + MkDocs als Doku-Pipeline** ist mit ca. 25 YAML-Zeilen und einer `mkdocs.yml` sehr günstig zu haben – und erzwingt nebenbei, dass die `README.md` Lint-rein bleibt (`--strict` lässt MkDocs bei jedem fehlerhaften Link fehlschlagen).
+- **Releases sind kostenlos**, sobald man bereits SemVer-Tags pflegt. Sie ersetzen das manuelle Pflegen einer "Was-wurde-wann-deployed"-Tabelle und werden später für die Abnahme der Semesterarbeit verlinkt.
+- **Cleanup-Policy zuerst, dann pushen.** Ohne Policy wachsen die Registry-Kosten auch bei privaten Projekten – die Policy ist UI-only und sollte vor dem ersten erfolgreichen Build-Push aktiviert werden.
+- **Disziplin schlägt Feature-Vielfalt.** Jedes nicht-genutzte Feature ist eines weniger, das im Projekt-Setup, in der Doku und bei der Verteidigung erklärt werden muss.
+
+---
+
+# 4.4 Big Picture
 
 ---
 
