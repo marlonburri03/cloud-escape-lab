@@ -38,12 +38,46 @@ resource "azurerm_user_assigned_identity" "mi_maker" {
   }
 }
 
-# add federated credential to managed identity for GitLab OIDC
+# add federated credential to managed identity for GitLab OIDC (main branch deploys)
 resource "azurerm_federated_identity_credential" "mi_maker_fic" {
   name                      = "${var.managed_identity_name}-fic"
   user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
   issuer                    = "https://gitlab.com"
-  subject                   = "project_path:<your-gitlab-group>/cloud-escape-lab:ref_type:branch:ref:main"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:main"
+  audience                  = ["https://gitlab.com"]
+}
+
+
+# add federated credentials to managed identity for GitLab OIDC (other branch deploys - feature, fix, hotfix, release)
+resource "azurerm_federated_identity_credential" "mi_maker_fic_feature" {
+  name                      = "${var.managed_identity_name}-fic-feature"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:feature/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_fix" {
+  name                      = "${var.managed_identity_name}-fic-fix"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:fix/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_hotfix" {
+  name                      = "${var.managed_identity_name}-fic-hotfix"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:hotfix/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_release" {
+  name                      = "${var.managed_identity_name}-fic-release"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:release/*"
   audience                  = ["https://gitlab.com"]
 }
 
@@ -51,6 +85,20 @@ resource "azurerm_federated_identity_credential" "mi_maker_fic" {
 resource "azurerm_role_assignment" "mi_maker_storage_blob_contributor" {
   scope                = azurerm_storage_account.st_tfstate.id
   role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.mi_maker.principal_id
+}
+
+# grant managed identity Contributor on the subscription so it can deploy resources
+resource "azurerm_role_assignment" "mi_maker_subscription_contributor" {
+  scope                = "/subscriptions/${var.subscription_id}"
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.mi_maker.principal_id
+}
+
+# grant managed identity User Access Administrator so it can manage RBAC assignments
+resource "azurerm_role_assignment" "mi_maker_subscription_uaa" {
+  scope                = "/subscriptions/${var.subscription_id}"
+  role_definition_name = "User Access Administrator"
   principal_id         = azurerm_user_assigned_identity.mi_maker.principal_id
 }
 

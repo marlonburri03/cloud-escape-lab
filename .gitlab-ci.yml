@@ -2,6 +2,7 @@ stages:
   - lint
   - build
   - test
+  - deploy
 
 workflow:
   rules:
@@ -79,6 +80,52 @@ secret-scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
+# Advanced Terraform linting (Azure-aware rules)
+tflint:
+  <<: *rules-terraform
+  stage: lint
+  image:
+    name: ghcr.io/terraform-linters/tflint:latest
+    entrypoint: [""]
+  script:
+    - tflint --init -c "$CI_PROJECT_DIR/.tflint.hcl"
+    - tflint -c "$CI_PROJECT_DIR/.tflint.hcl" --chdir=infra
+    - tflint -c "$CI_PROJECT_DIR/.tflint.hcl" --chdir=bootstrap
+
+# Security & compliance scanning for Terraform
+checkov:
+  <<: *rules-terraform
+  stage: lint
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]
+  script:
+    - checkov -d infra --framework terraform --quiet --compact --soft-fail -o cli -o json --output-file-path console,checkov-report.json
+    - checkov -d bootstrap --framework terraform --quiet --compact --soft-fail
+  artifacts:
+    when: always
+    paths:
+      - checkov-report.json
+    expire_in: 1 week
+
+# Filesystem & IaC vulnerability scan (CVEs in deps, misconfigurations)
+trivy-fs:
+  stage: lint
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache/"
+  script:
+    - trivy fs --severity HIGH,CRITICAL --exit-code 0 --scanners vuln,misconfig,secret .
+  cache:
+    paths:
+      - .trivycache/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
 # Stage 2: Build
 frontend-docker-build:
   <<: *rules-docker
@@ -98,21 +145,95 @@ frontend-docker-build:
         docker push "$IMAGE_TAG"
       fi
 
-terraform-plan:
-  <<: *rules-terraform
+# Image CVE scan (runs only on main where the image was pushed)
+trivy-image:
   stage: build
+  needs: [frontend-docker-build]
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
+    TRIVY_NO_PROGRESS: "true"
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | trivy registry login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - trivy image --severity HIGH,CRITICAL --exit-code 0 "$IMAGE_TAG"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+.terraform-base: &terraform-base
   image:
     name: hashicorp/terraform:1.9
     entrypoint: [""]
+  id_tokens:
+    ARM_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    ARM_USE_OIDC: "true"
+    TF_IN_AUTOMATION: "true"
+
+terraform-plan:
+  <<: *terraform-base
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - bootstrap/**/*
+        - infra/**/*
+        - .gitlab-ci.yml
   script:
     - cd infra
-    - terraform init -backend=false
-    - terraform plan -input=false -lock=false || true
+    - terraform init -input=false
+    - terraform plan -input=false -out=tfplan
+    - terraform show -no-color tfplan > plan.txt
   artifacts:
     when: always
     paths:
       - infra/plan.txt
+      - infra/tfplan
+      - infra/.terraform.lock.hcl
     expire_in: 1 week
+
+# Stage 4: Deploy (only on main, manual approval)
+terraform-apply:
+  <<: *terraform-base
+  stage: deploy
+  needs:
+    - job: terraform-plan
+      artifacts: true
+  script:
+    - cd infra
+    - terraform init -input=false
+    - terraform apply -input=false -auto-approve tfplan
+  environment:
+    name: production
+    action: start
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: false
+
+# Stage 4: Deploy - Tag-based release notes (GitLab Releases feature)
+release:
+  stage: deploy
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  script:
+    - echo "Creating GitLab Release for tag $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Release $CI_COMMIT_TAG"
+    description: |
+      Automated release for tag **$CI_COMMIT_TAG**.
+
+      Container image: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      Pipeline: $CI_PIPELINE_URL
+
+      See merge requests merged since the previous tag for details.
+
 
 # Stage 3: Test
 python-test:

@@ -32,7 +32,10 @@ def index():
 
 
 @bp.get("/tutorial")
-@bp.doc(summary="Tutorial entry stub (Phase 2 will redirect to theme container)", responses=[200])
+@bp.doc(
+    summary="Tutorial entry stub (Phase 2 will redirect to theme container)",
+    responses=[200],
+)
 def tutorial():
     return render_template(
         "tutorial.html",

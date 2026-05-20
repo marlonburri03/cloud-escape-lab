@@ -12,6 +12,7 @@ def create_app(config_class: type = Config) -> APIFlask:
 
     # Register blueprints
     from app.main import bp as main_bp
+
     app.register_blueprint(main_bp)
 
     @app.before_request
