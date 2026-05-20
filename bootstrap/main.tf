@@ -47,12 +47,37 @@ resource "azurerm_federated_identity_credential" "mi_maker_fic" {
   audience                  = ["https://gitlab.com"]
 }
 
-# add federated credential for merge request pipelines (terraform plan on MRs)
-resource "azurerm_federated_identity_credential" "mi_maker_fic_mr" {
-  name                      = "${var.managed_identity_name}-fic-mr"
+
+# add federated credentials to managed identity for GitLab OIDC (other branch deploys - feature, fix, hotfix, release)
+resource "azurerm_federated_identity_credential" "mi_maker_fic_feature" {
+  name                      = "${var.managed_identity_name}-fic-feature"
   user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
   issuer                    = "https://gitlab.com"
-  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:*"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:feature/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_fix" {
+  name                      = "${var.managed_identity_name}-fic-fix"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:fix/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_hotfix" {
+  name                      = "${var.managed_identity_name}-fic-hotfix"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:hotfix/*"
+  audience                  = ["https://gitlab.com"]
+}
+
+resource "azurerm_federated_identity_credential" "mi_maker_fic_release" {
+  name                      = "${var.managed_identity_name}-fic-release"
+  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
+  issuer                    = "https://gitlab.com"
+  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:release/*"
   audience                  = ["https://gitlab.com"]
 }
 

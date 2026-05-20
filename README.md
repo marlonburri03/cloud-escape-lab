@@ -580,6 +580,9 @@ Bewusst nicht umgesetzt, aber als nächste Ausbaustufen vorgemerkt:
 
 # 4.4 Big Picture
 
+![Architecture](data/Big_Picture.png)
+*Azure Architektur übersicht*
+
 ---
 
 # 5 Umsetzung
