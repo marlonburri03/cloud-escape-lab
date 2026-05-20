@@ -234,26 +234,6 @@ release:
 
       See merge requests merged since the previous tag for details.
 
-# Stage 4: Deploy - Project documentation site via GitLab Pages (MkDocs Material)
-pages:
-  stage: deploy
-  image: python:3.12-slim
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - README.md
-        - mkdocs.yml
-        - docs-site/**/*
-        - .gitlab-ci.yml
-  script:
-    - pip install --quiet mkdocs mkdocs-material pymdown-extensions
-    - cp README.md docs-site/concept.md
-    - mkdir -p docs-site/img && cp -r img/* docs-site/img/ 2>/dev/null || true
-    - mkdocs build --strict --site-dir public
-  artifacts:
-    paths:
-      - public
-    expire_in: 1 week
 
 # Stage 3: Test
 python-test:
