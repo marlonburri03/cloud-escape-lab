@@ -1,5 +1,5 @@
-# ignore docsfolder
-/docs*
+# ignore personal internal docs folder (architecture/, decisions/, runbooks/, etc.)
+/docs/
 
 # ignore backup files
 *.bkp

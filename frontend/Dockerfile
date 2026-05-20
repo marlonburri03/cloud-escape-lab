@@ -14,4 +14,4 @@ EXPOSE 8000
 COPY . .
 
 # WSGI entrypoint (wsgi.py exposes `app = create_app()`)
-CMD gunicorn --preload -w 2 -b 0.0.0.0:8000 wsgi:app
+CMD ["gunicorn", "--preload", "-w", "2", "-b", "0.0.0.0:8000", "wsgi:app"]

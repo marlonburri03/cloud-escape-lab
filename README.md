@@ -117,21 +117,21 @@ Azure Functions
 
 ## 2.5 Vorgaben, Methoden und Werkzeuge
 
-__Projektmethodik:__  
+__Projektmethodik:__
 
 Für die Umsetzung des Projekts wird SCRUM als agile Projektmanagementmethode eingesetzt. Die Entwicklung erfolgt iterativ in mehreren Sprints, wodurch regelmässig funktionsfähige Zwischenstände entstehen, welche überprüft und bei Bedarf angepasst werden können. Nach jedem Sprint werden Reviews und Retrospektiven durchgeführt, um den aktuellen Projektstand zu evaluieren und das weitere Vorgehen gezielt zu optimieren.
 
-__Projektmanagement:__  
+__Projektmanagement:__
 
 Für die Planung, Organisation und Steuerung des Projekts wird Jira eingesetzt. Sämtliche User Stories, Tasks, Sprint-Planungen sowie Fortschritte werden zentral verwaltet, um eine strukturierte und nachvollziehbare Projektorganisation sicherzustellen.
 
-__Versionsverwaltung und Dokumentation:__  
+__Versionsverwaltung und Dokumentation:__
 
 GitLab wird für die Versionsverwaltung, Dokumentation sowie die Nachverfolgung sämtlicher Änderungen verwendet. Der gesamte Quellcode, die Infrastrukturdefinitionen sowie die technische Dokumentation werden zentral in einem GitLab-Repository verwaltet.
 
 Die Projektdokumentation erfolgt fortlaufend in Markdown-Dateien innerhalb des Repositories und wird durch Commit Messages ergänzt, um die Nachvollziehbarkeit aller Änderungen sicherzustellen. Zusätzlich wird GitLab CI/CD zur Automatisierung von Build-, Test- und Deployment-Prozessen eingesetzt.
 
-__Systemarchitektur und technische Umsetzung:__  
+__Systemarchitektur und technische Umsetzung:__
 
 Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Einzelne Komponenten wie Frontend, Backend, Spiellogik sowie serverlose Funktionen werden voneinander getrennt entwickelt und betrieben, um eine flexible, skalierbare und wartbare Architektur zu gewährleisten.
 
@@ -139,7 +139,7 @@ Das Frontend wird mit JavaScript beziehungsweise TypeScript umgesetzt. Für die 
 
 Die Plattform wird containerisiert betrieben. Dafür werden Docker und Docker Compose eingesetzt, um die einzelnen Services lokal sowie in der Cloud reproduzierbar bereitzustellen.
 
-__Cloud und Infrastruktur:__    
+__Cloud und Infrastruktur:__
 
 Die Bereitstellung der Infrastruktur erfolgt mittels Infrastructure as Code unter Verwendung von OpenTofu (Terraform-kompatibel). Dadurch kann die gesamte Umgebung automatisiert, standardisiert und reproduzierbar bereitgestellt werden.
 
@@ -151,8 +151,8 @@ Für die Automatisierung von Build-, Test- und Deployment-Prozessen wird GitLab 
 
 Die Plattform soll so aufgebaut werden, dass Escape-Room-Szenarien automatisiert bereitgestellt und aktualisiert werden können. Dadurch wird ein effizienter und standardisierter Deployment-Prozess ermöglicht.
 
-__Test und Validierung:__  
-  
+__Test und Validierung:__
+
 Das Testing erfolgt kontinuierlich während der gesamten Entwicklung. Nach der Implementierung einzelner Funktionen werden Funktions-, Integrations- sowie Deployment-Tests durchgeführt.
 
 Am Ende des Projekts erfolgt zusätzlich ein End-to-End-Test der gesamten Plattform inklusive Authentifizierung, Deployment, Datenhaltung und Spiellogik, um die korrekte Funktionsweise der Lösung sicherzustellen.
@@ -165,7 +165,7 @@ Als Entwicklungsumgebung wird Visual Studio Code verwendet, da dieser Editor ein
 
 Zusätzlich werden AI-gestützte Werkzeuge wie ChatGPT, Claude oder GitHub Copilot unterstützend für Recherche, Problemlösung und Codeunterstützung verwendet.
 
-__Nicht Teil des Projektes:__  
+__Nicht Teil des Projektes:__
 
 Die vollständige produktive Einführung der Plattform ist nicht Bestandteil dieser Semesterarbeit. Ziel der Arbeit ist die Entwicklung eines funktionsfähigen Proof of Concept (POC), welcher die technische Machbarkeit sowie die grundlegende Architektur der Lösung demonstriert.
 
@@ -200,7 +200,7 @@ __SWOT-Analyse:__
 
 Im Rahmen der Konzeptionsphase wurde eine SWOT-Analyse durchgeführt, um die Stärken, Schwächen, Chancen und Risiken des Projekts systematisch zu erfassen. Diese Analyse dient als Grundlage für strategische Entscheidungen im weiteren Verlauf der Arbeit.
 
-![SWOTAnalyse](img/swot_analyse.png)  
+![SWOTAnalyse](img/swot_analyse.png)
 *Screenshot von meiner SWOT-Analyse aus data/SWOT_Analyse.xlsx.*
 
 
@@ -218,7 +218,7 @@ Für die Semesterarbeit wurden vier Sprints geplant. Auf einen klassischen Gantt
 | Sprint 1 | Core Platform & Game Engine        | 11.05.2026 – 31.05.2026 | Frontend Grundstruktur, Game Engine (State, Actions), erster Escape Room (Tutorial), einfache Interaktionen |
 | Sprint 2 | Interaktivität & Cloud Integration | 01.06.2026 – 21.06.2026 | Erweiterte Interaktionen, mehrere Räume / Szenarien, Cloud Deployment (erste Version), Microservices einführen            |
 | Sprint 3 | DevOps, Auth & Finalisierung       | 22.06.2026 – 06.07.2026 | Auth mit Microsoft Entra ID, Escape Rooms via GitLab Pipelines starten, Testing, Bugfixing, Dokumentation, Präsentation.                            |
-  
+
 Die folgende Gantt-Übersicht visualisiert die Sprint-Planung und die zugehörigen Releases (MVP[^34], MLP[^35], MMP[^36]). Das Diagramm wird direkt im README als Mermaid gepflegt und ist konsistent mit der obigen Tabelle.
 
 ```mermaid
@@ -477,23 +477,111 @@ Für Releases werden zusätzlich **Git-Tags** auf `main` gesetzt, die mit den im
 
 ## 4.2.3 Pipeline als Merge-Gate
 
-Jeder Merge Request löst automatisch eine GitLab-CI/CD-Pipeline aus. Erst wenn diese erfolgreich durchläuft, ist ein Merge nach `main` möglich. Die Pipeline besteht aus folgenden Stages:
+Jeder Merge Request löst automatisch eine GitLab-CI/CD-Pipeline aus. Erst wenn diese erfolgreich durchläuft, ist ein Merge nach `main` möglich. Die Pipeline ist in vier Stages aufgeteilt und bewusst nach dem **Fail-Fast-Prinzip** geordnet: günstige, schnelle Checks zuerst, teure Operationen (Build, Deploy) erst danach.
 
-| Stage   | Aufgabe                                                                |
-|---------|------------------------------------------------------------------------|
-| `lint`  | Statische Code-Analyse (z.B. ESLint, Prettier, Terraform fmt/validate) |
-| `build` | Kompilieren bzw. Bauen der Container-Images                            |
-| `test`  | Ausführung der automatisierten Unit- und Integrationstests             |
+### Stages und Jobs
 
-Zusätzliche Schutzmechanismen auf `main`:
+| Stage   | Job                       | Tool                | Zweck                                                                                       |
+|---------|---------------------------|---------------------|---------------------------------------------------------------------------------------------|
+| `lint`  | `python-lint`             | `ruff`              | Statische Code-Analyse für Python (Stilfehler, ungenutzte Imports, Bugs).                   |
+| `lint`  | `terraform-fmt-validate`  | `terraform`         | Formatierungs- und Syntaxprüfung der IaC-Module.                                            |
+| `lint`  | `tflint`                  | `tflint` + Azure-Plugin | Best-Practice-Linting für Terraform mit Azure-spezifischen Regeln.                       |
+| `lint`  | `checkov`                 | `checkov`           | Security- und Compliance-Scan der IaC-Definitionen (offene NSGs, Public Storage, RBAC etc.). |
+| `lint`  | `dockerfile-lint`         | `hadolint`          | Best Practices und Sicherheitsregeln im Dockerfile (z. B. CMD-exec-Form, kein `latest`).    |
+| `lint`  | `secret-scan`             | `gitleaks`          | Sucht versehentlich committete Credentials (API-Keys, Tokens, Private Keys).                |
+| `lint`  | `trivy-fs`                | `trivy`             | Filesystem-Scan auf bekannte CVEs in Dependencies sowie IaC-Misconfigurations.              |
+| `build` | `frontend-docker-build`   | `docker buildx`     | Erstellt das Frontend-Container-Image und pusht es bei `main` in die GitLab Registry.       |
+| `build` | `trivy-image`             | `trivy`             | CVE-Scan des frisch gebauten Images (nur auf `main`, nach dem Push).                        |
+| `build` | `terraform-plan`          | `terraform`         | Erzeugt einen `tfplan` als Artifact für reproduzierbares Apply.                             |
+| `test`  | `python-test`             | `pytest` + `coverage` | Unit-/Integrationstests inklusive Coverage-Report (Cobertura).                            |
+| `deploy`| `terraform-apply`         | `terraform`         | Wendet exakt den vorher erzeugten `tfplan` an. **Nur auf `main`, manueller Trigger.**       |
 
-- **Protected Branch**: kein direkter Push, nur Merge via MR.
-- **Pipeline must succeed**: GitLab verhindert den Merge bei rotem Build.
-- **All threads resolved**: offene Review-Kommentare blockieren den Merge.
+### Authentifizierung gegenüber Azure (OIDC)
 
-Damit ist sichergestellt, dass `main` jederzeit deploybar bleibt und die in Kapitel 4.1 beschriebenen Deployments (Plattform-Stack und Themen-Container) auf einem getesteten und qualitätsgesicherten Stand basieren.
+Sämtliche Terraform-Jobs authentifizieren sich **ohne statische Service-Principal-Secrets** gegen Azure. Stattdessen wird je Job-Lauf ein kurzlebiges GitLab-OIDC-Token (`id_tokens`) erzeugt und im Tausch gegen ein Azure-Access-Token an die im Bootstrap angelegte Managed Identity ausgestellt. Dafür sind zwei Federated Credentials hinterlegt – einer für `ref:main` (Apply auf der Plattform) und einer für `ref:*` (Plan in MR-Pipelines). In GitLab existieren lediglich drei nicht-geheime, protected Variablen: `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`. Der Terraform-Azure-Provider liest diese automatisch und nutzt zusammen mit `ARM_USE_OIDC=true` den föderierten Token-Tausch.
 
-# 4.3 Big Picture
+### Plan-Artifact-Workflow
+
+Der `terraform-plan`-Job erzeugt explizit eine `tfplan`-Datei (`terraform plan -out=tfplan`), die als Pipeline-Artifact an den späteren `terraform-apply`-Job weitergereicht wird. `apply` wendet damit **exakt den geprüften Plan** an – ein Drift zwischen dem im MR gezeigten Plan und dem tatsächlich deployten Zustand ist technisch ausgeschlossen.
+
+### Deploy-Gate
+
+Der `terraform-apply`-Job läuft ausschliesslich auf `main` und ist als `when: manual` konfiguriert. Zusätzlich ist das GitLab-Environment `production` als **Protected Environment** geschützt: nur Maintainer dürfen deployen, optional mit Required-Approvals-Regel. Damit ist sowohl ein versehentlicher Direkt-Deploy als auch ein Deploy von einem Feature-Branch ausgeschlossen.
+
+### Pfad-basierte Job-Auslösung
+
+Über drei wiederverwendete Rule-Blöcke (`.rules-python`, `.rules-terraform`, `.rules-docker`) reagieren die Jobs nur auf relevante Pfadänderungen. Eine reine Dokumentationsänderung in der README löst zum Beispiel weder `python-lint`, `terraform-plan` noch den Docker-Build aus. Das spart Compute-Minuten und verkürzt die Feedback-Schleife im MR.
+
+### Zusätzliche Schutzmechanismen auf `main`
+
+- **Protected Branch** – kein direkter Push, nur Merge via MR.
+- **Pipeline must succeed** – GitLab verhindert den Merge bei rotem Build.
+- **All threads resolved** – offene Review-Kommentare blockieren den Merge.
+- **Protected Environment `production`** – nur Maintainer dürfen den Apply-Job triggern.
+
+Damit ist sichergestellt, dass `main` jederzeit deploybar bleibt und die in Kapitel 4.1 beschriebenen Deployments (Plattform-Stack und Themen-Container) auf einem getesteten, statisch analysierten und security-gescannten Stand basieren.
+
+## 4.2.4 Lokale Entwicklungs-Tools
+
+Damit Fehler nicht erst in der CI-Pipeline auffallen, wird im Repository eine schlanke lokale Tool-Kette eingesetzt. Sie spiegelt die wichtigsten Pipeline-Checks und ist bewusst optional, aber dokumentiert:
+
+| Tool                 | Datei                          | Zweck                                                                                  |
+|----------------------|--------------------------------|----------------------------------------------------------------------------------------|
+| **`pre-commit`**     | `.pre-commit-config.yaml`      | Orchestriert `ruff`, `hadolint`, `gitleaks`, `terraform fmt/validate` und `tflint` lokal vor jedem Commit. Installation: `pre-commit install`. |
+| **`tflint`**         | `.tflint.hcl`                  | Gleiche Konfiguration wie in der Pipeline, kann lokal mit `tflint --init && tflint` ausgeführt werden. |
+| **`dive`**           | –                              | Inspiziert die Layer des Frontend-Images (`dive escape-frontend`), um Bloat und falsch sortierte `COPY`-Befehle zu finden. |
+| **`gitlab-ci-local`**| –                              | Führt die `.gitlab-ci.yml` lokal in Docker aus (`gitlab-ci-local`), so kann jeder Job ohne Push getestet werden. |
+| **Docker Compose**   | optional, siehe Kapitel 4.x    | Lokales Hochfahren des Frontend-Containers, später Multi-Service-Setups (Frontend + Backend + DB). Hat keinen Einfluss auf das Cloud-Deployment. |
+
+Damit gilt das Prinzip "shift-left": die Pipeline ist das Safety-Net, nicht die primäre Feedback-Quelle.
+
+## 4.2.5 Mögliche Erweiterungen
+
+Bewusst nicht umgesetzt, aber als nächste Ausbaustufen vorgemerkt:
+
+- **`cosign` keyless image signing** mit GitLab-OIDC und Sigstore Fulcio – erlaubt eine SLSA-konforme Lieferketten-Signatur. Voraussetzung: ein verifizierender Gegen-Stack in Azure Container Apps (Admission/Policy).
+- **`infracost`** als MR-Kommentar – Kostenabschätzung pro Plan, sinnvoll sobald mehrere Stacks existieren.
+- **`driftctl`** als geplanter Job auf `main` – erkennt Out-of-Band-Änderungen, die der Terraform-State nicht kennt.
+- **SBOM-Export** via `syft` im Build-Stage – wird mit der EU Cyber Resilience Act perspektivisch ohnehin verpflichtend.
+
+# 4.3 Eingesetzte GitLab-Plattform-Features
+
+Über Pipeline und Merge-Request hinaus nutzt das Projekt gezielt weitere GitLab-Features – jedoch nur dort, wo sie für die Semesterarbeit echten Mehrwert liefern. Genauso bewusst wurde entschieden, welche Features **nicht** eingesetzt werden, um den Scope realistisch zu halten.
+
+## 4.3.1 Aktiv eingesetzt
+
+| Feature | Wofür | Wo konfiguriert |
+| --- | --- | --- |
+| **Container Registry** | Speichert das Frontend-Image (`$CI_REGISTRY_IMAGE/frontend:<sha>`), das anschliessend von Trivy gescannt und von Azure Container Apps gezogen wird. | `frontend-docker-build` Job, push nur auf `main`. |
+| **Container Registry – Cleanup Policy** | Verhindert, dass die Registry mit jedem Commit unbegrenzt wächst. Behält die letzten 10 Tags sowie alles, was mit `v*` (Release-Tags) beginnt; alles ältere als 30 Tage wird entfernt. | GitLab-UI: *Settings → Packages and Registries → Container Registry → Cleanup policy* (UI-only, kein YAML-Pendant). |
+| **Releases** | Beim Push eines SemVer-Tags (`v0.1.0-mvp`, `v0.2.0-mlp`, `v1.0.0-mmp`) erzeugt der `release`-Job automatisch eine GitLab-Release-Seite mit Pipeline-Link und Image-Referenz. Die Release-Seite ist später der "single source of truth" für die Abnahme. | `.gitlab-ci.yml` → Job `release` mit `release-cli`-Image und `release:`-Keyword. |
+ |
+| **Protected Environments** | Die `production`-Umgebung (Terraform-Apply) ist als *Protected Environment* markiert. Nur Maintainer dürfen das manuelle Gate auslösen – schützt vor versehentlichem Apply durch fremde Pipeline-Trigger. | GitLab-UI: *Settings → CI/CD → Protected environments*. |
+| **CI/CD-Variablen (Protected, masked wo möglich)** | `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID` als *Protected* gesetzt – nur Pipelines auf geschützten Branches/Tags sehen sie. OIDC bedeutet, dass kein Geheimnis im Repo landet. | GitLab-UI: *Settings → CI/CD → Variables*. |
+
+## 4.3.2 Bewusst **nicht** eingesetzt
+
+| Feature | Begründung |
+| --- | --- |
+| **Feature Flags** | Setzt einen laufenden Unleash-kompatiblen Server voraus und bringt nur Mehrwert, wenn produktiv Nutzer auf einem stabilen `main` arbeiten. Für eine MVP/MLP-Schulungsumgebung Overkill; bei späterer Mehrnutzer-Iteration sinnvoll. |
+| **Model Registry** | Kein ML-Workload im Scope – das Projekt liefert eine Web-App, kein Modelltraining. |
+| **Terraform Module Registry** | Sinnvoll erst, wenn mehrere Projekte ein gemeinsames Modul konsumieren. Im aktuellen Mono-Repo wäre das eine künstliche Verkomplizierung; lokale Module unter `infra/modules/` reichen. |
+| **Package Registry (PyPI/npm)** | Es gibt aktuell keine eigene Python-Library, die wiederverwendet wird – die Anwendung ist ein Endprodukt, kein Paket. |
+| **GitLab-managed Terraform State** | Backend ist bereits Azure Blob Storage (`sttfstatescape`). Ein Zurückwechseln auf GitLab-State würde das Bootstrap unnötig an den GitLab-Provider koppeln. |
+
+## 4.3.3 Erkenntnisse
+
+- **Pages + MkDocs als Doku-Pipeline** ist mit ca. 25 YAML-Zeilen und einer `mkdocs.yml` sehr günstig zu haben – und erzwingt nebenbei, dass die `README.md` Lint-rein bleibt (`--strict` lässt MkDocs bei jedem fehlerhaften Link fehlschlagen).
+- **Releases sind kostenlos**, sobald man bereits SemVer-Tags pflegt. Sie ersetzen das manuelle Pflegen einer "Was-wurde-wann-deployed"-Tabelle und werden später für die Abnahme der Semesterarbeit verlinkt.
+- **Cleanup-Policy zuerst, dann pushen.** Ohne Policy wachsen die Registry-Kosten auch bei privaten Projekten – die Policy ist UI-only und sollte vor dem ersten erfolgreichen Build-Push aktiviert werden.
+- **Disziplin schlägt Feature-Vielfalt.** Jedes nicht-genutzte Feature ist eines weniger, das im Projekt-Setup, in der Doku und bei der Verteidigung erklärt werden muss.
+
+---
+
+# 4.4 Big Picture
+
+![Architecture](data/Big_Picture.png)
+*Azure Architektur übersicht*
 
 ---
 
