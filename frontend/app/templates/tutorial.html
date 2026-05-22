@@ -1,6 +1,498 @@
 {% extends "base.html" %}
+
+{% block title %}Tutorial Room – {{ title }}{% endblock %}
+
 {% block content %}
-  <h1>Tutorial Room</h1>
-  <p>The Tutorial Room theme container is not deployed yet (Phase 2).</p>
-  <p><a href="/">&larr; back</a></p>
+<style>
+  /* ── Page header ──────────────────────────────────────────── */
+  .room-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .room-back {
+    color: #94A3B8;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 150ms;
+  }
+  .room-back:hover { color: #F1F5F9; text-decoration: none; }
+  .room-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+  }
+  .room-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(34,211,238,0.12);
+    color: #22D3EE;
+    border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+  }
+
+  /* ── Message box ──────────────────────────────────────────── */
+  #message-box {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid #10B981;
+    color: #A7F3D0;
+    padding: .75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1.25rem;
+    font-size: .9rem;
+    min-height: 3rem;
+    line-height: 1.55;
+  }
+  #message-box.error {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: #EF4444;
+    color: #FCA5A5;
+  }
+  #message-box.win {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #F59E0B;
+    color: #FDE68A;
+    font-weight: 600;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  @media (max-width: 600px) { .game-layout { grid-template-columns: 1fr; } }
+
+  /* ── Panels ───────────────────────────────────────────────── */
+  .panel {
+    background: #1E293B;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .panel h2 {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748B;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Object cards ─────────────────────────────────────────── */
+  #objects-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .obj-card {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: .6rem .75rem;
+    cursor: pointer;
+    background: rgba(255,255,255,0.04);
+    transition: border-color 150ms, background 150ms, box-shadow 150ms;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    min-width: 80px;
+    font-size: .8125rem;
+    text-align: center;
+    color: #CBD5E1;
+  }
+  .obj-card:hover {
+    border-color: rgba(0, 120, 212, 0.5);
+    background: rgba(0, 120, 212, 0.08);
+    color: #F1F5F9;
+  }
+  .obj-card.active {
+    border-color: #0078D4;
+    background: rgba(0, 120, 212, 0.12);
+    box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.3);
+    color: #F1F5F9;
+  }
+  .obj-card .icon { font-size: 1.5rem; color: #22D3EE; }
+
+  /* ── Interaction area ─────────────────────────────────────── */
+  #interaction-area { display: none; }
+  #interaction-area.visible { display: block; }
+
+  #selected-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #22D3EE;
+    margin-bottom: .375rem;
+  }
+  #selected-desc {
+    color: #64748B;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .action-row {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+  }
+  .action-row input, .action-row select {
+    flex: 1;
+    padding: .45rem .75rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    font-size: .875rem;
+    font-family: inherit;
+    color: #F1F5F9;
+    outline: none;
+    transition: border-color 150ms;
+  }
+  .action-row input::placeholder { color: #475569; }
+  .action-row input:focus,
+  .action-row select:focus { border-color: #0078D4; }
+  .action-row select option { background: #1E293B; color: #F1F5F9; }
+
+  /* ── Buttons ──────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem .9rem;
+    border: none; border-radius: 8px;
+    cursor: pointer; font-size: .875rem;
+    font-family: inherit; font-weight: 500;
+    transition: background 150ms, opacity 150ms;
+    text-decoration: none;
+  }
+  .btn-primary   { background: #0078D4; color: #fff; }
+  .btn-primary:hover { background: #106EBE; text-decoration: none; }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: #CBD5E1; border: 1px solid rgba(255,255,255,0.12); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); text-decoration: none; }
+  .btn-danger    { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.25); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); text-decoration: none; }
+  .btn:disabled  { opacity: .35; cursor: default; }
+
+  /* ── Start screen ─────────────────────────────────────────── */
+  #start-screen {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+  #start-screen .start-icon {
+    font-size: 3rem;
+    color: #22D3EE;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  #start-screen h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+  #start-screen p {
+    color: #94A3B8;
+    font-size: .9375rem;
+    margin-bottom: 2rem;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── Win banner ───────────────────────────────────────────── */
+  #win-banner {
+    display: none;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  #win-banner.visible { display: block; }
+  #win-banner .win-icon { font-size: 2rem; margin-bottom: .5rem; }
+  #win-banner strong { font-size: 1.125rem; color: #FDE68A; }
+
+  /* ── Top bar (message + reset row) ───────────────────────── */
+  .game-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .625rem;
+  }
+  .game-topbar .section-label {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: #64748B;
+  }
+
+  /* ── Misc ─────────────────────────────────────────────────── */
+  .empty-hint {
+    color: #475569;
+    font-style: italic;
+    font-size: .875rem;
+  }
+</style>
+
+<div class="room-header">
+  <a href="/" class="room-back"><i class="bi bi-arrow-left"></i> Back</a>
+  <h1 class="room-title">Tutorial Escape Room</h1>
+  <span class="room-badge">Beginner</span>
+</div>
+
+<!-- ── Start screen ─────────────────────────────────────────── -->
+<div id="start-screen">
+  <i class="bi bi-door-closed start-icon"></i>
+  <h2>You find yourself in a dark, dusty office.</h2>
+  <p>Examine objects, discover clues, and find your way out. Can you escape?</p>
+  <button class="btn btn-primary" id="start-btn" onclick="startGame()">
+    <i class="bi bi-play-fill"></i> Start Game
+  </button>
+</div>
+
+<!-- ── Win banner ────────────────────────────────────────────── -->
+<div id="win-banner">
+  <div class="win-icon">🎉</div>
+  <strong>You escaped!</strong>
+  <p style="color:#94A3B8;font-size:.875rem;margin-top:.375rem">Tutorial room complete. Well done!</p>
+  <button class="btn btn-secondary" style="margin-top:.875rem" onclick="resetGame()">
+    <i class="bi bi-arrow-counterclockwise"></i> Play Again
+  </button>
+</div>
+
+<!-- ── Game UI ────────────────────────────────────────────────── -->
+<div id="game-ui" style="display:none">
+
+  <div id="message-box">Click an object to examine or interact with it.</div>
+
+  <div class="game-topbar">
+    <span class="section-label">Objects in the room</span>
+    <button class="btn btn-danger" id="reset-btn" onclick="resetGame()" style="font-size:.8rem;padding:.3rem .7rem">
+      <i class="bi bi-arrow-counterclockwise"></i> Reset
+    </button>
+  </div>
+
+  <div class="game-layout">
+    <!-- Left: Game area -->
+    <div class="panel">
+      <h2>Game Area</h2>
+      <div id="objects-grid">
+        <span class="empty-hint">No objects visible yet…</span>
+      </div>
+    </div>
+
+    <!-- Right: Interaction area -->
+    <div class="panel">
+      <h2>Interaction Area</h2>
+      <div id="interaction-placeholder" class="empty-hint">← Select an object to interact with it.</div>
+      <div id="interaction-area">
+        <div id="selected-name"></div>
+        <div id="selected-desc"></div>
+
+        <div class="action-row">
+          <button class="btn btn-secondary" onclick="examineSelected()">
+            <i class="bi bi-search"></i> Examine
+          </button>
+          <button class="btn btn-primary" onclick="interactSelected()">
+            <i class="bi bi-hand-index"></i> Interact
+          </button>
+        </div>
+
+        <div class="action-row" id="param-row" style="display:none">
+          <input type="text" id="param-input" placeholder="Enter code / text…">
+        </div>
+
+        <div class="action-row" id="obj-row" style="display:none">
+          <select id="obj-select">
+            <option value="">— use with object —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #game-ui -->
+
+<script>
+const BACKEND = "{{ backend_url }}";
+const ROOM    = "tutorial-room";
+
+let gameToken   = '';
+let roomObjects = [];
+let selectedId  = null;
+
+function generateUUID() {
+  return crypto.randomUUID().replace(/-/g, '').substring(0, 32);
+}
+
+// ── API helpers ────────────────────────────────────────────────
+async function apiGet(path) {
+  const r = await fetch(`${BACKEND}/${ROOM}${path}`, {
+    headers: { 'Authorization': 'Bearer ' + gameToken }
+  });
+  return r.json();
+}
+
+async function apiPost(path, body, isForm = false) {
+  const opts = { method: 'POST', headers: { 'Authorization': 'Bearer ' + gameToken } };
+  if (isForm) {
+    opts.body = body;
+  } else {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const r = await fetch(`${BACKEND}/${ROOM}${path}`, opts);
+  return r.json();
+}
+
+// ── Start game ─────────────────────────────────────────────────
+async function startGame() {
+  document.getElementById('start-btn').disabled = true;
+  let data;
+  try {
+    data = await apiPost('/start', {
+      game_uuid: generateUUID(),
+      player: { name: 'Player', email: 'player@escape.lab' }
+    });
+  } catch (e) {
+    showMessage('Cannot reach the game backend. Start it with: python wsgi.py (port 5001)', 'error');
+    document.getElementById('start-screen').style.display = 'block';
+    document.getElementById('start-btn').disabled = false;
+    return;
+  }
+  if (!data.token) {
+    showMessage('Could not connect to the game backend. Is it running?', 'error');
+    document.getElementById('start-btn').disabled = false;
+    return;
+  }
+  gameToken = data.token;
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-ui').style.display = 'block';
+  const state = await apiGet('/examine');
+  await refreshState(state);
+}
+
+// ── Reset game ─────────────────────────────────────────────────
+async function resetGame() {
+  document.getElementById('win-banner').classList.remove('visible');
+  document.getElementById('message-box').classList.remove('win');
+  if (!gameToken) { location.reload(); return; }
+  const data = await apiPost('/reset', null, false);
+  selectedId = null;
+  hideInteraction();
+  await refreshState(data);
+}
+
+// ── Examine selected object ────────────────────────────────────
+async function examineSelected() {
+  if (!selectedId) return;
+  const data = await apiGet(`/objects/${selectedId}/examine`);
+  await refreshState(data);
+}
+
+// ── Interact with selected object ─────────────────────────────
+async function interactSelected() {
+  if (!selectedId) return;
+  const fd = new FormData();
+  const param = document.getElementById('param-input').value.trim();
+  const objSel = document.getElementById('obj-select').value;
+  if (param)  fd.append('parameter', param);
+  if (objSel) fd.append('object_id', objSel);
+  const data = await apiPost(`/objects/${selectedId}/interact`, fd, true);
+  document.getElementById('param-input').value = '';
+  await refreshState(data);
+}
+
+// ── Update UI from API response ────────────────────────────────
+async function refreshState(data) {
+  roomObjects = data.objects || roomObjects;
+  renderObjects();
+  showMessage(data.message || '');
+
+  if (!data.exits_locked) {
+    showWin(data.message);
+  }
+
+  if (selectedId) selectObject(selectedId, false);
+}
+
+// ── Render object cards ────────────────────────────────────────
+function renderObjects() {
+  const grid = document.getElementById('objects-grid');
+  grid.innerHTML = '';
+
+  if (!roomObjects.length) {
+    grid.innerHTML = '<span class="empty-hint">No objects visible yet…</span>';
+    return;
+  }
+
+  roomObjects.forEach(obj => {
+    const card = document.createElement('div');
+    card.className = 'obj-card' + (obj.id === selectedId ? ' active' : '');
+    card.id = `card-${obj.id}`;
+    card.onclick = () => selectObject(obj.id, true);
+    card.innerHTML = `
+      <span class="icon"><i class="bi bi-${obj.icon}"></i></span>
+      <span>${obj.name}</span>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Select an object ───────────────────────────────────────────
+function selectObject(id, scroll) {
+  selectedId = id;
+
+  document.querySelectorAll('.obj-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById(`card-${id}`);
+  if (card) { card.classList.add('active'); if (scroll) card.scrollIntoView({block:'nearest'}); }
+
+  const obj = roomObjects.find(o => o.id === id);
+  if (!obj) return;
+
+  document.getElementById('selected-name').textContent = obj.name;
+  document.getElementById('selected-desc').textContent = obj.description || '';
+
+  const isColumn = obj.name === 'Column' || obj.name === 'Stone Column';
+  document.getElementById('param-row').style.display = isColumn ? 'flex' : 'none';
+  if (isColumn) document.getElementById('param-input').placeholder = 'Enter 4-digit code…';
+
+  const sel = document.getElementById('obj-select');
+  sel.innerHTML = '<option value="">— use with object —</option>';
+  roomObjects.forEach(o => {
+    if (o.id !== id) {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.name;
+      sel.appendChild(opt);
+    }
+  });
+  document.getElementById('obj-row').style.display = roomObjects.length > 1 ? 'flex' : 'none';
+
+  document.getElementById('interaction-placeholder').style.display = 'none';
+  document.getElementById('interaction-area').classList.add('visible');
+}
+
+function hideInteraction() {
+  document.getElementById('interaction-area').classList.remove('visible');
+  document.getElementById('interaction-placeholder').style.display = 'block';
+}
+
+// ── Message display ────────────────────────────────────────────
+function showMessage(msg, type) {
+  const box = document.getElementById('message-box');
+  box.textContent = msg;
+  box.className = type === 'error' ? 'error' : (type === 'win' ? 'win' : '');
+}
+
+function showWin(msg) {
+  document.getElementById('win-banner').classList.add('visible');
+  document.getElementById('message-box').classList.add('win');
+  showMessage(msg || 'You escaped!');
+}
+</script>
 {% endblock %}
