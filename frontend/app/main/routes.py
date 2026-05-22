@@ -32,12 +32,10 @@ def index():
 
 
 @bp.get("/tutorial")
-@bp.doc(
-    summary="Tutorial entry stub (Phase 2 will redirect to theme container)",
-    responses=[200],
-)
+@bp.doc(summary="Tutorial escape room", responses=[200])
 def tutorial():
     return render_template(
         "tutorial.html",
         title=current_app.config["SITE_TITLE"],
+        backend_url=current_app.config["BACKEND_URL"],
     )
