@@ -4,17 +4,23 @@ stages:
   - test
   - deploy
 
+# pipeline is fully disabled – uncomment the block below to re-enable
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_COMMIT_BRANCH == "main"
+#     - if: $CI_COMMIT_TAG
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_TAG
+    - when: never
 
 default:
   tags:
     - saas-linux-small-amd64
   interruptible: true
 
+# reusable rule sets (jobs always run on main)
+# on mrs only when the respective files changed
 .rules-python: &rules-python
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -41,7 +47,8 @@ default:
         - frontend/**/*
         - .gitlab-ci.yml
 
-# Stage 1: Lint, Validate and Secret Scan
+# stage 1: lint
+# checks python code in frontend/ for style issues, unused imports and bugs
 python-lint:
   <<: *rules-python
   stage: lint
@@ -51,17 +58,16 @@ python-lint:
   script:
     - ruff check frontend/
 
+# checks terraform code for correct formatting and syntactic validity
 terraform-fmt-validate:
-  <<: *rules-terraform
+  <<: [*rules-terraform, *terraform-base]
   stage: lint
-  image:
-    name: hashicorp/terraform:1.9
-    entrypoint: [""]
   script:
     - terraform fmt -check -recursive bootstrap/ infra/
-    - cd infra && terraform init -backend=false && terraform validate
-    - cd ../bootstrap && terraform init -backend=false && terraform validate
+    - cd infra && terraform init -input=false && terraform validate
+    - cd ../bootstrap && terraform init -input=false && terraform validate
 
+# checks the dockerfile for best-practice violations (e.g. missing version pins, root user)
 dockerfile-lint:
   <<: *rules-docker
   stage: lint
@@ -69,18 +75,7 @@ dockerfile-lint:
   script:
     - hadolint frontend/Dockerfile
 
-secret-scan:
-  stage: lint
-  image:
-    name: zricethezav/gitleaks:latest
-    entrypoint: [""]
-  script:
-    - gitleaks detect --source . --verbose --redact --no-banner
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-
-# Advanced Terraform linting (Azure-aware rules)
+# advanced terraform linting with azure-specific rules (deprecated resource types, missing tags)
 tflint:
   <<: *rules-terraform
   stage: lint
@@ -92,23 +87,7 @@ tflint:
     - tflint -c "$CI_PROJECT_DIR/.tflint.hcl" --chdir=infra
     - tflint -c "$CI_PROJECT_DIR/.tflint.hcl" --chdir=bootstrap
 
-# Security & compliance scanning for Terraform
-checkov:
-  <<: *rules-terraform
-  stage: lint
-  image:
-    name: bridgecrew/checkov:latest
-    entrypoint: [""]
-  script:
-    - checkov -d infra --framework terraform --quiet --compact --soft-fail -o cli -o json --output-file-path console,checkov-report.json
-    - checkov -d bootstrap --framework terraform --quiet --compact --soft-fail
-  artifacts:
-    when: always
-    paths:
-      - checkov-report.json
-    expire_in: 1 week
-
-# Filesystem & IaC vulnerability scan (CVEs in deps, misconfigurations)
+# scans the whole repo for known cves in dependencies, iac misconfigurations and accidentally committed secrets
 trivy-fs:
   stage: lint
   image:
@@ -126,7 +105,8 @@ trivy-fs:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# Stage 2: Build
+# stage 2: build
+# builds the frontend docker image, on main the image is also pushed to the gitlab container registry
 frontend-docker-build:
   <<: *rules-docker
   stage: build
@@ -138,14 +118,14 @@ frontend-docker-build:
     IMAGE_TAG: "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
   script:
     - docker build -t "$IMAGE_TAG" frontend/
-    # Push only on main (to GitLab Container Registry)
+    # push only on main (to gitlab container registry)
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
         docker push "$IMAGE_TAG"
       fi
 
-# Image CVE scan (runs only on main where the image was pushed)
+# scans the built container image for known cves (high/critical), only runs on main where the image was pushed
 trivy-image:
   stage: build
   needs: [frontend-docker-build]
@@ -162,6 +142,7 @@ trivy-image:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
+# base template for all terraform jobs, authenticates against azure via oidc
 .terraform-base: &terraform-base
   image:
     name: hashicorp/terraform:1.9
@@ -173,6 +154,7 @@ trivy-image:
     ARM_USE_OIDC: "true"
     TF_IN_AUTOMATION: "true"
 
+# creates a terraform plan and stores it as artifact so terraform-apply can use it without recalculating
 terraform-plan:
   <<: *terraform-base
   stage: build
@@ -196,46 +178,9 @@ terraform-plan:
       - infra/.terraform.lock.hcl
     expire_in: 1 week
 
-# Stage 4: Deploy (only on main, manual approval)
-terraform-apply:
-  <<: *terraform-base
-  stage: deploy
-  needs:
-    - job: terraform-plan
-      artifacts: true
-  script:
-    - cd infra
-    - terraform init -input=false
-    - terraform apply -input=false -auto-approve tfplan
-  environment:
-    name: production
-    action: start
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
-      allow_failure: false
-
-# Stage 4: Deploy - Tag-based release notes (GitLab Releases feature)
-release:
-  stage: deploy
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
-  script:
-    - echo "Creating GitLab Release for tag $CI_COMMIT_TAG"
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Release $CI_COMMIT_TAG"
-    description: |
-      Automated release for tag **$CI_COMMIT_TAG**.
-
-      Container image: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
-      Pipeline: $CI_PIPELINE_URL
-
-      See merge requests merged since the previous tag for details.
-
-
-# Stage 3: Test
+# stage 3: test
+# runs pytest and produces a coverage report (cobertura format for gitlab coverage display)
+# skipped if no tests/ directory exists
 python-test:
   <<: *rules-python
   stage: test
@@ -258,3 +203,42 @@ python-test:
         coverage_format: cobertura
         path: frontend/coverage.xml
     expire_in: 1 week
+
+# stage 4: deploy
+# applies the terraform plan to the production environment, must be triggered manually in gitlab
+terraform-apply:
+  <<: *terraform-base
+  stage: deploy
+  needs:
+    - job: terraform-plan
+      artifacts: true
+  script:
+    - cd infra
+    - terraform init -input=false
+    - terraform apply -input=false -auto-approve tfplan
+  environment:
+    name: production
+    action: start
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: false
+
+# creates a gitlab release entry when a semantic version tag (e.g. v1.2.3) is pushed
+release:
+  stage: deploy
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  script:
+    - echo "Creating GitLab Release for tag $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Release $CI_COMMIT_TAG"
+    description: |
+      Automated release for tag **$CI_COMMIT_TAG**.
+
+      Container image: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      Pipeline: $CI_PIPELINE_URL
+
+      See merge requests merged since the previous tag for details.

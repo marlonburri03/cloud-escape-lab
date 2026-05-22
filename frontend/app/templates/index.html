@@ -1,6 +1,134 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Hello, {{ user }}</h1>
-  <p>Welcome to the {{ title }} (POC).</p>
-  <p><a class="btn" href="/tutorial">Start Tutorial Room</a></p>
+<style>
+  /* ── Welcome card ─────────────────────────────────────────── */
+  .welcome-card {
+    background: #1E293B;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
+    margin-top: 1rem;
+  }
+
+  .welcome-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #22D3EE;
+    margin-bottom: 0.75rem;
+  }
+
+  .welcome-heading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+  }
+
+  .welcome-sub {
+    color: #94A3B8;
+    font-size: 0.9375rem;
+    margin-bottom: 2rem;
+    max-width: 480px;
+  }
+
+  /* ── Feature list ─────────────────────────────────────────── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    background: rgba(0, 120, 212, 0.07);
+    border: 1px solid rgba(0, 120, 212, 0.18);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+  }
+  .feature-item .fi-icon {
+    color: #22D3EE;
+    font-size: 1.125rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+  .feature-item .fi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #F1F5F9;
+    line-height: 1.4;
+  }
+  .feature-item .fi-sub {
+    font-size: 0.78rem;
+    color: #94A3B8;
+    margin-top: 0.1rem;
+  }
+
+  /* ── Footer note ──────────────────────────────────────────── */
+  .welcome-footer {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .welcome-footer .user-hint {
+    font-size: 0.8125rem;
+    color: #64748B;
+  }
+  .welcome-footer .user-hint strong { color: #94A3B8; }
+</style>
+
+<div class="welcome-card">
+  <p class="welcome-eyebrow"><i class="bi bi-terminal-fill"></i> &nbsp;Interactive Cloud Learning</p>
+
+  <h1 class="welcome-heading">
+    Welcome back, {{ user }}.<br>
+    Ready to escape?
+  </h1>
+
+  <p class="welcome-sub">
+    Solve hands-on cloud challenges, collect XP, and work your way through
+    Azure, DevOps, and Security escape rooms.
+  </p>
+
+  <div class="features">
+    <div class="feature-item">
+      <i class="bi bi-cloud-check fi-icon"></i>
+      <div>
+        <div class="fi-label">Azure-based Labs</div>
+        <div class="fi-sub">Real cloud environments</div>
+      </div>
+    </div>
+    <div class="feature-item">
+      <i class="bi bi-infinity fi-icon"></i>
+      <div>
+        <div class="fi-label">DevOps Challenges</div>
+        <div class="fi-sub">CI/CD, Terraform, K8s</div>
+      </div>
+    </div>
+    <div class="feature-item">
+      <i class="bi bi-shield-lock fi-icon"></i>
+      <div>
+        <div class="fi-label">Security Missions</div>
+        <div class="fi-sub">IAM, networking, zero-trust</div>
+      </div>
+    </div>
+  </div>
+
+  <a class="btn" href="/tutorial">
+    <i class="bi bi-play-fill"></i> Start Tutorial Room
+  </a>
+
+  <div class="welcome-footer">
+    <span class="user-hint">Logged in as <strong>{{ user }}</strong></span>
+    <span class="user-hint">{{ title }}</span>
+  </div>
+</div>
 {% endblock %}
