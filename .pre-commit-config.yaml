@@ -7,6 +7,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-merge-conflict
+      - id: detect-private-key
 
   # lints and formats python code in frontend/ (replaces flake8 + black + isort)
   - repo: https://github.com/astral-sh/ruff-pre-commit
