@@ -404,19 +404,31 @@ async function interactSelected() {
   if (objSel) fd.append('object_id', objSel);
   const data = await apiPost(`/objects/${selectedId}/interact`, fd, true);
   document.getElementById('param-input').value = '';
-  await refreshState(data);
+  await refreshState(data, true);
 }
 
 // ── Update UI from API response ────────────────────────────────
-async function refreshState(data) {
+// wasInteraction: true when called after an interact (not examine/start/reset)
+// If objects didn't change during an interaction → show as error (red)
+async function refreshState(data, wasInteraction = false) {
+  const prevIds = new Set(roomObjects.map(o => o.id));
   roomObjects = data.objects || roomObjects;
+  const newIds = new Set(roomObjects.map(o => o.id));
   renderObjects();
-  showMessage(data.message || '');
 
   if (!data.exits_locked) {
     showWin(data.message);
+    return;
   }
 
+  let msgType = '';
+  if (wasInteraction) {
+    const changed = [...prevIds].some(id => !newIds.has(id)) ||
+                    [...newIds].some(id => !prevIds.has(id));
+    if (!changed) msgType = 'error';
+  }
+
+  showMessage(data.message || '', msgType);
   if (selectedId) selectObject(selectedId, false);
 }
 
