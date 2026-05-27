@@ -58,6 +58,18 @@ python-lint:
   script:
     - ruff check frontend/
 
+# base template for all terraform jobs, authenticates against azure via oidc
+.terraform-base: &terraform-base
+  image:
+    name: hashicorp/terraform:1.9
+    entrypoint: [""]
+  id_tokens:
+    ARM_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    ARM_USE_OIDC: "true"
+    TF_IN_AUTOMATION: "true"
+
 # checks terraform code for correct formatting and syntactic validity
 terraform-fmt-validate:
   <<: [*rules-terraform, *terraform-base]
@@ -141,18 +153,6 @@ trivy-image:
     - trivy image --severity HIGH,CRITICAL --exit-code 0 "$IMAGE_TAG"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-
-# base template for all terraform jobs, authenticates against azure via oidc
-.terraform-base: &terraform-base
-  image:
-    name: hashicorp/terraform:1.9
-    entrypoint: [""]
-  id_tokens:
-    ARM_OIDC_TOKEN:
-      aud: https://gitlab.com
-  variables:
-    ARM_USE_OIDC: "true"
-    TF_IN_AUTOMATION: "true"
 
 # creates a terraform plan and stores it as artifact so terraform-apply can use it without recalculating
 terraform-plan:

@@ -13,42 +13,44 @@ from flask import g
 TEXT = {
     "room.description": {
         "en": (
-            "Welcome to the Cloud Escape Lab tutorial! This is a cosy old office. "
-            "It's pretty dark in here. "
-            "A first step could be to bring some light into the scene — "
-            "INTERACT with the Light Switch."
+            "You're trapped in Prof. Dr. Mike Roservice's office at Contoso after his lecture on distributed systems. "
+            "The room is cluttered with architecture diagrams and stacks of printed API docs — and completely dark. "
+            "The exit door is locked with a digital panel. Find the code before he returns! "
+            "A first step: INTERACT with the Light Switch."
         ),
         "de": (
-            "Willkommen im Cloud Escape Lab Tutorial! Dies ist ein gemütliches altes Büro. "
-            "Es ist ziemlich dunkel hier. "
-            "Ein erster Schritt wäre, etwas Licht ins Dunkel zu bringen — "
-            "INTERAGIERE mit dem Lichtschalter."
+            "Du steckst in Prof. Dr. Mike Roservices Büro an der Contoso fest — nach seiner Vorlesung über verteilte Systeme. "
+            "Der Raum ist übersät mit Architekturdiagrammen und Stapeln ausgedruckter API-Dokumentation — und völlig dunkel. "
+            "Die Ausgangstür ist mit einem digitalen Panel gesichert. Finde den Code, bevor er zurückkommt! "
+            "Ein erster Schritt: INTERAGIERE mit dem Lichtschalter."
         ),
     },
     "room.reset": {
-        "en": "The room shifts, and everything returns to its original state. The challenge begins anew.",
-        "de": "Der Raum verändert sich und alles kehrt in seinen Ursprungszustand zurück. Die Herausforderung beginnt von Neuem.",
+        "en": "The office resets itself — as if a rollback was triggered. Prof. Dr. Mike Roservice is still on his way back. Try again!",
+        "de": "Das Büro setzt sich zurück — als wäre ein Rollback ausgelöst worden. Prof. Dr. Mike Roservice ist noch unterwegs. Versuch es nochmal!",
     },
     "examine.desk.key": {
         "en": (
-            "You search below the desk and find a silver key attached with duct tape. "
-            "Maybe you can USE this key with the desk? "
-            "Select the Silver Key from the dropdown and INTERACT with the Wooden Desk."
+            "You dig through a towering pile of printed API docs and find an office key taped to the underside of the desk. "
+            "Typical Roservice — hiding things in layers. "
+            "Select the Office Key from the dropdown and INTERACT with the Professor's Desk."
         ),
         "de": (
-            "Du suchst unter dem Schreibtisch und findest einen Silberschlüssel mit Klebeband befestigt. "
-            "Vielleicht kannst du diesen Schlüssel mit dem Schreibtisch verwenden? "
-            "Wähle den Silberschlüssel im Dropdown und INTERAGIERE mit dem Holzschreibtisch."
+            "Du durchwühlst einen riesigen Stapel ausgedruckter API-Dokumentation und findest einen Büroschlüssel unter dem Schreibtisch. "
+            "Typisch Roservice — alles in Schichten verstecken. "
+            "Wähle den Büroschlüssel im Dropdown und INTERAGIERE mit dem Professorenschreibtisch."
         ),
     },
     "examine.diary": {
         "en": (
-            "The diary falls open on a bookmarked page. A note reads: "
-            "'Today's exit code is 1234.' — Enter that code into the Stone Column."
+            "You flip through pages of microservice diagrams and cryptic margin notes. "
+            "On the last page, scrawled between two service mesh drawings: "
+            "'Emergency exit code (DO NOT SHARE): 1234' — Enter that code into the Exit Terminal."
         ),
         "de": (
-            "Das Tagebuch schlägt sich auf einer markierten Seite auf. Eine Notiz steht dort: "
-            "'Der heutige Ausgangscode ist 1234.' — Gib diesen Code in die Steinsäule ein."
+            "Du blätterst durch Seiten voller Microservice-Diagramme und kryptischer Randnotizen. "
+            "Auf der letzten Seite, zwischen zwei Service-Mesh-Zeichnungen gekritzelt: "
+            "'Notfall-Exitcode (NICHT WEITERGEBEN): 1234' — Gib diesen Code ins Ausgangsterminal ein."
         ),
     },
     "examine.default": {
@@ -57,57 +59,59 @@ TEXT = {
     },
     "interact.light": {
         "en": (
-            "Click! The lights flicker on. You can now see a Wooden Desk and a Stone Column. "
+            "Click! The fluorescent lights flicker to life. "
+            "You can now see the Professor's Desk buried under paperwork, and an Exit Terminal next to the door. "
             "EXAMINE them to find out more."
         ),
         "de": (
-            "Klick! Das Licht geht an. Du siehst jetzt einen Holzschreibtisch und eine Steinsäule. "
+            "Klick! Die Neonlichter flackern an. "
+            "Du siehst jetzt den Professorenschreibtisch, begraben unter Papierstapeln, und ein Ausgangsterminal neben der Tür. "
             "UNTERSUCHE sie, um mehr herauszufinden."
         ),
     },
     "interact.desk.key_used": {
-        "en": "You use the silver key to unlock the desk drawer and find an old diary inside. EXAMINE the diary.",
-        "de": "Du öffnest die Schublade mit dem Silberschlüssel und findest ein altes Tagebuch. UNTERSUCHE das Tagebuch.",
+        "en": "You unlock the drawer with the office key and find Prof. Roservice's research journal inside — it looks important. EXAMINE the Research Journal.",
+        "de": "Du öffnest die Schublade mit dem Büroschlüssel und findest Prof. Roservices Forschungstagebuch — es sieht wichtig aus. UNTERSUCHE das Forschungstagebuch.",
     },
     "interact.desk.wrong": {
-        "en": "That doesn't seem to work with the desk.",
-        "de": "Das scheint nicht mit dem Schreibtisch zu funktionieren.",
+        "en": "That doesn't seem to work with the desk. Maybe try a different approach — Prof. Roservice always said: 'wrong interface, wrong result.'",
+        "de": "Das scheint nicht mit dem Schreibtisch zu funktionieren. Vielleicht ein anderer Ansatz — Prof. Roservice sagte immer: 'Falsches Interface, falsches Ergebnis.'",
     },
     "interact.desk.hint": {
-        "en": "Maybe you need to use another object together with the desk. Try selecting an object from the dropdown.",
-        "de": "Vielleicht musst du ein anderes Objekt zusammen mit dem Schreibtisch verwenden. Wähle ein Objekt aus dem Dropdown.",
+        "en": "The drawer has a keyhole. Maybe another object could help. Try selecting one from the dropdown.",
+        "de": "Die Schublade hat ein Schlüsselloch. Vielleicht hilft ein anderes Objekt. Wähle eines aus dem Dropdown.",
     },
     "interact.column.success": {
-        "en": "Congratulations! You solved the tutorial room! The exit door springs open. Well done!",
-        "de": "Herzlichen Glückwunsch! Du hast den Tutorial-Raum gelöst! Die Ausgangstür springt auf. Gut gemacht!",
+        "en": "Access granted! The exit door swings open. You slip out of Prof. Dr. Mike Roservice's office just in time — you can already hear his footsteps in the corridor. Well done!",
+        "de": "Zugang gewährt! Die Ausgangstür schwingt auf. Du verlässt Prof. Dr. Mike Roservices Büro gerade noch rechtzeitig — seine Schritte sind schon im Flur zu hören. Gut gemacht!",
     },
     "interact.column.wrong": {
-        "en": "You punch in the numbers, but nothing happens. That must be the wrong code.",
-        "de": "Du gibst die Zahlen ein, aber nichts passiert. Das muss der falsche Code sein.",
+        "en": "Access denied. The terminal blinks red. That's not the right code — check the professor's notes again.",
+        "de": "Zugang verweigert. Das Terminal blinkt rot. Das ist nicht der richtige Code — schau nochmal in den Notizen des Professors nach.",
     },
     "interact.column.hint": {
-        "en": "The column has a combination lock. Enter a code in the input field below, then click Interact.",
-        "de": "Die Säule hat ein Kombinationsschloss. Gib einen Code ins Eingabefeld ein und klicke dann auf Interagieren.",
+        "en": "The exit terminal has a numeric keypad. Enter the code in the input field below, then click Interact.",
+        "de": "Das Ausgangsterminal hat ein Nummernfeld. Gib den Code ins Eingabefeld ein und klicke dann auf Interagieren.",
     },
     "interact.default": {
         "en": "Nothing happened.",
         "de": "Nichts ist passiert.",
     },
     "exits.north": {
-        "en": "A bright door leads outside into the sunshine.",
-        "de": "Eine helle Tür führt nach draußen in den Sonnenschein.",
+        "en": "A door leads to the Contoso main corridor.",
+        "de": "Eine Tür führt zum Contoso-Hauptkorridor.",
     },
     "exits.east": {
-        "en": "A heavy door with a 'Exit' sign above it.",
-        "de": "Eine schwere Tür mit einem 'Ausgang'-Schild darüber.",
+        "en": "A heavy door with a digital 'EXIT' panel next to it.",
+        "de": "Eine schwere Tür mit einem digitalen 'EXIT'-Panel daneben.",
     },
     "exits.south": {
-        "en": "A glass door reveals the corridor beyond.",
-        "de": "Eine Glastür zeigt den Korridor dahinter.",
+        "en": "A glass door reveals the lecture hall beyond.",
+        "de": "Eine Glastür zeigt den Hörsaal dahinter.",
     },
     "exits.west": {
-        "en": "A small window lets in a sliver of light.",
-        "de": "Ein kleines Fenster lässt einen Lichtstreifen herein.",
+        "en": "A window overlooks the Contoso campus courtyard.",
+        "de": "Ein Fenster mit Blick auf den Contoso-Campushof.",
     },
 }
 
@@ -129,8 +133,8 @@ room_objects = [
         "name": "Light Switch",
         "display_name_en": "Light Switch",
         "display_name_de": "Lichtschalter",
-        "description_en": "A dusty light switch on the wall.",
-        "description_de": "Ein staubiger Lichtschalter an der Wand.",
+        "description_en": "A dusty light switch on the wall. Prof. Roservice clearly prefers the dark.",
+        "description_de": "Ein staubiger Lichtschalter an der Wand. Prof. Roservice bevorzugt offenbar die Dunkelheit.",
         "icon": "toggle2-off",
         "initial-visibility": True,
         "initial-state": "untouched",
@@ -139,10 +143,10 @@ room_objects = [
     {
         "id": 2,
         "name": "Wooden Desk",
-        "display_name_en": "Wooden Desk",
-        "display_name_de": "Holzschreibtisch",
-        "description_en": "An old wooden desk. One drawer has a keyhole.",
-        "description_de": "Ein alter Holzschreibtisch. Eine Schublade hat ein Schlüsselloch.",
+        "display_name_en": "Professor's Desk",
+        "display_name_de": "Professorenschreibtisch",
+        "description_en": "A desk buried under towering stacks of API documentation and microservice diagrams. One drawer has a keyhole.",
+        "description_de": "Ein Schreibtisch, begraben unter riesigen Stapeln API-Dokumentation und Microservice-Diagrammen. Eine Schublade hat ein Schlüsselloch.",
         "icon": "archive-fill",
         "initial-visibility": False,
         "initial-state": "untouched",
@@ -151,10 +155,10 @@ room_objects = [
     {
         "id": 3,
         "name": "Column",
-        "display_name_en": "Stone Column",
-        "display_name_de": "Steinsäule",
-        "description_en": "A stone column with a four-digit combination lock.",
-        "description_de": "Eine Steinsäule mit einem vierstelligen Kombinationsschloss.",
+        "display_name_en": "Exit Terminal",
+        "display_name_de": "Ausgangsterminal",
+        "description_en": "A digital keypad panel mounted next to the exit door. Requires a four-digit code.",
+        "description_de": "Ein digitales Nummernfeld neben der Ausgangstür. Erfordert einen vierstelligen Code.",
         "icon": "database-lock",
         "initial-visibility": False,
         "initial-state": "untouched",
@@ -163,10 +167,10 @@ room_objects = [
     {
         "id": 4,
         "name": "Silver Key",
-        "display_name_en": "Silver Key",
-        "display_name_de": "Silberschlüssel",
-        "description_en": "A worn silver key. Rests of duct tape still cling to it.",
-        "description_de": "Ein abgenutzter Silberschlüssel. Klebereste haften noch daran.",
+        "display_name_en": "Office Key",
+        "display_name_de": "Büroschlüssel",
+        "description_en": "A small key taped under the desk beneath a stack of printed API docs. Typical Roservice.",
+        "description_de": "Ein kleiner Schlüssel, unter dem Schreibtisch unter einem Stapel ausgedruckter API-Docs befestigt. Typisch Roservice.",
         "icon": "key-fill",
         "initial-visibility": False,
         "initial-state": "untouched",
@@ -175,10 +179,10 @@ room_objects = [
     {
         "id": 5,
         "name": "Diary",
-        "display_name_en": "Diary",
-        "display_name_de": "Tagebuch",
-        "description_en": "An old diary with a bookmark. What secrets does it hold?",
-        "description_de": "Ein altes Tagebuch mit einem Lesezeichen. Welche Geheimnisse verbirgt es?",
+        "display_name_en": "Research Journal",
+        "display_name_de": "Forschungstagebuch",
+        "description_en": "Prof. Roservice's personal research journal, filled with microservice diagrams and cryptic margin notes.",
+        "description_de": "Prof. Roservices persönliches Forschungstagebuch, gefüllt mit Microservice-Diagrammen und kryptischen Randnotizen.",
         "icon": "journal",
         "initial-visibility": False,
         "initial-state": "untouched",
