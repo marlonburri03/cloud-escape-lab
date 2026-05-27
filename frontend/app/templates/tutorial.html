@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Tutorial Room – {{ title }}{% endblock %}
+{% block title %}Prof. Dr. Mike Roservice's Office – {{ title }}{% endblock %}
 
 {% block content %}
 <style>
@@ -228,16 +228,17 @@
   /* ── Win banner ───────────────────────────────────────────── */
   #win-banner {
     display: none;
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    border-radius: 12px;
-    padding: 1.5rem;
+    grid-area: 1/1;
+    background: rgba(15,23,42,0.65);
     text-align: center;
-    margin-bottom: 1.25rem;
+    padding: 2.5rem 2rem;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
   }
-  #win-banner.visible { display: block; }
-  #win-banner .win-icon { font-size: 2rem; margin-bottom: .5rem; }
-  #win-banner strong { font-size: 1.125rem; color: #FDE68A; }
+  #win-banner.visible { display: flex; }
+  #win-banner .win-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+  #win-banner strong { font-size: 1.25rem; color: #FDE68A; }
 
   /* ── Top bar (message + reset row) ───────────────────────── */
   .game-topbar {
@@ -260,30 +261,49 @@
   }
 </style>
 
-<div class="room-header">
+{% set room_img = url_for('static', filename='img/tutorial_room.png') %}
+
+<!-- ── Kompakter Header während des Spiels ───────────────────── -->
+<div id="game-header" class="room-header" style="display:none">
   <a href="/" class="room-back"><i class="bi bi-arrow-left"></i> Back</a>
-  <h1 class="room-title">Tutorial Escape Room</h1>
+  <h1 class="room-title">Prof. Dr. Mike Roservice's Office</h1>
   <span class="room-badge">Beginner</span>
 </div>
 
-<!-- ── Start screen ─────────────────────────────────────────── -->
-<div id="start-screen">
-  <i class="bi bi-door-closed start-icon"></i>
-  <h2>You find yourself in a dark, dusty office.</h2>
-  <p>Examine objects, discover clues, and find your way out. Can you escape?</p>
-  <button class="btn btn-primary" id="start-btn" onclick="startGame()">
-    <i class="bi bi-play-fill"></i> Start Game
-  </button>
-</div>
+<!-- ── Bild (immer sichtbar) + Overlay nur vor Spielstart ─────── -->
+<div style="display:grid; border-radius:12px; margin-bottom:1.5rem; overflow:hidden;">
+  <img src="{{ room_img }}" alt="Prof. Dr. Mike Roservice's Office"
+       style="grid-area:1/1; width:100%; height:auto; display:block;">
+  <div id="room-overlay" style="grid-area:1/1; background:rgba(15,23,42,0.65); padding:1.75rem 2rem 2.5rem;">
 
-<!-- ── Win banner ────────────────────────────────────────────── -->
-<div id="win-banner">
-  <div class="win-icon">🎉</div>
-  <strong>You escaped!</strong>
-  <p style="color:#94A3B8;font-size:.875rem;margin-top:.375rem">Tutorial room complete. Well done!</p>
-  <button class="btn btn-secondary" style="margin-top:.875rem" onclick="resetGame()">
-    <i class="bi bi-arrow-counterclockwise"></i> Play Again
-  </button>
+    <div class="room-header" style="margin-bottom:1.5rem">
+      <a href="/" class="room-back"><i class="bi bi-arrow-left"></i> Back</a>
+      <h1 class="room-title">Prof. Dr. Mike Roservice's Office</h1>
+      <span class="room-badge">Beginner</span>
+    </div>
+
+    <!-- ── Start screen ───────────────────────────────────────── -->
+    <div id="start-screen" style="text-align:center; padding:1.5rem 1rem 0.5rem;">
+      <i class="bi bi-door-closed start-icon"></i>
+      <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso.</h2>
+      <p>Dig through the chaos, decode his cryptic notes, and escape before he returns from his lecture!</p>
+      <button class="btn btn-primary" id="start-btn" onclick="startGame()">
+        <i class="bi bi-play-fill"></i> Start Game
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Win banner (overlay auf dem Bild) ─────────────────────── -->
+  <div id="win-banner">
+    <div class="win-icon">🎉</div>
+    <strong>You escaped!</strong>
+    <p style="color:#94A3B8;font-size:.875rem;margin-top:.375rem">You slipped out just before Prof. Dr. Mike Roservice returned. Tutorial complete!</p>
+    <button class="btn btn-secondary" style="margin-top:.875rem" onclick="resetGame()">
+      <i class="bi bi-arrow-counterclockwise"></i> Play Again
+    </button>
+  </div>
+
 </div>
 
 <!-- ── Game UI ────────────────────────────────────────────────── -->
@@ -382,7 +402,7 @@ async function startGame() {
     });
   } catch (e) {
     logMessage('Cannot reach the game backend. Start it with: python wsgi.py (port 5001)', 'error');
-    document.getElementById('start-screen').style.display = 'block';
+    document.getElementById('room-overlay').style.display = 'grid';
     document.getElementById('start-btn').disabled = false;
     return;
   }
@@ -392,7 +412,8 @@ async function startGame() {
     return;
   }
   gameToken = data.token;
-  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('room-overlay').style.display = 'none';
+  document.getElementById('game-header').style.display = 'flex';
   document.getElementById('game-ui').style.display = 'block';
   logMessage('You find yourself in a dark, dusty office…', 'info');
   const state = await apiGet('/examine');
@@ -402,6 +423,7 @@ async function startGame() {
 // ── Reset game ─────────────────────────────────────────────────
 async function resetGame() {
   document.getElementById('win-banner').classList.remove('visible');
+  document.getElementById('game-ui').style.display = 'block';
   document.getElementById('game-log').innerHTML = '';
   if (!gameToken) { location.reload(); return; }
   const data = await apiPost('/reset', null, false);
@@ -492,7 +514,7 @@ function selectObject(id, scroll) {
   document.getElementById('selected-name').textContent = obj.name;
   document.getElementById('selected-desc').textContent = obj.description || '';
 
-  const isColumn = obj.name === 'Column' || obj.name === 'Stone Column';
+  const isColumn = obj.name === 'Column' || obj.name === 'Stone Column' || obj.name === 'Exit Terminal';
   document.getElementById('param-row').style.display = isColumn ? 'flex' : 'none';
   if (isColumn) document.getElementById('param-input').placeholder = 'Enter 4-digit code…';
 
@@ -531,6 +553,7 @@ function logMessage(msg, type = 'action') {
 }
 
 function showWin(msg) {
+  document.getElementById('game-ui').style.display = 'none';
   document.getElementById('win-banner').classList.add('visible');
   logMessage(msg || 'You escaped!', 'win');
 }
