@@ -72,8 +72,11 @@
     .site-header .logo-text span { color: var(--cyan); }
     .site-header .header-right {
       margin-left: auto;
-      font-size: 0.8125rem;
-      color: var(--muted);
+    }
+    .site-header .header-right img {
+      height: 36px;
+      width: auto;
+      display: block;
     }
 
     /* ── Main content ─────────────────────────────────────────── */
@@ -108,7 +111,9 @@
         <div class="logo-icon"><i class="bi bi-cloud-fill"></i></div>
         <span class="logo-text">Cloud<span>Escape</span> Lab</span>
       </a>
-      <div class="header-right">Contoso University</div>
+      <div class="header-right">
+        <img src="{{ url_for('static', filename='img/brand_logo.png') }}" alt="Contoso University">
+      </div>
     </header>
     <main class="site-main">
       {% block content %}{% endblock %}
