@@ -219,12 +219,13 @@ Für die Semesterarbeit wurden vier Sprints geplant. Auf einen klassischen Gantt
 | Sprint 2 | Interaktivität & Cloud Integration | 01.06.2026 – 21.06.2026 | Erweiterte Interaktionen, mehrere Räume / Szenarien, Cloud Deployment (erste Version), Microservices einführen            |
 | Sprint 3 | DevOps, Auth & Finalisierung       | 22.06.2026 – 06.07.2026 | Auth mit Microsoft Entra ID, Escape Rooms via GitLab Pipelines starten, Testing, Bugfixing, Dokumentation, Präsentation.                            |
 
-Die folgende Gantt-Übersicht visualisiert die Sprint-Planung und die zugehörigen Releases (MVP[^34], MLP[^35], MMP[^36]). Das Diagramm wird direkt im README als Mermaid gepflegt und ist konsistent mit der obigen Tabelle.
+Die folgende Gantt-Übersicht visualisiert die Sprint-Planung und die zugehörigen Releases (MVP, MLP, MMP). Das Diagramm wird direkt im README als Mermaid gepflegt und ist konsistent mit der obigen Tabelle.
 
 ```mermaid
 gantt
   title Gantt Chart
   dateFormat YYYY-MM-DD
+  axisFormat %b '%y
 
   section Sprints
   Sprint 0 :crit, sprint0, 2025-10-31, 2025-11-06
@@ -382,34 +383,42 @@ __Lessons Learned:__
 
 # 4 Lösungsdesign
 
-## 4.1 Deployment-Modell
+Im Lösungsdesign stehen die zentralen Leitplanken des Projekts im Vordergrund. Die technische Arbeitsweise, das Zielbild in Azure sowie das Git- und Delivery-Modell. Ziel ist eine Lösung, die wartbar, sicher und für weitere Escape-Room-Inhalte sauber erweiterbar ist.
 
-Beim Aufbau der Plattform möchte ich von Anfang an zwischen der Infrastruktur also Frontend, Datenbank, Netzwerk etc. welches einmalig Aufgebaut wird und dauerhaft läuft und den einzelnen Escape Room Themen Containern unterscheiden. Die Escape Room Themen sollen schnell entstehen können und können sich häufig ändern. Wenn ein neuer Escape Room dazukommt sollte nicht immer die ganze Pipeline der Infrastruktur durchlaufen sondern nur die Pipeline des neuen Escape Rooms. Desshalb möchte ich zwei klar voneinander getrennte Lebenszyklen haben.
+## 4.1 Arbeitsweise und Engineering-Prinzipien
 
-Bevor überhaupt eine automatisierte Pipeline laufen kann, müssen zwei elementare Dinge existieren. Ein zentraler Ablageort für den Terraform-State und eine Managed Identity, die GitLab gegenüber Azure verwendet, um sich zu authentifizieren. Diese beiden Ressourcen können nicht von einer Pipeline erzeugt werden, da die Pipeline sie selbst zwingend benötigt, ein klassisches Henne-Ei-Problem. Aus diesem Grund wird der Bootstrap bewusst **einmalig und lokal vom Entwickler** ausgeführt. Er ist damit kein Bestandteil des laufenden Betriebs, sondern eine Vorbedingung, die genau einmal pro Subscription geschaffen wird. Danach übernehmen die automatisierten Pipelines. Falls sich irgendetwas an der Permission der Managed Identity ändern soll wird dies über den bootstrap verändert um das Terraform Statefile konsistent zu halten.
+Die Umsetzung folgt einem Engineering-Ansatz, bei dem Infrastruktur, Application Code und Deployment nicht getrennt betrachtet werden, sondern als zusammenhängendes System. Änderungen sollen reproduzierbar, nachvollziehbar und mit möglichst wenig manuellen Eingriffen ausgerollt werden. Daraus ergeben sich für das Projekt drei Grundprinzipien:
 
-Die Idee des **Theme-Stack** ist, dass jeder Escape Room ein eigenes kleines Deployment-Paket darstellt, das ausschliesslich die Ressourcen umfasst, die nur dieses eine Thema betreffen. Die Container-App, Managed Identity, den Zugriff auf seine spezifischen Secrets im Key Vault und seine eigene Pfadregel auf dem Application Gateway. Alles andere also der Cluster, auf dem die Container-App läuft, die Registry, aus der das Image gezogen wird, oder die Datenbank, mit der gesprochen wird, wird aus dem Infrastruktur-Stack **referenziert**, aber niemals verändert. Diese Trennung wird technisch dadurch erreicht, dass jeder Stack sein eigenes State-File besitzt und Theme-Stacks die benötigten Informationen ausschliesslich einlesen.
+- **Infrastructure as Code**: Azure-Ressourcen werden deklarativ beschrieben, versioniert und kontrolliert geändert.
+- **Automation first**: Nach einem einmaligen Bootstrap laufen Änderungen über einen definierten Delivery-Prozess statt über manuelle Eingriffe im Portal.
+- **Security by Design**: Die Authentifizierung erfolgt über Managed Identities in Azure um kurzlebige Tokens statt dauerhaft hinterlegte Secrets zu verwenden.
 
-### 4.1.1 Aufteilung der Verantwortlichkeiten
+Damit bleiben Changes nachvollziehbar, Deployments konsistent und der Betriebsaufwand auch bei wachsendem Scope kontrollierbar.
 
-Die folgende Übersicht fasst zusammen, welche Ressourcen wo angesiedelt sind und in welcher Frequenz mit Änderungen zu rechnen ist.
+## 4.2 Lösungsdesign in Azure
 
-| Stack | Lebensdauer | Multiplizität | Inhalt |
-|---|---|---|---|
-| **Bootstrap** | Einmalig, lokal | 1× pro Subscription | Storage Account für Terraform State, Managed Identity mit GitLab-OIDC-Trust. Wird ausschliesslich lokal vom Entwickler ausgeführt. |
-| **Infrastruktur-Stack** | Stabil, seltene Änderungen | 1× pro Environment | Netzwerk, App Service Frontend, PostgreSQL, Key Vault, ACR, ACA Environment, Monitoring, Private Endpoints. Liegt in `infra/`. |
-| **Theme-Stack** | Häufige Veränderungen | N× (ein Stack pro Theme) | Nur die Ressourcen eines Themas: Container App, Managed Identity, KV-Secret-Scope, AppGW-Pfadregel. |
+Das Azure-Design trennt bewusst zwischen einer stabilen Plattform und fachlich wechselnden Escape-Room-Inhalten. Shared Services werden zentral bereitgestellt, während einzelne Themes unabhängig erweitert und ausgerollt werden können. Dadurch bleibt die Basis stabil, auch wenn sich der fachliche Inhalt regelmässig verändert.
 
+Vor dem regulären Betrieb ist ein einmaliger Bootstrap notwendig. Dabei werden das Terraform State Backend und die Identität für die Authentifizierung gegenüber Azure vorbereitet. Danach laufen alle weiteren Änderungen automatisiert über den definierten CI/CD-Workflow.
 
-### 4.1.2 Pipelines und Automatisierung
+| Ebene | Rolle im Lösungsdesign |
+|---|---|
+| **Bootstrap** | Schafft die technischen Voraussetzungen für automatisierte Deployments |
+| **Plattform-Stack** | Enthält die gemeinsame Azure-Basis wie Netzwerk, Security, Persistenz und zentrale Plattformdienste |
+| **Theme-Stack** | Kapselt einen einzelnen Escape Room mit seinen themenspezifischen Ressourcen |
 
-Sobald der Bootstrap einmal lokal durchlaufen ist, soll möglichst nichts mehr von Hand angefasst werden müssen. Genau aus diesem Gedanken heraus entsteht das Pipeline-Modell. Jeder Stack, der regelmässig verändert wird, bekommt eine eigene, klar zuständige Pipeline und diese Pipelines sind so geschnitten, dass sie sich gegenseitig nicht in die Quere kommen können.
+Entscheidend ist, dass Theme-Stacks nur definierte Outputs des Plattform-Stacks verwenden, diesen aber nicht verändern. Dadurch lassen sich neue Inhalte ergänzen, ohne die Gesamtarchitektur oder bestehende Deployments zu destabilisieren.
 
-Die Infrastruktur-Pipeline ist für alles zuständig, was die gemeinsame Basis ausmacht. Die Infrastruktur, das Frontend sowie die Plattform-API. Wann immer sich in einem dieser Verzeichnisse etwas ändert, startet die Pipeline, führt einen Terraform-Apply auf den Plattform-Stack aus und deployt anschliessend Frontend und API. Da die Plattform bewusst stabil gehalten wird, läuft diese Pipeline vergleichsweise selten und genau das ist beabsichtigt. Ein seltener Lauf bedeutet, dass jede Änderung Aufmerksamkeit verdient, sorgfältig geplant wird und nicht im Rauschen täglicher Theme-Deployments untergeht.
+### 4.2.1 Big Picture
 
-Die zweite Pipeline existiert pro Theme. Ob man sie technisch als eigene Pipeline pro Verzeichnis oder als parametrisierte Matrix-Pipeline umsetzt, ist eine Frage des Geschmacks und der GitLab-Möglichkeiten. Konzeptionell ist sie aber pro Theme zu denken. Die Pipeline beobachtet ausschliesslich Pfade unterhalb von `themes/<name>/` und reagiert auch nur auf Änderungen dort. Sie baut das Theme-Image, pusht es in die Container Registry und führt am Ende einen Terraform-Apply auf den Theme-Stack aus, um die Container App auf das neue Image zu setzen. Was sie dabei nicht tut, ist mindestens so wichtig wie das, was sie tut. Sie fasst die Plattform unter keinen Umständen an. Sie hat dafür weder die RBAC-Berechtigung auf dem Plattform-State-Key noch im Code überhaupt eine Referenz, die Plattformressourcen verändern könnte ein versehentlicher Plattform-Eingriff aus einer Theme-Pipeline heraus ist damit nicht „unwahrscheinlich", sondern technisch ausgeschlossen.
+Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut ist. Im Fokus stehen die zentralen Plattformkomponenten, ihre Abhängigkeiten sowie der eingehende und ausgehende Traffic Flow zwischen den beteiligten Services. Damit macht die Darstellung sichtbar, über welche Entry Points Requests in die Plattform gelangen, wie sie intern weitergeleitet werden und welche Komponenten für ausgehende Kommunikation zuständig sind.
 
-Die Verbindung beider Pipelines zu Azure erfolgt über OIDC. Beide Pipelines tauschen ihr GitLab-Job-Token gegen ein Azure-Token ein, das auf dieselbe User-assigned Managed Identity ausgestellt wird, die im Bootstrap einmalig erzeugt wurde. Statische Service-Principal-Secrets gibt es bewusst nicht.
+Im Zentrum steht der Plattform-Stack als gemeinsame Basis. Er bündelt die wiederverwendbaren Foundation-Services, auf die die einzelnen Escape-Room-Themes aufbauen. Die Theme-Stacks ergänzen darauf ihre eigenen Workloads, ohne die gemeinsame Basis zu verändern. Dadurch entsteht eine modulare Architektur mit klaren Verantwortlichkeiten, sauber getrennten Zuständigkeiten und einem nachvollziehbaren Routing- und Security-Modell.
+
+![Architecture](data/Big_Picture.png)
+*Big Picture der Azure-Zielarchitektur inklusive Ingress- und Egress-Flow*
+
+### 4.2.2 Delivery-Flow
 
 ```mermaid
 flowchart LR
@@ -417,171 +426,38 @@ flowchart LR
 
   subgraph GL[GitLab CI/CD]
     direction TB
-    PPIPE[platform-pipeline<br/>trigger: infra/, frontend/, backend/]
-    TPIPE[theme-name-pipeline<br/>trigger: themes/name/]
+    PPIPE[Plattform-Pipeline]
+    TPIPE[Theme-Pipeline]
   end
 
-  OIDC[OIDC Federated<br/>mi-maker]
+  OIDC[OIDC-Föderation<br/>Azure-Identität]
 
-  PSTACK[Plattform-Stack<br/>terraform apply infra/]
-  TSTACK[Theme-Stack<br/>terraform apply themes/name/]
+  PSTACK[Plattform-Stack]
+  TSTACK[Theme-Stack]
 
   DEV --> PPIPE
   DEV --> TPIPE
-
   PPIPE --> OIDC
   TPIPE --> OIDC
-
   OIDC --> PSTACK
   OIDC --> TSTACK
-
-  PSTACK -. Outputs<br/>(remote_state) .-> TSTACK
+  PSTACK -. definierte Outputs .-> TSTACK
 ```
 
-# 4.2 Branching Strategie
+## 4.3 Gitflow und Delivery-Modell
 
-Für die Versionskontrolle wird eine **feature-basierte Branching-Strategie** nach dem Prinzip von **GitLab Flow (light)** eingesetzt. Da das Projekt nur von einer einzelnen Person umgesetzt wird, wäre ein vollständiges GitFlow mit `develop`- und `release/*`-Branches unnötig komplex. Stattdessen genügt ein schlankes Modell mit einem stabilen Hauptbranch und kurzlebigen Feature-Branches.
-
-## 4.2.1 Branch-Modell
+Für die tägliche Arbeit wird ein schlankes Gitflow-Modell eingesetzt. `main` bleibt jederzeit in einem stabilen und releasefähigen Zustand. Neue Features, Fixes und Hotfixes werden isoliert in eigenen Branches umgesetzt und erst nach Review integriert.
 
 ```
 main
- ├── feature/<beschreibung>     z.B. feature/tutorial-room
- ├── fix/<beschreibung>         z.B. fix/timer-reset
- └── hotfix/<beschreibung>      nur für kritische Fehler nach Release
+ ├── feature/<beschreibung>
+ ├── fix/<beschreibung>
+ └── hotfix/<beschreibung>
 ```
 
-- **`main`** stellt jederzeit den stabilen, lauffähigen und release-fähigen Stand der Plattform dar. Direktes Pushen ist **nicht erlaubt** – `main` ist als *Protected Branch* konfiguriert.
-- **`feature/*`** wird pro neuer Funktionalität erstellt (z.B. `feature/game-state-engine`, `feature/entra-auth`). Jeder Branch entspricht möglichst genau einem Jira-Ticket, um die Nachvollziehbarkeit zwischen Anforderung, Code und Review zu gewährleisten.
-- **`fix/*`** dient der Korrektur nicht-kritischer Fehler im laufenden Sprint.
-- **`hotfix/*`** wird nur verwendet, falls nach einem Release (MVP, MLP, MMP) ein kritischer Fehler im produktiven Stand behoben werden muss.
+Der Merge nach `main` erfolgt ausschliesslich über Merge Requests. So bleibt jede Änderung nachvollziehbar und durchläuft vor der Integration die definierten Quality Gates. Die Pipeline fungiert dabei als technisches Merge-Gate und prüft Codequalität, Security, Build-Fähigkeit und geplante Infrastrukturänderungen, bevor ein Merge oder Deployment möglich ist.
 
-## 4.2.2 Merge-Request-Prozess
-
-Änderungen gelangen ausschliesslich über **Merge Requests (MR)** in den `main`-Branch. Der Ablauf ist wie folgt:
-
-1. Feature-Branch von `main` abzweigen.
-2. Entwicklung und lokale Tests im Feature-Branch.
-3. Push auf GitLab und Erstellung eines Merge Requests gegen `main`.
-4. Automatische Ausführung der CI/CD-Pipeline (siehe 4.2.3).
-5. Self-Review der Änderungen anhand der MR-Checkliste.
-6. Merge nach `main`, sobald die Pipeline grün ist und alle MR-Threads aufgelöst sind. Anschliessend wird der Feature-Branch gelöscht.
-
-Für Releases werden zusätzlich **Git-Tags** auf `main` gesetzt, die mit den im Projekt definierten Releases korrespondieren:
-
-| Tag              | Release | Ende Sprint |
-|------------------|---------|-------------|
-| `v0.1.0-mvp`     | MVP     | Sprint 1    |
-| `v0.2.0-mlp`     | MLP     | Sprint 2    |
-| `v1.0.0-mmp`     | MMP     | Sprint 3    |
-
-## 4.2.3 Pipeline als Merge-Gate
-
-Jeder Merge Request löst automatisch eine GitLab-CI/CD-Pipeline aus. Erst wenn diese erfolgreich durchläuft, ist ein Merge nach `main` möglich. Die Pipeline ist in vier Stages aufgeteilt und bewusst nach dem **Fail-Fast-Prinzip** geordnet: günstige, schnelle Checks zuerst, teure Operationen (Build, Deploy) erst danach.
-
-### Stages und Jobs
-
-| Stage   | Job                       | Tool                | Zweck                                                                                       |
-|---------|---------------------------|---------------------|---------------------------------------------------------------------------------------------|
-| `lint`  | `python-lint`             | `ruff`              | Statische Code-Analyse für Python (Stilfehler, ungenutzte Imports, Bugs).                   |
-| `lint`  | `terraform-fmt-validate`  | `terraform`         | Formatierungs- und Syntaxprüfung der IaC-Module.                                            |
-| `lint`  | `tflint`                  | `tflint` + Azure-Plugin | Best-Practice-Linting für Terraform mit Azure-spezifischen Regeln.                       |
-| `lint`  | `checkov`                 | `checkov`           | Security- und Compliance-Scan der IaC-Definitionen (offene NSGs, Public Storage, RBAC etc.). |
-| `lint`  | `dockerfile-lint`         | `hadolint`          | Best Practices und Sicherheitsregeln im Dockerfile (z. B. CMD-exec-Form, kein `latest`).    |
-| `lint`  | `secret-scan`             | `gitleaks`          | Sucht versehentlich committete Credentials (API-Keys, Tokens, Private Keys).                |
-| `lint`  | `trivy-fs`                | `trivy`             | Filesystem-Scan auf bekannte CVEs in Dependencies sowie IaC-Misconfigurations.              |
-| `build` | `frontend-docker-build`   | `docker buildx`     | Erstellt das Frontend-Container-Image und pusht es bei `main` in die GitLab Registry.       |
-| `build` | `trivy-image`             | `trivy`             | CVE-Scan des frisch gebauten Images (nur auf `main`, nach dem Push).                        |
-| `build` | `terraform-plan`          | `terraform`         | Erzeugt einen `tfplan` als Artifact für reproduzierbares Apply.                             |
-| `test`  | `python-test`             | `pytest` + `coverage` | Unit-/Integrationstests inklusive Coverage-Report (Cobertura).                            |
-| `deploy`| `terraform-apply`         | `terraform`         | Wendet exakt den vorher erzeugten `tfplan` an. **Nur auf `main`, manueller Trigger.**       |
-
-### Authentifizierung gegenüber Azure (OIDC)
-
-Sämtliche Terraform-Jobs authentifizieren sich **ohne statische Service-Principal-Secrets** gegen Azure. Stattdessen wird je Job-Lauf ein kurzlebiges GitLab-OIDC-Token (`id_tokens`) erzeugt und im Tausch gegen ein Azure-Access-Token an die im Bootstrap angelegte Managed Identity ausgestellt. Dafür sind zwei Federated Credentials hinterlegt – einer für `ref:main` (Apply auf der Plattform) und einer für `ref:*` (Plan in MR-Pipelines). In GitLab existieren lediglich drei nicht-geheime, protected Variablen: `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`. Der Terraform-Azure-Provider liest diese automatisch und nutzt zusammen mit `ARM_USE_OIDC=true` den föderierten Token-Tausch.
-
-### Plan-Artifact-Workflow
-
-Der `terraform-plan`-Job erzeugt explizit eine `tfplan`-Datei (`terraform plan -out=tfplan`), die als Pipeline-Artifact an den späteren `terraform-apply`-Job weitergereicht wird. `apply` wendet damit **exakt den geprüften Plan** an – ein Drift zwischen dem im MR gezeigten Plan und dem tatsächlich deployten Zustand ist technisch ausgeschlossen.
-
-### Deploy-Gate
-
-Der `terraform-apply`-Job läuft ausschliesslich auf `main` und ist als `when: manual` konfiguriert. Zusätzlich ist das GitLab-Environment `production` als **Protected Environment** geschützt: nur Maintainer dürfen deployen, optional mit Required-Approvals-Regel. Damit ist sowohl ein versehentlicher Direkt-Deploy als auch ein Deploy von einem Feature-Branch ausgeschlossen.
-
-### Pfad-basierte Job-Auslösung
-
-Über drei wiederverwendete Rule-Blöcke (`.rules-python`, `.rules-terraform`, `.rules-docker`) reagieren die Jobs nur auf relevante Pfadänderungen. Eine reine Dokumentationsänderung in der README löst zum Beispiel weder `python-lint`, `terraform-plan` noch den Docker-Build aus. Das spart Compute-Minuten und verkürzt die Feedback-Schleife im MR.
-
-### Zusätzliche Schutzmechanismen auf `main`
-
-- **Protected Branch** – kein direkter Push, nur Merge via MR.
-- **Pipeline must succeed** – GitLab verhindert den Merge bei rotem Build.
-- **All threads resolved** – offene Review-Kommentare blockieren den Merge.
-- **Protected Environment `production`** – nur Maintainer dürfen den Apply-Job triggern.
-
-Damit ist sichergestellt, dass `main` jederzeit deploybar bleibt und die in Kapitel 4.1 beschriebenen Deployments (Plattform-Stack und Themen-Container) auf einem getesteten, statisch analysierten und security-gescannten Stand basieren.
-
-## 4.2.4 Lokale Entwicklungs-Tools
-
-Damit Fehler nicht erst in der CI-Pipeline auffallen, wird im Repository eine schlanke lokale Tool-Kette eingesetzt. Sie spiegelt die wichtigsten Pipeline-Checks und ist bewusst optional, aber dokumentiert:
-
-| Tool                 | Datei                          | Zweck                                                                                  |
-|----------------------|--------------------------------|----------------------------------------------------------------------------------------|
-| **`pre-commit`**     | `.pre-commit-config.yaml`      | Orchestriert `ruff`, `hadolint`, `gitleaks`, `terraform fmt/validate` und `tflint` lokal vor jedem Commit. Installation: `pre-commit install`. |
-| **`tflint`**         | `.tflint.hcl`                  | Gleiche Konfiguration wie in der Pipeline, kann lokal mit `tflint --init && tflint` ausgeführt werden. |
-| **`dive`**           | –                              | Inspiziert die Layer des Frontend-Images (`dive escape-frontend`), um Bloat und falsch sortierte `COPY`-Befehle zu finden. |
-| **`gitlab-ci-local`**| –                              | Führt die `.gitlab-ci.yml` lokal in Docker aus (`gitlab-ci-local`), so kann jeder Job ohne Push getestet werden. |
-| **Docker Compose**   | optional, siehe Kapitel 4.x    | Lokales Hochfahren des Frontend-Containers, später Multi-Service-Setups (Frontend + Backend + DB). Hat keinen Einfluss auf das Cloud-Deployment. |
-
-Damit gilt das Prinzip "shift-left": die Pipeline ist das Safety-Net, nicht die primäre Feedback-Quelle.
-
-## 4.2.5 Mögliche Erweiterungen
-
-Bewusst nicht umgesetzt, aber als nächste Ausbaustufen vorgemerkt:
-
-- **`cosign` keyless image signing** mit GitLab-OIDC und Sigstore Fulcio – erlaubt eine SLSA-konforme Lieferketten-Signatur. Voraussetzung: ein verifizierender Gegen-Stack in Azure Container Apps (Admission/Policy).
-- **`infracost`** als MR-Kommentar – Kostenabschätzung pro Plan, sinnvoll sobald mehrere Stacks existieren.
-- **`driftctl`** als geplanter Job auf `main` – erkennt Out-of-Band-Änderungen, die der Terraform-State nicht kennt.
-- **SBOM-Export** via `syft` im Build-Stage – wird mit der EU Cyber Resilience Act perspektivisch ohnehin verpflichtend.
-
-# 4.3 Eingesetzte GitLab-Plattform-Features
-
-Über Pipeline und Merge-Request hinaus nutzt das Projekt gezielt weitere GitLab-Features – jedoch nur dort, wo sie für die Semesterarbeit echten Mehrwert liefern. Genauso bewusst wurde entschieden, welche Features **nicht** eingesetzt werden, um den Scope realistisch zu halten.
-
-## 4.3.1 Aktiv eingesetzt
-
-| Feature | Wofür | Wo konfiguriert |
-| --- | --- | --- |
-| **Container Registry** | Speichert das Frontend-Image (`$CI_REGISTRY_IMAGE/frontend:<sha>`), das anschliessend von Trivy gescannt und von Azure Container Apps gezogen wird. | `frontend-docker-build` Job, push nur auf `main`. |
-| **Container Registry – Cleanup Policy** | Verhindert, dass die Registry mit jedem Commit unbegrenzt wächst. Behält die letzten 10 Tags sowie alles, was mit `v*` (Release-Tags) beginnt; alles ältere als 30 Tage wird entfernt. | GitLab-UI: *Settings → Packages and Registries → Container Registry → Cleanup policy* (UI-only, kein YAML-Pendant). |
-| **Releases** | Beim Push eines SemVer-Tags (`v0.1.0-mvp`, `v0.2.0-mlp`, `v1.0.0-mmp`) erzeugt der `release`-Job automatisch eine GitLab-Release-Seite mit Pipeline-Link und Image-Referenz. Die Release-Seite ist später der "single source of truth" für die Abnahme. | `.gitlab-ci.yml` → Job `release` mit `release-cli`-Image und `release:`-Keyword. |
- |
-| **Protected Environments** | Die `production`-Umgebung (Terraform-Apply) ist als *Protected Environment* markiert. Nur Maintainer dürfen das manuelle Gate auslösen – schützt vor versehentlichem Apply durch fremde Pipeline-Trigger. | GitLab-UI: *Settings → CI/CD → Protected environments*. |
-| **CI/CD-Variablen (Protected, masked wo möglich)** | `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID` als *Protected* gesetzt – nur Pipelines auf geschützten Branches/Tags sehen sie. OIDC bedeutet, dass kein Geheimnis im Repo landet. | GitLab-UI: *Settings → CI/CD → Variables*. |
-
-## 4.3.2 Bewusst **nicht** eingesetzt
-
-| Feature | Begründung |
-| --- | --- |
-| **Feature Flags** | Setzt einen laufenden Unleash-kompatiblen Server voraus und bringt nur Mehrwert, wenn produktiv Nutzer auf einem stabilen `main` arbeiten. Für eine MVP/MLP-Schulungsumgebung Overkill; bei späterer Mehrnutzer-Iteration sinnvoll. |
-| **Model Registry** | Kein ML-Workload im Scope – das Projekt liefert eine Web-App, kein Modelltraining. |
-| **Terraform Module Registry** | Sinnvoll erst, wenn mehrere Projekte ein gemeinsames Modul konsumieren. Im aktuellen Mono-Repo wäre das eine künstliche Verkomplizierung; lokale Module unter `infra/modules/` reichen. |
-| **Package Registry (PyPI/npm)** | Es gibt aktuell keine eigene Python-Library, die wiederverwendet wird – die Anwendung ist ein Endprodukt, kein Paket. |
-| **GitLab-managed Terraform State** | Backend ist bereits Azure Blob Storage (`sttfstatescape`). Ein Zurückwechseln auf GitLab-State würde das Bootstrap unnötig an den GitLab-Provider koppeln. |
-
-## 4.3.3 Erkenntnisse
-
-- **Pages + MkDocs als Doku-Pipeline** ist mit ca. 25 YAML-Zeilen und einer `mkdocs.yml` sehr günstig zu haben – und erzwingt nebenbei, dass die `README.md` Lint-rein bleibt (`--strict` lässt MkDocs bei jedem fehlerhaften Link fehlschlagen).
-- **Releases sind kostenlos**, sobald man bereits SemVer-Tags pflegt. Sie ersetzen das manuelle Pflegen einer "Was-wurde-wann-deployed"-Tabelle und werden später für die Abnahme der Semesterarbeit verlinkt.
-- **Cleanup-Policy zuerst, dann pushen.** Ohne Policy wachsen die Registry-Kosten auch bei privaten Projekten – die Policy ist UI-only und sollte vor dem ersten erfolgreichen Build-Push aktiviert werden.
-- **Disziplin schlägt Feature-Vielfalt.** Jedes nicht-genutzte Feature ist eines weniger, das im Projekt-Setup, in der Doku und bei der Verteidigung erklärt werden muss.
-
----
-
-# 4.4 Big Picture
-
-![Architecture](data/Big_Picture.png)
-*Azure Architektur übersicht*
+Releases werden zusätzlich über Tags markiert, damit wichtige Projektstände wie MVP, MLP und MMP eindeutig referenzierbar bleiben. Das unterstützt einen klaren Release-Stand, kontrollierte Integration und eine saubere Nachvollziehbarkeit über den gesamten Lifecycle.
 
 ---
 
