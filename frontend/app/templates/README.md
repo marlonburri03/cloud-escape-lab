@@ -12,7 +12,7 @@ Jinja2 erlaubt es, **HTML mit Python-Variablen und Logik** zu kombinieren. Zum B
 <h1>Hallo, {{ user }}</h1>
 ```
 
-Flask übergibt `user` aus der Route, Jinja2 setzt ihn in das HTML ein.  
+Flask übergibt `user` aus der Route, Jinja2 setzt ihn in das HTML ein.
 → Quelle: [jinja.palletsprojects.com/en/3.x/templates](https://jinja.palletsprojects.com/en/3.x/templates/)
 
 ---
@@ -57,7 +57,7 @@ Jede Kindseite füllt diesen Platzhalter aus:
 - **CSS Design-System** → Alle Farben, Abstände, Schriften als CSS-Variablen
 - **App-Shell-Layout** → Der gemeinsame Header mit Logo und Contoso-Bezeichnung
 
-**Warum ein Design-System?**  
+**Warum ein Design-System?**
 Durch CSS Custom Properties (`--blue`, `--navy` etc.) muss eine Farbe nur einmal geändert werden und gilt überall. Das ist ein Best Practice aus der modernen Web-Entwicklung.
 
 ---
@@ -100,7 +100,7 @@ Authorization: Bearer <token>
 ```
 Das Backend prüft diesen Token und weiss so, welches Spiel gemeint ist.
 
-**Woher der Token kommt:**  
+**Woher der Token kommt:**
 Beim `startGame()` wird ein UUID generiert (`crypto.randomUUID()`), ans Backend gesendet, und das Backend gibt einen JWT-Token zurück. Dieser Token wird im Browser gespeichert (`gameToken`).
 
 ---
@@ -111,12 +111,16 @@ Beim `startGame()` wird ein UUID generiert (`crypto.randomUUID()`), ans Backend 
 |---|---|---|
 | `base.html` | Minimal: 15 Zeilen, weisser Hintergrund, `system-ui`-Font | Komplett neu: Dark Theme, Inter-Font, CSS-Variablen, Logo-Header |
 | `index.html` | `<h1>Hello, {{ user }}</h1>` + grüner Button | Welcome-Card mit Feature-Chips, gleiche Variablen und Route |
-| `tutorial.html` | Placeholder: "not deployed yet (Phase 2)" → dann vollständige Spiellogik vom Lehrer bereitgestellt | Komplettes CSS-Redesign (Dark Theme), JS **1:1 unverändert** übernommen |
+| `tutorial.html` | Basiert auf `ma-room-template/app/templates/room_tester.html` | Komplettes CSS-Redesign (Dark Theme), Layout-Integration, JS weitgehend aus dem Vorbild übernommen |
 
-> **Das gesamte JavaScript in `tutorial.html` ist die Arbeit des Lehrers.**  
-> Ich habe ausschliesslich das visuelle Design (CSS) verbessert und einen `try/catch`  
-> in `startGame()` ergänzt, damit Netzwerkfehler sichtbar angezeigt werden statt  
-> den Button einzufrieren.
+> **Lizenz- und Herkunftshinweis zu `tutorial.html`**
+> `tutorial.html` basiert auf dem Room Tester aus
+> [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) und
+> steht als abgeleitetes Material unter **CC BY-SA 4.0**. Das inhaltliche
+> Grundgerüst und grosse Teile der Spielinteraktion stammen aus dem
+> Vorbild; in diesem Repository wurden vor allem das visuelle Design,
+> die Einbettung ins eigene UI sowie kleine Fehlerbehandlungs-Anpassungen
+> ergänzt.
 
 ---
 

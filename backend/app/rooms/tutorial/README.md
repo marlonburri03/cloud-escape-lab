@@ -2,6 +2,13 @@
 
 Dieser Ordner enthält den **Tutorial Escape Room**: die einzige fertiggestellte Rauminstanz der Plattform. Er dient als Einführung in das Spielprinzip.
 
+> **Herkunft / Lizenz**
+> Die Implementierung dieses Tutorial Rooms basiert auf dem Repository
+> [`ma-room-template`](https://gitlab.com/solvista/ma-room-template),
+> insbesondere auf der Demo-Room-Logik. Das Original steht unter
+> **CC BY-SA 4.0**. Für dieses Projekt wurden Story, Texte und
+> Einbettung in die Cloud-Escape-Lab-Plattform angepasst.
+
 ---
 
 ## Spielprinzip
@@ -75,11 +82,11 @@ Jeder Endpunkt folgt dem gleichen Muster:
 def interact_with_object(object_id, form_and_files_data):
     game_uuid = token_auth.current_user   # UUID aus Token
     game_room = GameRoom(...)             # Spielzustand aus DB laden
-    
+
     match current_object.name:           # Python match/case = switch
         case "Light Switch":
             # Spiellogik hier ...
-    
+
     db.session.commit()                  # Zustand in DB speichern
     return game_room.assemble_json_room_state(message)  # JSON zurückgeben
 ```
@@ -126,7 +133,7 @@ Diese Klassen trennen die **Datenbanklogik** von der **Spiellogik**:
 - `GameRoom` → lädt die DB-Zeilen und bietet einfache Methoden wie `get_object_by_name()`
 - `GameObject` → ein einzelnes Objekt mit Properties (`visible`, `locked`, `state`), die beim Setzen automatisch die DB-Zeile aktualisieren
 
-Das Muster heisst **Repository Pattern** – die Spiellogik muss nicht wissen wie die Datenbank funktioniert.  
+Das Muster heisst **Repository Pattern** – die Spiellogik muss nicht wissen wie die Datenbank funktioniert.
 → Quelle: [martinfowler.com – Repository](https://martinfowler.com/eaaCatalog/repository.html)
 
 ---

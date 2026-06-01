@@ -21,6 +21,12 @@ Die Arbeit dient als proof of concept (POC) für eine moderne und interaktive Le
 
 Die Arbeit stützt sich auf das im dritten Semester des Lehrgangs zum dipl. Informatiker HF mit Vertiefung in Cloud Native erarbeitete Fachwissen und wurde von Marlon Burri als Einzelarbeit konzipiert und umgesetzt.
 
+> **Lizenz- und Herkunftshinweis zum Tutorial Room**
+> Dieses Repository enthält abgeleitete Inhalte aus dem Repository [`ma-room-template`](https://gitlab.com/solvista/ma-room-template), das unter **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)** veröffentlicht wurde.
+> Betroffen sind insbesondere `frontend/app/templates/tutorial.html`, `backend/app/rooms/tutorial/` sowie die dazugehörigen Dokumentationsabschnitte.
+> Eigene Anpassungen umfassen vor allem das UI-/CSS-Redesign, die inhaltliche Contoso-/Cloud-Escape-Lab-Einbettung und projektspezifische Integration in Frontend und Backend.
+> Die konkreten Attribution-Hinweise stehen in [`NOTICE`](./NOTICE), der vollständige Lizenztext in [`LICENSE`](./LICENSE).
+
 ## 1.1 Behandelte Module
 
 - Microservices mit Python
