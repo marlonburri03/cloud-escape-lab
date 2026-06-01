@@ -1,3 +1,9 @@
+# Adapted from: ma-room-template/app/rooms/demo_room/routes.py
+# Source: https://gitlab.com/solvista/ma-room-template
+# License: CC BY-SA 4.0
+# Changes in this repository: Contoso/Cloud Escape Lab retheme, room-specific text
+# rewrites, tutorial-room naming, and integration into this backend service.
+
 from app.rooms.tutorial import bp
 from app.extensions import db
 from app.models.gameRoom import GameRoom

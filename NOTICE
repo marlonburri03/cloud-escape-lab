@@ -1,0 +1,37 @@
+Attribution notice for adapted tutorial-room materials
+=====================================================
+
+This repository contains adapted material from the repository
+`ma-room-template`.
+
+The CC BY-SA 4.0 license text in `LICENSE` is included for these
+adapted tutorial-room materials and their accompanying documentation.
+
+Source repository:
+https://gitlab.com/solvista/ma-room-template
+
+Local reference copy used during this project:
+C:\Users\marlo\GIT\ma-room-template
+
+Original license:
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+License text:
+See the `LICENSE` file in this repository.
+
+Adapted materials in this repository include in particular:
+- `frontend/app/templates/tutorial.html`
+- `backend/app/rooms/tutorial/`
+- `frontend/app/templates/README.md`
+- `backend/app/rooms/tutorial/README.md`
+- `README.md` sections that document the adapted tutorial room
+
+Changes made in this repository include:
+- UI/CSS redesign and layout integration into Cloud Escape Lab
+- Contoso-specific retheming and narrative changes
+- project-specific frontend/backend integration
+- documentation of the adapted tutorial room for this semester project
+
+If you reuse or redistribute these adapted materials, preserve the
+attribution to the original source, indicate that changes were made,
+and keep the adapted material under CC BY-SA 4.0.
