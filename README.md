@@ -324,21 +324,23 @@ Im Jira-Projekt ist eine Automation Rule hinterlegt, welche beim Erstellen neuer
 
 ### 3.4.2 Sprint 1 – MVP Release
 
-Der Sprint 1 ist der erste produktive Sprint der Semesterarbeit, in dem am Ende ein erster Release in Form des Minimum Viable Product (MVP) erwartet wird. In diesem Sprint beginnt die eigentliche Umsetzung der Cloud-basierten Escape-Room-Plattform, und es werden die ersten zentralen Komponenten des Systems aufgebaut. Dazu gehören insbesondere die Definition der Architektur, die Grundstruktur der Anwendung sowie die Implementierung eines ersten spielbaren Tutorials. Diese Grundlagen bilden die Basis für alle weiteren Sprints.
-
-Das Hauptziel dieses Sprints besteht darin, die grundlegende Plattformstruktur zu entwickeln und einen ersten funktionalen Prototypen bereitzustellen, welcher bereits einfache Interaktionen und ein spielbares Escape-Room-Szenario ermöglicht. Damit wird die technische Grundlage für die weitere Erweiterung der Plattform in den folgenden Sprints geschaffen.
-
 __Sprint Planning:__
 
-Wie vor jedem Sprint mussten zunächst die User Stories aufbereitet werden, damit sie die Definition of Ready (DoR) erfüllen und offiziell in den Sprint aufgenommen werden konnten. Dabei wurden insbesondere technische Abhängigkeiten geprüft, der fachliche Umfang verifiziert und die Stories entsprechend priorisiert.
+**Zeitplan:**
+11.05.2026 – 31.05.2026
 
-Anschliessend erfolgte die Schätzung der User Stories anhand der Fibonacci-Zahlen. Ziel dieses Vorgehens ist es, den Umsetzungsaufwand bzw die Komplexität möglichst realistisch einzuschätzen und eine konsistente Grundlage für die Sprint-Planung zu schaffen. Besonders hohe Priorität hatten dabei die Architekturdefinition, die Game Engine sowie der erste spielbare Escape Room, da diese den Kern des MVP bilden.
+**Beschreibung:**
+Der erste produktive Sprint dient der Umsetzung eines Minimum Viable Product (MVP) der Escape-Room-Plattform. Im Rahmen dieses Sprints werden die grundlegende Plattformarchitektur definiert, die Basisstruktur der Anwendung aufgebaut sowie ein erster spielbarer Escape Room entwickelt. Die erarbeiteten Komponenten bilden die technische Grundlage für die Weiterentwicklung der Plattform in den folgenden Sprints. Nach Vollendung des Sprints steht ein funktionaler Prototyp mit ersten Interaktionsmöglichkeiten zur Verfügung.
 
-Der Sprint 1 erstreckt sich vom 11. Mai bis zum 31. Mai 2026 und bildet den ersten produktiven Entwicklungszyklus der Semesterarbeit. Ziel des Sprints ist die Umsetzung eines Minimum Viable Product (MVP), welches die grundlegende Architektur der Plattform sowie einen ersten spielbaren Escape Room enthält.
+**Meilenstein:** MVP mit grundlegender Plattformarchitektur und erstem spielbaren Escape Room umgesetzt.
 
 __Sprint Review:__
 
-Abgeschlossene User Stories:
+**Status:**
+Der Sprint wurde erfolgreich abgeschlossen. Der definierte Meilenstein wurde erreicht und sämtliche geplanten User Stories konnten innerhalb des vorgesehenen Zeitraums umgesetzt werden.
+
+**Übersicht des Backlogs:**
+Die folgenden Aufgaben wurden innerhalb des Sprints geplant, bearbeitet und erfolgreich abgeschlossen:
 
 * [S3M-6, Define project structure and architecture]()✅-DONE
 * [S3M-12, Define CI/CD pipeline concept]()✅-DONE
@@ -349,16 +351,44 @@ Abgeschlossene User Stories:
 * [S3M-17, Feedback System]()✅-DONE
 * [S3M-19, Define Project Documentation]()✅-DONE
 
-__Risikoverlauf Sprint 1:__
+**Risikoverlauf:**
+
+Die nachfolgende Tabelle zeigt den Stand aller Risiken aus der initialen Risikoanalyse am Ende von Sprint 1.
+
+| Risiko-ID | Beschreibung | Score vorher | Score nachher | Status | Bemerkung |
+|-----------|--------------|:------------:|:-------------:|:------:|-----------|
+| R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🔴 16 | 🟠 12 | ↓ | MVP erfolgreich umgesetzt; schrittweise Umsetzungsstrategie bewährt sich. Eintrittswahrscheinlichkeit sinkt von 4 auf 3. |
+| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🔴 16 | 🔴 16 | → | Sprint-Ziele erreicht, jedoch hat das Erkunden von GitLab-Plattform-Features mehr Zeit gekostet als geplant. Risiko bleibt unverändert hoch. |
+| R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟠 12 | 🟡 8 | ↓ | Lint-Pipeline (ruff, tflint, hadolint, trivy) sowie terraform validate eingeführt. Pipeline wird auf MRs automatisch ausgeführt. Eintrittswahrscheinlichkeit sinkt von 3 auf 2. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟠 12 | → | Entra ID Integration ist erst für Sprint 3 geplant; noch nicht adressiert. Zusätzliche Erkenntnis: Azure FIC-Wildcard matcht keine Schrägstriche – Branch-Benennung auf Bindestriche (`feature-xyz`) umgestellt, um OIDC-Auth-Fehler zu verhindern. |
+| R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 9 | 🟡 6 | ↓ | tflint und terraform validate sind in der Pipeline integriert. Infrastruktur noch nicht deployed (Pipeline auf `when: never`); Eintrittswahrscheinlichkeit sinkt von 3 auf 2. |
 
 __Sprint Retrospective:__
 
-__Lessons Learned:__
+Für die Retrospektive habe ich wie im vergangenen Semester die Mad, Sad, Glad Methode auf einem Miro-Board angewendet. Sie erlaubt eine kompakte, ehrliche Einschätzung des Sprints aus drei verschiedenen Blickwinkeln.
+
+![Sprint1Retro](img/sprint1retro.png)
+*Screenshot vom Miro Board für die Retrospektive des Sprint 1.*
+
+**Lessons Learned:**
+
+- **GitLab Managed Terraform State von Anfang an nutzen:** Der Self-managed Remote State im Azure Storage Account hat den Bootstrap-Code unnötig vergrössert. Mit dem GitLab-integrierten Backend wäre der Bootstrap etwa halb so gross – und die Pipeline-Konfiguration für State-Locking deutlich einfacher.
+- **Branch-Namenskonvention beachten (Bindestriche statt Schrägstriche):** Azure Managed Identity Federated Identity Credentials erlauben keinen Wildcard-Match über `/`. Ein Branch `feature/xyz` würde in der OIDC-Pipeline nie authentifiziert werden. Die Konvention `feature-xyz` löst dieses Problem vollständig.
+- **Plattform-Features gezielt einführen, nicht explorativ:** GitLab bietet viele nützliche Features (Pages, Releases, Cleanup Policies). Die explorative Herangehensweise hat jedoch deutlich mehr Zeit gekostet als geplant. In zukünftigen Sprints werden Platform-Features als explizite User Stories geplant, damit der Aufwand sichtbar und steuerbar bleibt.
+- **Linting früh in der Pipeline verankern zahlt sich aus:** Die frühe Integration von ruff, tflint, hadolint und Trivy verhindert das Einschleichen von Code-Smells und Sicherheitsproblemen. Einmal eingerichtet, läuft die Pipeline wartungsarm und liefert konsistenten Mehrwert.
 
 
 ### 3.4.3 Sprint 2 – MLP Release
 
 __Sprint Planning:__
+
+**Zeitplan:**
+01.06.2026 – 21.06.2026
+
+**Beschreibung:**
+Der Sprint 2 dient der Weiterentwicklung des bestehenden MVPs hin zu einem Minimum Lovable Product (MLP). Im Rahmen dieses Sprints wird die Cloud-Infrastruktur sowie die Implementierung einer durchgängigen Deployment-Pipeline für die Escape-Room-Plattform aufgebaut. Ziel ist eine robustere, besser strukturierte und leichter erweiterbare Gesamtarchitektur.
+
+Meilenstein: Erweiterte interaktive Escape-Room-Plattform mit mehreren Szenarien, erster Cloud-Deployment-Version und initialer Microservice-Architektur umgesetzt.
 
 __Sprint Review:__
 
