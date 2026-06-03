@@ -1,6 +1,6 @@
 # create app service plan
 resource "azurerm_service_plan" "plan" {
-  name                = "asp-${var.name_prefix}-frontend"
+  name                = "asp-${var.name_prefix}-${var.app_name}"
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Linux"
@@ -10,7 +10,7 @@ resource "azurerm_service_plan" "plan" {
 
 # create linux web app
 resource "azurerm_linux_web_app" "frontend" {
-  name                          = "app-${var.name_prefix}-frontend"
+  name                          = "app-${var.name_prefix}-${var.app_name}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
   service_plan_id               = azurerm_service_plan.plan.id
@@ -58,10 +58,13 @@ resource "azurerm_linux_web_app" "frontend" {
     }
   }
 
-  app_settings = {
-    WEBSITES_PORT    = "8000"
-    DOCKER_ENABLE_CI = "true"
-  }
+  app_settings = merge(
+    {
+      WEBSITES_PORT    = tostring(var.app_port)
+      DOCKER_ENABLE_CI = "true"
+    },
+    var.extra_app_settings
+  )
 
   logs {
     http_logs {

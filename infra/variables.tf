@@ -1,4 +1,5 @@
 # values live in terraform.tfvars
+
 # azure auth
 variable "tenant_id" {
   description = "Entra ID tenant ID."
@@ -90,5 +91,16 @@ variable "frontend_image_name" {
 
 variable "frontend_image_tag" {
   description = "Frontend image tag to deploy. Overridden by CI ($CI_COMMIT_SHA)."
+  type        = string
+}
+
+# backend image
+variable "backend_image_name" {
+  description = "Repository name for the backend API image inside ACR."
+  type        = string
+}
+
+variable "backend_image_tag" {
+  description = "Backend image tag to deploy. Overridden by CI ($CI_COMMIT_SHA)."
   type        = string
 }

@@ -33,3 +33,7 @@ acr_sku  = "Basic"
 # frontend image references
 frontend_image_name = "frontend"
 frontend_image_tag  = "bootstrap"
+
+# backend image references
+backend_image_name = "backend"
+backend_image_tag  = "bootstrap"

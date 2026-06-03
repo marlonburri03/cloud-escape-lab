@@ -21,3 +21,11 @@ output "frontend_default_hostname" {
 output "frontend_app_name" {
   value = module.app_service.name
 }
+
+output "backend_default_hostname" {
+  value = module.app_service_backend.default_hostname
+}
+
+output "backend_app_name" {
+  value = module.app_service_backend.name
+}
