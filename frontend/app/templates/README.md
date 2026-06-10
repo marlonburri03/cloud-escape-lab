@@ -88,6 +88,8 @@ Durch CSS Custom Properties (`--blue`, `--navy` etc.) muss eine Farbe nur einmal
 
 ```
 startGame()       → POST /tutorial-room/start  → erhält JWT-Token
+stopRuntime()     → POST /tutorial-room/runtime/stop
+deleteRuntime()   → DELETE /tutorial-room/runtime
 examineRoom()     → GET  /tutorial-room/examine
 examineSelected() → GET  /tutorial-room/objects/{id}/examine
 interactSelected()→ POST /tutorial-room/objects/{id}/interact
@@ -99,6 +101,8 @@ resetGame()       → POST /tutorial-room/reset
 Authorization: Bearer <token>
 ```
 Das Backend prüft diesen Token und weiss so, welches Spiel gemeint ist.
+
+Stop/Delete beenden die aktive Room-Runtime im Backend. Das Frontend bleibt dabei erreichbar und kann direkt wieder eine neue Runtime starten.
 
 **Woher der Token kommt:**
 Beim `startGame()` wird ein UUID generiert (`crypto.randomUUID()`), ans Backend gesendet, und das Backend gibt einen JWT-Token zurück. Dieser Token wird im Browser gespeichert (`gameToken`).

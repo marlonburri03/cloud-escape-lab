@@ -188,3 +188,29 @@ class GameRoom:
             db.session.commit()
 
         return room_state
+
+    @staticmethod
+    def delete_runtime(game_uuid, room_name):
+        room_state = RoomState.query.filter_by(
+            game_uuid=game_uuid, room_name=room_name
+        ).first()
+        if not room_state:
+            return False
+
+        player_id = room_state.player_id
+
+        ObjectState.query.filter_by(room_state_id=room_state.id).delete()
+        db.session.delete(room_state)
+
+        if player_id:
+            remaining_rooms = RoomState.query.filter(
+                RoomState.player_id == player_id,
+                RoomState.id != room_state.id,
+            ).first()
+            if not remaining_rooms:
+                player = db.session.get(Player, player_id)
+                if player:
+                    db.session.delete(player)
+
+        db.session.commit()
+        return True

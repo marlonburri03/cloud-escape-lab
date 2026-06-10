@@ -66,6 +66,7 @@ Browser ← JSON-Antwort ←─────────────┘
 ```
 
 Die Backend-URL kommt aus der Konfiguration (`config.py` → `BACKEND_URL`).
+Das Frontend selbst bleibt jederzeit erreichbar; über die Runtime-Endpunkte (`/tutorial-room/runtime/stop`, `/tutorial-room/runtime`) kann die aktive Room-Instanz im Backend gestoppt oder gelöscht und danach neu gestartet werden.
 
 ---
 
@@ -98,4 +99,4 @@ python wsgi.py
 ```
 
 > Das Frontend benötigt das Backend auf Port 5001 damit das Spiel funktioniert.
-> Ohne Backend sieht man die Seiten, aber "Start Game" zeigt eine Fehlermeldung.
+> Ohne Backend ist die Oberfläche weiterhin erreichbar, aber "Start Game" und Room-Aktionen zeigen eine Fehlermeldung.
