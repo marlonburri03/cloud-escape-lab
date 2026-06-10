@@ -1,9 +1,15 @@
 from apiflask import APIFlask
+from apiflask.fields import String
+from apiflask.schemas import Schema
 from flask import request, g
 from flask_cors import CORS
 
 from config import Config
 from app.extensions import db
+
+
+class HealthOut(Schema):
+    status = String()
 
 
 def create_app(config_class: type = Config) -> APIFlask:
@@ -25,6 +31,12 @@ def create_app(config_class: type = Config) -> APIFlask:
     def detect_language():
         lang = request.headers.get("Accept-Language", "en")
         g.lang = lang.split(",")[0].split("-")[0]
+
+    @app.get("/healthz")
+    @app.output(HealthOut, status_code=200)
+    def healthz():
+        """Health probe target for App Service."""
+        return {"status": "ok"}
 
     @app.get("/")
     def index():

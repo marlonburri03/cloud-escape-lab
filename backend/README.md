@@ -53,12 +53,14 @@ Alle Endpunkte sind unter dem Prefix `/tutorial-room` erreichbar.
 | `GET` | `/tutorial-room/ping` | Nein | Erreichbarkeitstest |
 | `GET` | `/tutorial-room/description` | Nein | Raumbeschreibung (Text) |
 | `POST` | `/tutorial-room/start` | Nein | Spiel starten, JWT-Token erhalten |
+| `POST` | `/tutorial-room/runtime/stop` | JWT | Aktive Room-Runtime stoppen |
+| `DELETE` | `/tutorial-room/runtime` | JWT | Aktive Room-Runtime löschen |
 | `GET` | `/tutorial-room/examine` | JWT | Aktuellen Raumzustand laden |
 | `POST` | `/tutorial-room/reset` | JWT | Spiel auf Anfangszustand zurücksetzen |
 | `GET` | `/tutorial-room/objects/{id}/examine` | JWT | Objekt untersuchen |
 | `POST` | `/tutorial-room/objects/{id}/interact` | JWT | Mit Objekt interagieren |
 
-> Die vollständige interaktive API-Dokumentation (OpenAPI/Swagger) ist unter  
+> Die vollständige interaktive API-Dokumentation (OpenAPI/Swagger) ist unter
 > `http://localhost:5001/docs` verfügbar wenn das Backend läuft.
 
 ---
@@ -71,10 +73,11 @@ Das Backend ist **zustandslos** (stateless) – jede HTTP-Anfrage muss beweisen,
 1. POST /start  → Backend erstellt Spiel mit UUID, gibt JWT-Token zurück
 2. Alle weiteren Anfragen → Frontend schickt: Authorization: Bearer <token>
 3. Backend prüft Token → extrahiert UUID → lädt Spielzustand aus DB
+4. POST /runtime/stop oder DELETE /runtime → beendet/löscht die aktive Runtime
 ```
 
-**Warum JWT?**  
-JWT-Tokens sind selbstenthaltend (der UUID steckt direkt im Token) und müssen nicht in einer Session-Tabelle nachgeschlagen werden. Sie werden mit dem `SECRET_KEY` signiert, damit sie nicht gefälscht werden können.  
+**Warum JWT?**
+JWT-Tokens sind selbstenthaltend (der UUID steckt direkt im Token) und müssen nicht in einer Session-Tabelle nachgeschlagen werden. Sie werden mit dem `SECRET_KEY` signiert, damit sie nicht gefälscht werden können.
 → Quelle: [jwt.io – Introduction to JSON Web Tokens](https://jwt.io/introduction)
 
 ---

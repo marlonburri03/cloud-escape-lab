@@ -499,6 +499,52 @@ Releases werden zusätzlich über Tags markiert, damit wichtige Projektstände w
 
 # 5 Umsetzung
 
+## 5.1 Erstmaliges Deployment (Bootstrap)
+
+Vor dem ersten automatisierten Deployment über die CI/CD-Pipeline müssen die Container-Images manuell gebaut und in die Azure Container Registry (ACR) gepusht werden. Hintergrund: Die Pipeline benötigt ein bereits vorhandenes Image in der ACR, bevor Azure Container Apps eine Revision erfolgreich starten kann. Beim allerersten `terraform apply` existiert dieses Image noch nicht, weshalb ein manueller Bootstrap-Schritt notwendig ist.
+
+> **Hinweis:** Dieser Schritt ist einmalig und wird nach dem ersten erfolgreichen Deployment nicht mehr benötigt. Ab dann übernimmt die CI/CD-Pipeline den vollständigen Build- und Deploy-Prozess.
+
+### Voraussetzungen
+
+- Azure CLI (`az`) installiert und eingeloggt (`az login`)
+- Zugriff auf die ACR `acrlabprodescape` (Rolle `AcrPush` oder `Contributor`)
+- [Bootstrap-Infrastruktur](bootstrap/) bereits deployed (Storage Account, OIDC-Identität)
+
+### Schritte
+
+**1. Bootstrap-Infrastruktur deployen** (falls noch nicht geschehen):
+
+```bash
+cd bootstrap
+terraform init
+terraform apply
+```
+
+**2. Container-Images manuell in ACR bauen und pushen:**
+
+`az acr build` führt den Build direkt in der Cloud durch — es ist keine lokale Docker-Installation notwendig.
+
+```bash
+# Frontend-Image bauen und pushen
+az acr build --registry acrlabprodescape --image frontend:bootstrap ./frontend/
+
+# Backend-Image bauen und pushen
+az acr build --registry acrlabprodescape --image backend:bootstrap ./backend/
+```
+
+**3. Plattform-Infrastruktur deployen:**
+
+```bash
+cd infra
+terraform init
+terraform apply
+```
+
+### Danach: Normaler Delivery-Prozess
+
+Ab dem ersten erfolgreichen Deployment läuft alles über die GitLab CI/CD-Pipeline. Ein Push auf `main` löst automatisch den Build aus, pusht neue Images mit dem Commit-SHA als Tag in die ACR und aktualisiert die Container Apps via `terraform apply` (manuell auslösbar im GitLab-UI).
+
 ---
 
 # 6 Testverfahren

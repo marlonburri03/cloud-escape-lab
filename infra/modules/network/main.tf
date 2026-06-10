@@ -4,18 +4,20 @@ data "azurerm_virtual_network" "spoke" {
   resource_group_name = var.spoke_vnet_resource_group
 }
 
-# create app service integration subnet with delegation to Microsoft.Web/serverFarms
-resource "azurerm_subnet" "app" {
-  name                 = "snet-app"
+# create ACA infrastructure subnet with delegation to Microsoft.App/environments
+# service endpoint for ACR bypasses the UDR/Firewall for image pulls (Basic ACR, public access)
+resource "azurerm_subnet" "aca" {
+  name                 = "snet-aca"
   resource_group_name  = var.spoke_vnet_resource_group
   virtual_network_name = data.azurerm_virtual_network.spoke.name
-  address_prefixes     = [var.subnet_app_address_prefix]
+  address_prefixes     = [var.subnet_aca_address_prefix]
+  service_endpoints    = ["Microsoft.ContainerRegistry"]
 
   delegation {
-    name = "delegation-webserverfarms"
+    name = "delegation-aca"
     service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      name    = "Microsoft.App/environments"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
 }

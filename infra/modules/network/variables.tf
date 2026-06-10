@@ -10,18 +10,12 @@ variable "spoke_vnet_name" {
 }
 
 # subnet plan inside the vended /24
-variable "subnet_app_address_prefix" {
-  description = "CIDR for the app service vnet integration subnet."
+variable "subnet_aca_address_prefix" {
+  description = "CIDR for the ACA environment infrastructure subnet inside the vended spoke."
   type        = string
 }
 
 variable "subnet_pe_address_prefix" {
   description = "CIDR for the private endpoint subnet."
   type        = string
-}
-
-# tags
-variable "tags" {
-  description = "Tags applied to created subnets (kept for consistency; subnets do not take tags)."
-  type        = map(string)
 }

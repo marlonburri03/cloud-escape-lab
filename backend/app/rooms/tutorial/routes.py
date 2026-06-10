@@ -7,7 +7,7 @@
 from app.rooms.tutorial import bp
 from app.extensions import db
 from app.models.gameRoom import GameRoom
-from app.models.roomState import RoomStateIn, RoomStateOut, TokenOut, RoomState
+from app.models.roomState import RoomStateIn, RoomStateOut, RuntimeOut, TokenOut
 from app.models.roomState import PingOut, DescriptionOut, ExitsOut, InteractionIn
 from app.auth import token_auth
 
@@ -34,6 +34,18 @@ TEXT = {
     "room.reset": {
         "en": "The office resets itself — as if a rollback was triggered. Prof. Dr. Mike Roservice is still on his way back. Try again!",
         "de": "Das Büro setzt sich zurück — als wäre ein Rollback ausgelöst worden. Prof. Dr. Mike Roservice ist noch unterwegs. Versuch es nochmal!",
+    },
+    "runtime.stopped": {
+        "en": "Room runtime stopped. Start Game creates a fresh room instance.",
+        "de": "Room-Runtime gestoppt. Mit Start Game wird eine neue Room-Instanz erstellt.",
+    },
+    "runtime.deleted": {
+        "en": "Room runtime deleted. Start Game creates a new runtime in the background.",
+        "de": "Room-Runtime gelöscht. Mit Start Game wird im Hintergrund eine neue Runtime erstellt.",
+    },
+    "runtime.not_found": {
+        "en": "No active runtime found. You can start a new game now.",
+        "de": "Keine aktive Runtime gefunden. Du kannst jetzt ein neues Spiel starten.",
     },
     "examine.desk.key": {
         "en": (
@@ -230,10 +242,11 @@ def start_visit(json_data):
     player = json_data.get("player", {})
     game_uuid = json_data.get("game_uuid")
 
+    # Start is idempotent for a given UUID: replace any existing runtime state.
+    GameRoom.delete_runtime(game_uuid, room_name)
+
     room_state = GameRoom.create_initial_state(game_uuid, room_name, player, room_objects)
     token = room_state.generate_auth_token()
-    db.session.add(room_state)
-    db.session.commit()
 
     return {"token": token}
 
@@ -257,6 +270,32 @@ def reset_room():
     game_room.exits_locked = True
     db.session.commit()
     return game_room.assemble_json_room_state(t("room.reset"))
+
+
+@bp.post("/runtime/stop")
+@bp.auth_required(token_auth)
+@bp.output(RuntimeOut, status_code=200)
+def stop_runtime():
+    game_uuid = token_auth.current_user
+    deleted = GameRoom.delete_runtime(game_uuid, room_name)
+    return {
+        "game_uuid": game_uuid,
+        "status": "stopped",
+        "message": t("runtime.stopped") if deleted else t("runtime.not_found"),
+    }
+
+
+@bp.delete("/runtime")
+@bp.auth_required(token_auth)
+@bp.output(RuntimeOut, status_code=200)
+def delete_runtime():
+    game_uuid = token_auth.current_user
+    deleted = GameRoom.delete_runtime(game_uuid, room_name)
+    return {
+        "game_uuid": game_uuid,
+        "status": "deleted",
+        "message": t("runtime.deleted") if deleted else t("runtime.not_found"),
+    }
 
 
 # -----------------------------

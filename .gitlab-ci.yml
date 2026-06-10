@@ -4,15 +4,17 @@ stages:
   - test
   - deploy
 
-# pipeline is fully disabled – uncomment the block below to re-enable
-# workflow:
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#     - if: $CI_COMMIT_BRANCH == "main"
-#     - if: $CI_COMMIT_TAG
 workflow:
   rules:
-    - when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+variables:
+  ACR_NAME: "acrlabprodescape"
+  ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000003"
+  ARM_TENANT_ID: "00000000-0000-0000-0000-000000000001"
+  ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000002"
 
 default:
   tags:
@@ -38,13 +40,22 @@ default:
         - infra/**/*
         - .gitlab-ci.yml
 
-.rules-docker: &rules-docker
+.rules-docker-frontend: &rules-docker-frontend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - frontend/Dockerfile
         - frontend/**/*
+        - .gitlab-ci.yml
+
+.rules-docker-backend: &rules-docker-backend
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - backend/Dockerfile
+        - backend/**/*
         - .gitlab-ci.yml
 
 # stage 1: lint
@@ -79,13 +90,20 @@ terraform-fmt-validate:
     - cd infra && terraform init -input=false && terraform validate
     - cd ../bootstrap && terraform init -input=false && terraform validate
 
-# checks the dockerfile for best-practice violations (e.g. missing version pins, root user)
+# checks both dockerfiles for best-practice violations (e.g. missing version pins, root user)
 dockerfile-lint:
-  <<: *rules-docker
   stage: lint
   image: hadolint/hadolint:latest-debian
   script:
     - hadolint frontend/Dockerfile
+    - hadolint backend/Dockerfile
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - frontend/Dockerfile
+        - backend/Dockerfile
+        - .gitlab-ci.yml
 
 # advanced terraform linting with azure-specific rules (deprecated resource types, missing tags)
 tflint:
@@ -120,7 +138,7 @@ trivy-fs:
 # stage 2: build
 # builds the frontend docker image, on main the image is also pushed to the gitlab container registry
 frontend-docker-build:
-  <<: *rules-docker
+  <<: *rules-docker-frontend
   stage: build
   image: docker:27
   services:
@@ -137,7 +155,7 @@ frontend-docker-build:
         docker push "$IMAGE_TAG"
       fi
 
-# scans the built container image for known cves (high/critical), only runs on main where the image was pushed
+# scans the built frontend container image for known cves (high/critical), only runs on main where the image was pushed
 trivy-image:
   stage: build
   needs: [frontend-docker-build]
@@ -154,7 +172,67 @@ trivy-image:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# creates a terraform plan and stores it as artifact so terraform-apply can use it without recalculating
+# builds the backend docker image, on main the image is also pushed to the gitlab container registry
+backend-docker-build:
+  <<: *rules-docker-backend
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
+  script:
+    - docker build -t "$IMAGE_TAG" backend/
+    # push only on main (to gitlab container registry)
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker push "$IMAGE_TAG"
+      fi
+
+# scans the built backend container image for known cves (high/critical), only runs on main where the image was pushed
+trivy-image-backend:
+  stage: build
+  needs: [backend-docker-build]
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
+    TRIVY_NO_PROGRESS: "true"
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | trivy registry login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - trivy image --severity HIGH,CRITICAL --exit-code 0 "$IMAGE_TAG"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# base template for acr build jobs – authenticates against azure via oidc and uses az acr build
+.acr-build-base: &acr-build-base
+  stage: build
+  image: mcr.microsoft.com/azure-cli
+  id_tokens:
+    ARM_OIDC_TOKEN:
+      aud: https://gitlab.com
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# builds the frontend image and pushes it directly to acr
+frontend-acr-build:
+  <<: *acr-build-base
+  script:
+    - az login --service-principal --username "$ARM_CLIENT_ID" --federated-token "$ARM_OIDC_TOKEN" --tenant "$ARM_TENANT_ID"
+    - az acr build --registry "$ACR_NAME" --image "frontend:$CI_COMMIT_SHORT_SHA" frontend/
+
+# builds the backend image and pushes it directly to acr
+backend-acr-build:
+  <<: *acr-build-base
+  script:
+    - az login --service-principal --username "$ARM_CLIENT_ID" --federated-token "$ARM_OIDC_TOKEN" --tenant "$ARM_TENANT_ID"
+    - az acr build --registry "$ACR_NAME" --image "backend:$CI_COMMIT_SHORT_SHA" backend/
+
+
 terraform-plan:
   <<: *terraform-base
   stage: build
@@ -168,7 +246,7 @@ terraform-plan:
   script:
     - cd infra
     - terraform init -input=false
-    - terraform plan -input=false -out=tfplan
+    - terraform plan -input=false -out=tfplan -var "frontend_image_tag=${CI_COMMIT_SHORT_SHA:-bootstrap}" -var "backend_image_tag=${CI_COMMIT_SHORT_SHA:-bootstrap}"
     - terraform show -no-color tfplan > plan.txt
   artifacts:
     when: always
@@ -212,6 +290,10 @@ terraform-apply:
   needs:
     - job: terraform-plan
       artifacts: true
+    - job: frontend-acr-build
+      optional: true
+    - job: backend-acr-build
+      optional: true
   script:
     - cd infra
     - terraform init -input=false
@@ -238,7 +320,10 @@ release:
     description: |
       Automated release for tag **$CI_COMMIT_TAG**.
 
-      Container image: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      Container images:
+      - Frontend: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      - Backend:  `$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA`
+
       Pipeline: $CI_PIPELINE_URL
 
       See merge requests merged since the previous tag for details.

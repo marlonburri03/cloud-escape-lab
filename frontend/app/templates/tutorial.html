@@ -244,6 +244,14 @@ and minor JavaScript error handling adjustments.
     margin-left: auto;
     margin-right: auto;
   }
+  .runtime-status {
+    font-size: .875rem;
+    margin: 0 auto 1rem;
+    max-width: 420px;
+  }
+  .runtime-status.info { color: #94A3B8; }
+  .runtime-status.error { color: #FCA5A5; }
+  .runtime-status.success { color: #86EFAC; }
 
   /* ── Win banner ───────────────────────────────────────────── */
   #win-banner {
@@ -267,6 +275,12 @@ and minor JavaScript error handling adjustments.
     align-items: center;
     justify-content: space-between;
     margin-bottom: .625rem;
+  }
+  .topbar-actions {
+    display: flex;
+    gap: .45rem;
+    align-items: center;
+    flex-wrap: wrap;
   }
   .game-topbar .section-label {
     font-size: .8125rem;
@@ -318,6 +332,7 @@ and minor JavaScript error handling adjustments.
       <i class="bi bi-door-closed start-icon"></i>
       <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso.</h2>
       <p>Dig through the chaos, decode his cryptic notes, and escape before he returns from his lecture!</p>
+      <p id="runtime-status" class="runtime-status info" style="display:none;"></p>
       <button class="btn btn-primary" id="start-btn" onclick="startGame()">
         <i class="bi bi-play-fill"></i> Start Game
       </button>
@@ -347,9 +362,17 @@ and minor JavaScript error handling adjustments.
 
   <div class="game-topbar">
     <span class="section-label">Objects in the room</span>
-    <button class="btn btn-danger" id="reset-btn" onclick="resetGame()" style="font-size:.8rem;padding:.3rem .7rem">
-      <i class="bi bi-arrow-counterclockwise"></i> Reset
-    </button>
+    <div class="topbar-actions">
+      <button class="btn btn-danger" id="reset-btn" onclick="resetGame()" style="font-size:.8rem;padding:.3rem .7rem">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+      <button class="btn btn-secondary" id="stop-btn" onclick="stopRuntime()" style="font-size:.8rem;padding:.3rem .7rem">
+        <i class="bi bi-pause-circle"></i> Stop Room
+      </button>
+      <button class="btn btn-danger" id="delete-btn" onclick="deleteRuntime()" style="font-size:.8rem;padding:.3rem .7rem">
+        <i class="bi bi-trash"></i> Delete Room
+      </button>
+    </div>
   </div>
 
   <div class="game-layout">
@@ -402,58 +425,139 @@ const ROOM    = "tutorial-room";
 let gameToken   = '';
 let roomObjects = [];
 let selectedId  = null;
+let runtimeBusy = false;
 
 function generateUUID() {
   return crypto.randomUUID().replace(/-/g, '').substring(0, 32);
 }
 
-// ── API helpers ────────────────────────────────────────────────
-async function apiGet(path) {
-  const r = await fetch(`${BACKEND}/${ROOM}${path}`, {
-    headers: { 'Authorization': 'Bearer ' + gameToken }
-  });
-  return r.json();
+function setRuntimeStatus(message, type = 'info') {
+  const status = document.getElementById('runtime-status');
+  status.textContent = message;
+  status.className = `runtime-status ${type}`;
+  status.style.display = message ? 'block' : 'none';
 }
 
-async function apiPost(path, body, isForm = false) {
-  const opts = { method: 'POST', headers: { 'Authorization': 'Bearer ' + gameToken } };
+function clearRuntimeStatus() {
+  setRuntimeStatus('', 'info');
+}
+
+function showGameUi() {
+  document.getElementById('room-overlay').style.display = 'none';
+  document.getElementById('game-header').style.display = 'flex';
+  document.getElementById('game-ui').style.display = 'block';
+}
+
+function showStartUi() {
+  document.getElementById('room-overlay').style.display = 'block';
+  document.getElementById('game-header').style.display = 'none';
+  document.getElementById('game-ui').style.display = 'none';
+  document.getElementById('win-banner').classList.remove('visible');
+}
+
+function setTopbarButtonsDisabled(disabled) {
+  ['reset-btn', 'stop-btn', 'delete-btn'].forEach(id => {
+    const button = document.getElementById(id);
+    if (button) button.disabled = disabled;
+  });
+}
+
+function resetRuntimeUi(message, type = 'info') {
+  gameToken = '';
+  roomObjects = [];
+  selectedId = null;
+  document.getElementById('game-log').innerHTML = '';
+  document.getElementById('param-input').value = '';
+  hideInteraction();
+  renderObjects();
+  showStartUi();
+  setTopbarButtonsDisabled(false);
+  setRuntimeStatus(message, type);
+}
+
+function isUnauthorizedError(error) {
+  return (error?.message || '').toLowerCase().includes('unauthorized');
+}
+
+// ── API helpers ────────────────────────────────────────────────
+async function parseApiResponse(response) {
+  const rawBody = await response.text();
+  let payload = {};
+
+  if (rawBody) {
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      payload = { message: rawBody };
+    }
+  }
+
+  if (!response.ok) {
+    const detail = payload.message || payload.detail?.message || `Request failed (${response.status})`;
+    throw new Error(detail);
+  }
+
+  return payload;
+}
+
+async function apiGet(path) {
+  const r = await fetch(`${BACKEND}/${ROOM}${path}`, {
+    headers: gameToken ? { 'Authorization': 'Bearer ' + gameToken } : {}
+  });
+  return parseApiResponse(r);
+}
+
+async function apiPost(path, body = null, isForm = false) {
+  const headers = gameToken ? { 'Authorization': 'Bearer ' + gameToken } : {};
+  const opts = { method: 'POST', headers };
   if (isForm) {
     opts.body = body;
-  } else {
+  } else if (body !== null && body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
+
   const r = await fetch(`${BACKEND}/${ROOM}${path}`, opts);
-  return r.json();
+  return parseApiResponse(r);
+}
+
+async function apiDelete(path) {
+  const r = await fetch(`${BACKEND}/${ROOM}${path}`, {
+    method: 'DELETE',
+    headers: gameToken ? { 'Authorization': 'Bearer ' + gameToken } : {}
+  });
+  return parseApiResponse(r);
 }
 
 // ── Start game ─────────────────────────────────────────────────
 async function startGame() {
-  document.getElementById('start-btn').disabled = true;
+  const startButton = document.getElementById('start-btn');
+  startButton.disabled = true;
+  clearRuntimeStatus();
+
   let data;
   try {
     data = await apiPost('/start', {
       game_uuid: generateUUID(),
       player: { name: 'Player', email: 'player@escape.lab' }
     });
+
+    if (!data.token) {
+      setRuntimeStatus('Could not create room runtime. Try again.', 'error');
+      return;
+    }
+
+    gameToken = data.token;
+    showGameUi();
+    logMessage('You find yourself in a dark, dusty office…', 'info');
+
+    const state = await apiGet('/examine');
+    await refreshState(state);
   } catch (e) {
-    logMessage('Cannot reach the game backend. Start it with: python wsgi.py (port 5001)', 'error');
-    document.getElementById('room-overlay').style.display = 'grid';
-    document.getElementById('start-btn').disabled = false;
-    return;
+    resetRuntimeUi(`Cannot start room runtime: ${e.message}`, 'error');
+  } finally {
+    startButton.disabled = false;
   }
-  if (!data.token) {
-    logMessage('Could not connect to the game backend. Is it running?', 'error');
-    document.getElementById('start-btn').disabled = false;
-    return;
-  }
-  gameToken = data.token;
-  document.getElementById('room-overlay').style.display = 'none';
-  document.getElementById('game-header').style.display = 'flex';
-  document.getElementById('game-ui').style.display = 'block';
-  logMessage('You find yourself in a dark, dusty office…', 'info');
-  const state = await apiGet('/examine');
-  await refreshState(state);
 }
 
 // ── Reset game ─────────────────────────────────────────────────
@@ -462,17 +566,85 @@ async function resetGame() {
   document.getElementById('game-ui').style.display = 'block';
   document.getElementById('game-log').innerHTML = '';
   if (!gameToken) { location.reload(); return; }
-  const data = await apiPost('/reset', null, false);
-  selectedId = null;
-  hideInteraction();
-  await refreshState(data);
+
+  setTopbarButtonsDisabled(true);
+  try {
+    const data = await apiPost('/reset');
+    selectedId = null;
+    hideInteraction();
+    await refreshState(data);
+  } catch (e) {
+    if (isUnauthorizedError(e)) {
+      resetRuntimeUi('Room runtime is no longer active. Start a new game.', 'info');
+      return;
+    }
+    setRuntimeStatus(`Reset failed: ${e.message}`, 'error');
+  } finally {
+    setTopbarButtonsDisabled(false);
+  }
+}
+
+async function stopRuntime() {
+  if (runtimeBusy) return;
+  if (!gameToken) {
+    setRuntimeStatus('No active room runtime. Start a new game.', 'info');
+    return;
+  }
+
+  runtimeBusy = true;
+  setTopbarButtonsDisabled(true);
+  try {
+    const data = await apiPost('/runtime/stop');
+    resetRuntimeUi(data.message || 'Room runtime stopped.', 'info');
+  } catch (e) {
+    if (isUnauthorizedError(e)) {
+      resetRuntimeUi('No active runtime found. Start a new game.', 'info');
+      return;
+    }
+    setRuntimeStatus(`Stop failed: ${e.message}`, 'error');
+  } finally {
+    runtimeBusy = false;
+    setTopbarButtonsDisabled(false);
+  }
+}
+
+async function deleteRuntime() {
+  if (runtimeBusy) return;
+  if (!gameToken) {
+    setRuntimeStatus('No active room runtime. Start a new game.', 'info');
+    return;
+  }
+
+  runtimeBusy = true;
+  setTopbarButtonsDisabled(true);
+  try {
+    const data = await apiDelete('/runtime');
+    resetRuntimeUi(data.message || 'Room runtime deleted.', 'success');
+  } catch (e) {
+    if (isUnauthorizedError(e)) {
+      resetRuntimeUi('No active runtime found. Start a new game.', 'info');
+      return;
+    }
+    setRuntimeStatus(`Delete failed: ${e.message}`, 'error');
+  } finally {
+    runtimeBusy = false;
+    setTopbarButtonsDisabled(false);
+  }
 }
 
 // ── Examine selected object ────────────────────────────────────
 async function examineSelected() {
   if (!selectedId) return;
-  const data = await apiGet(`/objects/${selectedId}/examine`);
-  await refreshState(data);
+  try {
+    const data = await apiGet(`/objects/${selectedId}/examine`);
+    await refreshState(data);
+  } catch (e) {
+    if (isUnauthorizedError(e)) {
+      resetRuntimeUi('Room runtime is no longer active. Start a new game.', 'info');
+      return;
+    }
+    logMessage(`Examine failed: ${e.message}`, 'error');
+  }
 }
 
 // ── Interact with selected object ─────────────────────────────
@@ -483,9 +655,17 @@ async function interactSelected() {
   const objSel = document.getElementById('obj-select').value;
   if (param)  fd.append('parameter', param);
   if (objSel) fd.append('object_id', objSel);
-  const data = await apiPost(`/objects/${selectedId}/interact`, fd, true);
-  document.getElementById('param-input').value = '';
-  await refreshState(data, true);
+  try {
+    const data = await apiPost(`/objects/${selectedId}/interact`, fd, true);
+    document.getElementById('param-input').value = '';
+    await refreshState(data, true);
+  } catch (e) {
+    if (isUnauthorizedError(e)) {
+      resetRuntimeUi('Room runtime is no longer active. Start a new game.', 'info');
+      return;
+    }
+    logMessage(`Interaction failed: ${e.message}`, 'error');
+  }
 }
 
 // ── Update UI from API response ────────────────────────────────

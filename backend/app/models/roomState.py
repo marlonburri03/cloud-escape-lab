@@ -54,6 +54,12 @@ class TokenOut(Schema):
     token = String()
 
 
+class RuntimeOut(Schema):
+    game_uuid = String()
+    status = String()
+    message = String()
+
+
 class InteractionIn(Schema):
     object_id = Integer(required=False)
     parameter = String(required=False)
