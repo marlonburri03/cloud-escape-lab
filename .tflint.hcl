@@ -8,12 +8,8 @@ plugin "terraform" {
   preset  = "recommended"
 }
 
-# Many variables are declared as architectural placeholders for the next
-# iteration (e.g., hub_firewall_private_ip for the central egress route).
-# We disable this rule during MVP/MLP to avoid premature deletion of
-# planned interfaces. Re-enable once the architecture stabilises.
 rule "terraform_unused_declarations" {
-  enabled = false
+  enabled = true
 }
 
 plugin "azurerm" {

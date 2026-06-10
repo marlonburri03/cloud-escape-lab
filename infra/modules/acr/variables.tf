@@ -10,7 +10,6 @@ variable "location" {
 }
 
 # acr
-
 variable "name" {
   description = "ACR name (lowercase alphanumeric, 5-50 chars, must be globally unique)."
   type        = string
@@ -19,9 +18,4 @@ variable "name" {
 variable "sku" {
   description = "ACR sku. Basic for POC, Premium when private endpoints or geo-replication are needed."
   type        = string
-}
-
-variable "tags" {
-  description = "Tags applied to the ACR."
-  type        = map(string)
 }

@@ -1,5 +1,6 @@
-# ignore personal internal docs folder (architecture/, decisions/, runbooks/, etc.)
+# ignore internal docs
 /docs/
+.github/
 
 # ignore backup files
 *.bkp

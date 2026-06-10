@@ -320,7 +320,10 @@ release:
     description: |
       Automated release for tag **$CI_COMMIT_TAG**.
 
-      Container image: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      Container images:
+      - Frontend: `$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA`
+      - Backend:  `$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA`
+
       Pipeline: $CI_PIPELINE_URL
 
       See merge requests merged since the previous tag for details.

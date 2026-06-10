@@ -5,19 +5,13 @@ use_oidc        = true
 location    = "northeurope"
 name_prefix = "lab-prod-escape"
 
-tags = {
-  project     = "cloud-escape-lab"
-  environment = "poc"
-  owner       = "contoso-escape"
-}
-
 # vended spoke network references
 spoke_vnet_resource_group = "rg-network-lab-prod-escape"
 spoke_vnet_name           = "vnet-lab-prod-escape-ne-01"
 hub_firewall_private_ip   = "10.10.0.4"
 
 # subnets inside the vended vnet (10.20.18.0/24)
-subnet_app_address_prefix = "10.20.18.128/27"
+subnet_aca_address_prefix = "10.20.18.128/27"
 subnet_pe_address_prefix  = "10.20.18.192/27"
 
 # workload
@@ -37,3 +31,8 @@ frontend_image_tag  = "bootstrap"
 # backend image references
 backend_image_name = "backend"
 backend_image_tag  = "bootstrap"
+
+# backend api url
+# Within the ACA environment (server-side): http://ca-lab-prod-escape-backend
+# Once AppGW is configured with /tutorial-room/* path routing, update to the AppGW public hostname.
+backend_api_url = "https://escape.contoso.example"
