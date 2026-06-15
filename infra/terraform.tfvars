@@ -17,9 +17,6 @@ subnet_pe_address_prefix  = "10.20.18.192/27"
 # workload
 workload_resource_group_name = "rg-workload-lab-prod-escape"
 
-# hub references
-appgw_subnet_cidr = "10.10.2.0/24"
-
 # azure container registry
 acr_name = "acrlabprodescape"
 acr_sku  = "Basic"
@@ -32,7 +29,11 @@ frontend_image_tag  = "bootstrap"
 backend_image_name = "backend"
 backend_image_tag  = "bootstrap"
 
+<<<<<<< HEAD
 # backend api url
 # Within the ACA environment (server-side): http://ca-lab-prod-escape-backend
 # Once AppGW is configured with /tutorial-room/* path routing, update to the AppGW public hostname.
+=======
+# backend api base url used by frontend
+>>>>>>> 35b35a3 (S3M-25: format files)
 backend_api_url = "https://escape.contoso.example"
