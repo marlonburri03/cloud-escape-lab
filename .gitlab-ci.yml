@@ -11,12 +11,11 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # -----------------------------
-# GLOBAL DEFAULTS
+# GLOBAL DEFAULTS (NO IMAGE HERE!)
 # -----------------------------
 default:
   tags:
     - saas-linux-small-amd64
-  image: hashicorp/terraform:1.7
 
 variables:
   TF_DIR: "infra"
@@ -27,6 +26,9 @@ variables:
 # -----------------------------
 terraform:validate:
   stage: validate
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
   script:
     - cd $TF_DIR
     - terraform fmt -check
@@ -38,6 +40,9 @@ terraform:validate:
 # -----------------------------
 terraform:plan:
   stage: plan
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
   script:
     - cd $TF_DIR
     - terraform init
@@ -47,11 +52,14 @@ terraform:plan:
       - infra/tfplan
 
 # -----------------------------
-# TERRAFORM APPLY (manual safety)
+# TERRAFORM APPLY
 # -----------------------------
 terraform:apply:
   stage: apply
   when: manual
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
   script:
     - cd $TF_DIR
     - terraform init
@@ -92,17 +100,16 @@ build:frontend:
     - docker push $IMAGE_NAME:$IMAGE_TAG
 
 # -----------------------------
-# DEPLOY (Terraform re-apply with new image tags)
+# DEPLOY
 # -----------------------------
 deploy:infra:
   stage: deploy
-  image: hashicorp/terraform:1.7
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
   script:
     - cd $TF_DIR
     - terraform init
     - terraform apply -auto-approve
-  dependencies:
-    - build:backend
-    - build:frontend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
