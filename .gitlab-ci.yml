@@ -10,9 +10,9 @@ workflow:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-# -----------------------------
+# -----------------------------------------------------------
 # GLOBAL DEFAULTS
-# -----------------------------
+# -----------------------------------------------------------
 default:
   tags:
     - saas-linux-small-amd64
@@ -21,9 +21,32 @@ variables:
   TF_DIR: "infra"
   TF_IN_AUTOMATION: "true"
 
-# -----------------------------
-# TERRAFORM VALIDATION
-# -----------------------------
+# Azure identity values (non-secret, already in backend.tf)
+.azure_auth: &azure_auth
+  ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000003"
+  ARM_TENANT_ID: "00000000-0000-0000-0000-000000000001"
+  ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000002"
+  ARM_USE_OIDC: "true"
+  TF_VAR_tenant_id: "00000000-0000-0000-0000-000000000001"
+  TF_VAR_subscription_id: "00000000-0000-0000-0000-000000000002"
+  TF_VAR_use_oidc: "true"
+
+# OIDC token setup reused across all Terraform jobs
+.terraform_oidc: &terraform_oidc
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - export ARM_OIDC_TOKEN=$GITLAB_OIDC_TOKEN
+
+# -----------------------------------------------------------
+# STEP 1 – VALIDATE
+# Checks Terraform format and syntax without backend auth.
+# Runs on every push and every merge request.
+# -----------------------------------------------------------
 terraform:validate:
   stage: validate
   image:
@@ -35,14 +58,16 @@ terraform:validate:
     - terraform init -backend=false
     - terraform validate
 
-# -----------------------------
-# TERRAFORM PLAN
-# -----------------------------
+# -----------------------------------------------------------
+# STEP 2 – PLAN
+# Connects to Azure and previews infrastructure changes.
+# Saves plan artifact for the manual apply step.
+# -----------------------------------------------------------
 terraform:plan:
+  <<: *terraform_oidc
   stage: plan
-  image:
-    name: hashicorp/terraform:1.7
-    entrypoint: [""]
+  variables:
+    <<: *azure_auth
   script:
     - cd $TF_DIR
     - terraform init
@@ -50,26 +75,34 @@ terraform:plan:
   artifacts:
     paths:
       - infra/tfplan
+    expire_in: 1 day
 
-# -----------------------------
-# TERRAFORM APPLY
-# -----------------------------
+# -----------------------------------------------------------
+# STEP 3 – APPLY (manual)
+# Applies the saved plan. Requires manual click in GitLab UI.
+# Only available on the main branch.
+# -----------------------------------------------------------
 terraform:apply:
+  <<: *terraform_oidc
   stage: apply
-  when: manual
-  image:
-    name: hashicorp/terraform:1.7
-    entrypoint: [""]
+  variables:
+    <<: *azure_auth
   script:
     - cd $TF_DIR
     - terraform init
     - terraform apply -auto-approve tfplan
   dependencies:
     - terraform:plan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
 
-# -----------------------------
-# BUILD BACKEND IMAGE
-# -----------------------------
+# -----------------------------------------------------------
+# STEP 4a – BUILD BACKEND
+# Builds and pushes the backend image to ACR.
+# Tag: $CI_COMMIT_SHORT_SHA
+# Required CI/CD variables: ACR_LOGIN_SERVER, ACR_USERNAME, ACR_PASSWORD
+# -----------------------------------------------------------
 build:backend:
   stage: build
   image: docker:24
@@ -82,10 +115,12 @@ build:backend:
     - docker login $ACR_LOGIN_SERVER -u $ACR_USERNAME -p $ACR_PASSWORD
     - docker build -t $IMAGE_NAME:$IMAGE_TAG ./backend
     - docker push $IMAGE_NAME:$IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
 
-# -----------------------------
-# BUILD FRONTEND IMAGE
-# -----------------------------
+# -----------------------------------------------------------
+# STEP 4b – BUILD FRONTEND
+# -----------------------------------------------------------
 build:frontend:
   stage: build
   image: docker:24
@@ -98,18 +133,31 @@ build:frontend:
     - docker login $ACR_LOGIN_SERVER -u $ACR_USERNAME -p $ACR_PASSWORD
     - docker build -t $IMAGE_NAME:$IMAGE_TAG ./frontend
     - docker push $IMAGE_NAME:$IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
 
-# -----------------------------
-# DEPLOY
-# -----------------------------
-deploy:infra:
+# -----------------------------------------------------------
+# STEP 5 – DEPLOY (manual)
+# Updates Container App image tags via terraform apply.
+# Each new tag triggers a new revision in Azure Container Apps.
+# Requires manual click after build step succeeds.
+# -----------------------------------------------------------
+deploy:images:
+  <<: *terraform_oidc
   stage: deploy
-  image:
-    name: hashicorp/terraform:1.7
-    entrypoint: [""]
+  variables:
+    <<: *azure_auth
+    TF_VAR_frontend_image_tag: $CI_COMMIT_SHORT_SHA
+    TF_VAR_backend_image_tag: $CI_COMMIT_SHORT_SHA
   script:
     - cd $TF_DIR
     - terraform init
     - terraform apply -auto-approve
+        -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA"
+        -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
+  dependencies:
+    - build:backend
+    - build:frontend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+      when: manual

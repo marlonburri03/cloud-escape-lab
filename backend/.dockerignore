@@ -1,10 +1,7 @@
 __pycache__/
 *.pyc
-<<<<<<< HEAD
-.venv/
-.env
-=======
 *.pyo
 *.pyd
->>>>>>> 35b35a3 (S3M-25: format files)
+.venv/
+.env
 app.db
