@@ -8,12 +8,8 @@ resource "azurerm_container_registry" "acr" {
   public_network_access_enabled = true
 
   lifecycle {
-<<<<<<< HEAD
-    ignore_changes = [tags]
-=======
     ignore_changes = [
       tags
     ]
->>>>>>> 35b35a3 (S3M-25: format files)
   }
 }
