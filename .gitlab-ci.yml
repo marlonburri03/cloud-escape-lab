@@ -21,17 +21,7 @@ variables:
   TF_DIR: "infra"
   TF_IN_AUTOMATION: "true"
 
-# Azure identity values (non-secret, already in backend.tf)
-.azure_auth: &azure_auth
-  ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000003"
-  ARM_TENANT_ID: "00000000-0000-0000-0000-000000000001"
-  ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000002"
-  ARM_USE_OIDC: "true"
-  TF_VAR_tenant_id: "00000000-0000-0000-0000-000000000001"
-  TF_VAR_subscription_id: "00000000-0000-0000-0000-000000000002"
-  TF_VAR_use_oidc: "true"
-
-# OIDC token setup reused across all Terraform jobs
+# OIDC token setup reused across all Terraform jobs that need Azure
 .terraform_oidc: &terraform_oidc
   image:
     name: hashicorp/terraform:1.7
@@ -39,13 +29,21 @@ variables:
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
+  variables:
+    ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000003"
+    ARM_TENANT_ID: "00000000-0000-0000-0000-000000000001"
+    ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000002"
+    ARM_USE_OIDC: "true"
+    TF_VAR_tenant_id: "00000000-0000-0000-0000-000000000001"
+    TF_VAR_subscription_id: "00000000-0000-0000-0000-000000000002"
+    TF_VAR_use_oidc: "true"
   before_script:
     - export ARM_OIDC_TOKEN=$GITLAB_OIDC_TOKEN
 
 # -----------------------------------------------------------
 # STEP 1 – VALIDATE
-# Checks Terraform format and syntax without backend auth.
-# Runs on every push and every merge request.
+# Syntax- und Formatcheck ohne Backend-Verbindung.
+# Läuft bei jedem Push und jedem Merge Request.
 # -----------------------------------------------------------
 terraform:validate:
   stage: validate
@@ -59,15 +57,13 @@ terraform:validate:
     - terraform validate
 
 # -----------------------------------------------------------
-# STEP 2 – PLAN
-# Connects to Azure and previews infrastructure changes.
-# Saves plan artifact for the manual apply step.
+# STEP 2 – PLAN  (nur main)
+# Verbindet sich mit Azure und zeigt geplante Änderungen.
+# Speichert den Plan als Artifact für den Apply-Schritt.
 # -----------------------------------------------------------
 terraform:plan:
   <<: *terraform_oidc
   stage: plan
-  variables:
-    <<: *azure_auth
   script:
     - cd $TF_DIR
     - terraform init
@@ -76,17 +72,16 @@ terraform:plan:
     paths:
       - infra/tfplan
     expire_in: 1 day
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
 
 # -----------------------------------------------------------
-# STEP 3 – APPLY (manual)
-# Applies the saved plan. Requires manual click in GitLab UI.
-# Only available on the main branch.
+# STEP 3 – APPLY  (nur main, manuell)
+# Wendet den gespeicherten Plan an. Manueller Klick erforderlich.
 # -----------------------------------------------------------
 terraform:apply:
   <<: *terraform_oidc
   stage: apply
-  variables:
-    <<: *azure_auth
   script:
     - cd $TF_DIR
     - terraform init
@@ -98,10 +93,10 @@ terraform:apply:
       when: manual
 
 # -----------------------------------------------------------
-# STEP 4a – BUILD BACKEND
-# Builds and pushes the backend image to ACR.
+# STEP 4a – BUILD BACKEND  (nur main)
+# Baut und pusht das Backend-Image in die ACR.
 # Tag: $CI_COMMIT_SHORT_SHA
-# Required CI/CD variables: ACR_LOGIN_SERVER, ACR_USERNAME, ACR_PASSWORD
+# Benötigte CI/CD-Variablen: ACR_LOGIN_SERVER, ACR_USERNAME, ACR_PASSWORD
 # -----------------------------------------------------------
 build:backend:
   stage: build
@@ -119,7 +114,7 @@ build:backend:
     - if: $CI_COMMIT_BRANCH == "main"
 
 # -----------------------------------------------------------
-# STEP 4b – BUILD FRONTEND
+# STEP 4b – BUILD FRONTEND  (nur main)
 # -----------------------------------------------------------
 build:frontend:
   stage: build
@@ -137,24 +132,21 @@ build:frontend:
     - if: $CI_COMMIT_BRANCH == "main"
 
 # -----------------------------------------------------------
-# STEP 5 – DEPLOY (manual)
-# Updates Container App image tags via terraform apply.
-# Each new tag triggers a new revision in Azure Container Apps.
-# Requires manual click after build step succeeds.
+# STEP 5 – DEPLOY  (nur main, manuell)
+# Aktualisiert die Image-Tags via terraform apply.
+# Jeder neue Tag erzeugt automatisch eine neue ACA-Revision.
+# Manueller Klick nach erfolgreichem Build erforderlich.
 # -----------------------------------------------------------
 deploy:images:
   <<: *terraform_oidc
   stage: deploy
-  variables:
-    <<: *azure_auth
-    TF_VAR_frontend_image_tag: $CI_COMMIT_SHORT_SHA
-    TF_VAR_backend_image_tag: $CI_COMMIT_SHORT_SHA
   script:
     - cd $TF_DIR
     - terraform init
-    - terraform apply -auto-approve
-        -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA"
-        -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
+    - >-
+      terraform apply -auto-approve
+      -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA"
+      -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
   dependencies:
     - build:backend
     - build:frontend
