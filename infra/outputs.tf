@@ -27,6 +27,7 @@ output "acr_name" {
 }
 
 output "aca_env_default_domain" {
+<<<<<<< HEAD
   description = "Default domain of the ACA environment. Configure this as the AppGW backend pool FQDN."
   value       = module.aca_env.default_domain
 }
@@ -64,4 +65,39 @@ output "frontend_app_name" {
 
 output "backend_app_name" {
   value = module.aca_app_backend.name
+=======
+  value = module.aca_env.default_domain
+}
+
+output "aca_env_static_ip_address" {
+  value = module.aca_env.static_ip_address
+}
+
+output "frontend_fqdn" {
+  value = module.aca_app_frontend.fqdn
+}
+
+output "backend_fqdn" {
+  value = module.aca_app_backend.fqdn
+}
+
+output "backend_app_name" {
+  value = module.aca_app_backend.app_name
+}
+
+output "frontend_app_name" {
+  value = module.aca_app_frontend.app_name
+}
+
+# structured output consumed by Contoso AGW change request
+output "connectivity_appgw_config" {
+  value = {
+    frontend_backend_host_name = module.aca_app_frontend.fqdn
+    backend_backend_host_name  = module.aca_app_backend.fqdn
+    backend_paths              = ["/tutorial-room", "/tutorial-room/*"]
+    backend_port               = 80
+    backend_protocol           = "http"
+    probe_path                 = "/healthz"
+  }
+>>>>>>> 35b35a3 (S3M-25: format files)
 }

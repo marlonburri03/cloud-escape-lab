@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Production image for the Escape Room Platform Backend API.
+=======
+# Production image for the Escape Room Platform Backend.
+>>>>>>> 35b35a3 (S3M-25: format files)
 
 FROM python:3.13-slim-trixie
 

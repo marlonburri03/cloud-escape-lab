@@ -1,7 +1,6 @@
 from apiflask import Schema
 from apiflask.fields import Integer, String, Boolean, Nested
 
-from app.models.objectState import ObjectState
 from app.extensions import db
 from flask import current_app
 from jwt import encode, decode, InvalidTokenError

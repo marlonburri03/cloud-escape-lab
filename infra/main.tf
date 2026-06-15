@@ -26,6 +26,7 @@ module "acr" {
   sku                 = var.acr_sku
 }
 
+<<<<<<< HEAD
 # container app environment
 module "aca_env" {
   source              = "./modules/aca_env"
@@ -33,10 +34,20 @@ module "aca_env" {
   location            = azurerm_resource_group.workload.location
   name_prefix         = var.name_prefix
   subnet_id_aca       = module.network.subnet_id_aca
+=======
+# call aca environment module
+module "aca_env" {
+  source              = "./modules/aca_env"
+  name_prefix         = var.name_prefix
+  resource_group_name = azurerm_resource_group.workload.name
+  location            = azurerm_resource_group.workload.location
+  subnet_id           = module.network.subnet_id_aca
+>>>>>>> 35b35a3 (S3M-25: format files)
 }
 
 # frontend container app
 module "aca_app_frontend" {
+<<<<<<< HEAD
   source                       = "./modules/aca_app"
   resource_group_name          = azurerm_resource_group.workload.name
   name_prefix                  = var.name_prefix
@@ -54,12 +65,28 @@ module "aca_app_frontend" {
     # Within the ACA environment, container apps are reachable via their app name.
     # For browser-side JS calls, configure AppGW path routing (/tutorial-room/*) and set this
     # to the public AppGW hostname once available.
+=======
+  source              = "./modules/aca_app"
+  name_prefix         = var.name_prefix
+  app_name            = "frontend"
+  resource_group_name = azurerm_resource_group.workload.name
+  aca_env_id          = module.aca_env.id
+  acr_id              = module.acr.id
+  acr_login_server    = module.acr.login_server
+  image_name          = var.frontend_image_name
+  image_tag           = var.frontend_image_tag
+  target_port         = 8000
+  min_replicas        = 1
+  max_replicas        = 3
+  app_settings = {
+>>>>>>> 35b35a3 (S3M-25: format files)
     BACKEND_URL = var.backend_api_url
   }
 }
 
 # backend container app
 module "aca_app_backend" {
+<<<<<<< HEAD
   source                       = "./modules/aca_app"
   resource_group_name          = azurerm_resource_group.workload.name
   name_prefix                  = var.name_prefix
@@ -75,6 +102,23 @@ module "aca_app_backend" {
 }
 
 # private DNS zone for the ACA environment
+=======
+  source              = "./modules/aca_app"
+  name_prefix         = var.name_prefix
+  app_name            = "backend"
+  resource_group_name = azurerm_resource_group.workload.name
+  aca_env_id          = module.aca_env.id
+  acr_id              = module.acr.id
+  acr_login_server    = module.acr.login_server
+  image_name          = var.backend_image_name
+  image_tag           = var.backend_image_tag
+  target_port         = 5001
+  min_replicas        = 1
+  max_replicas        = 1
+}
+
+# private dns zone for the aca environment (auto-named by azure)
+>>>>>>> 35b35a3 (S3M-25: format files)
 resource "azurerm_private_dns_zone" "aca_env" {
   name                = module.aca_env.default_domain
   resource_group_name = azurerm_resource_group.workload.name
@@ -84,6 +128,7 @@ resource "azurerm_private_dns_zone" "aca_env" {
   }
 }
 
+<<<<<<< HEAD
 # wildcard A record covers all container app FQDNs within the environment
 resource "azurerm_private_dns_a_record" "aca_wildcard" {
   name                = "*"
@@ -94,6 +139,8 @@ resource "azurerm_private_dns_a_record" "aca_wildcard" {
 }
 
 # apex A record covers the environment FQDN itself (AppGW health probes)
+=======
+>>>>>>> 35b35a3 (S3M-25: format files)
 resource "azurerm_private_dns_a_record" "aca_apex" {
   name                = "@"
   zone_name           = azurerm_private_dns_zone.aca_env.name
@@ -102,7 +149,18 @@ resource "azurerm_private_dns_a_record" "aca_apex" {
   records             = [module.aca_env.static_ip_address]
 }
 
+<<<<<<< HEAD
 # link the DNS zone to the spoke VNet so workloads can resolve ACA FQDNs
+=======
+resource "azurerm_private_dns_a_record" "aca_wildcard" {
+  name                = "*"
+  zone_name           = azurerm_private_dns_zone.aca_env.name
+  resource_group_name = azurerm_resource_group.workload.name
+  ttl                 = 300
+  records             = [module.aca_env.static_ip_address]
+}
+
+>>>>>>> 35b35a3 (S3M-25: format files)
 resource "azurerm_private_dns_zone_virtual_network_link" "aca_env_spoke" {
   name                  = "vnetlink-cae-spoke"
   resource_group_name   = azurerm_resource_group.workload.name

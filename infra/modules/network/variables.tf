@@ -11,7 +11,11 @@ variable "spoke_vnet_name" {
 
 # subnet plan inside the vended /24
 variable "subnet_aca_address_prefix" {
+<<<<<<< HEAD
   description = "CIDR for the ACA environment infrastructure subnet inside the vended spoke."
+=======
+  description = "CIDR for the ACA environment subnet (delegated to Microsoft.App/environments)."
+>>>>>>> 35b35a3 (S3M-25: format files)
   type        = string
 }
 

@@ -367,7 +367,7 @@ __Sprint Retrospective:__
 
 Für die Retrospektive habe ich wie im vergangenen Semester die Mad, Sad, Glad Methode auf einem Miro-Board angewendet. Sie erlaubt eine kompakte, ehrliche Einschätzung des Sprints aus drei verschiedenen Blickwinkeln.
 
-![Sprint1Retro](img/sprint1retro.png)
+![Sprint1Retro](./img/sprint1retro.png)
 *Screenshot vom Miro Board für die Retrospektive des Sprint 1.*
 
 **Lessons Learned:**
@@ -419,17 +419,19 @@ __Lessons Learned:__
 
 # 4 Lösungsdesign
 
-Im Lösungsdesign stehen die zentralen Leitplanken des Projekts im Vordergrund. Die technische Arbeitsweise, das Zielbild in Azure sowie das Git- und Delivery-Modell. Ziel ist eine Lösung, die wartbar, sicher und für weitere Escape-Room-Inhalte sauber erweiterbar ist.
+Zu Beginn des Projekts wurden die grundlegenden Rahmenbedingungen für die technische Umsetzung definiert. Dabei standen insbesondere die Engineering-Prinzipien, das Delivery-Modell sowie die Zielarchitektur in Azure im Fokus. Ziel ist eine wartbare, sichere und erweiterbare Plattform, welche die Entwicklung und den Betrieb mehrerer Escape-Room-Szenarien unterstützt.
 
 ## 4.1 Arbeitsweise und Engineering-Prinzipien
 
-Die Umsetzung folgt einem Engineering-Ansatz, bei dem Infrastruktur, Application Code und Deployment nicht getrennt betrachtet werden, sondern als zusammenhängendes System. Änderungen sollen reproduzierbar, nachvollziehbar und mit möglichst wenig manuellen Eingriffen ausgerollt werden. Daraus ergeben sich für das Projekt drei Grundprinzipien:
+Die Umsetzung folgt einem Engineering-Ansatz, bei dem Infrastruktur, Anwendungscode und Deployment als integriertes Gesamtsystem betrachtet werden. Änderungen sollen reproduzierbar, nachvollziehbar und mit minimalem manuellem Aufwand ausgerollt werden können.
 
-- **Infrastructure as Code**: Azure-Ressourcen werden deklarativ beschrieben, versioniert und kontrolliert geändert.
-- **Automation first**: Nach einem einmaligen Bootstrap laufen Änderungen über einen definierten Delivery-Prozess statt über manuelle Eingriffe im Portal.
-- **Security by Design**: Die Authentifizierung erfolgt über Managed Identities in Azure um kurzlebige Tokens statt dauerhaft hinterlegte Secrets zu verwenden.
+Daraus ergeben sich folgende Grundprinzipien:
 
-Damit bleiben Changes nachvollziehbar, Deployments konsistent und der Betriebsaufwand auch bei wachsendem Scope kontrollierbar.
+- **Infrastructure as Code (IaC):** Sämtliche Azure-Ressourcen werden deklarativ beschrieben, versioniert und automatisiert bereitgestellt.
+- **Automation First:** Nach der initialen Einrichtung erfolgen Änderungen ausschliesslich über definierte CI/CD-Prozesse anstelle manueller Anpassungen im Azure-Portal.
+- **Security by Design:** Die Authentifizierung gegenüber Azure-Diensten erfolgt über Managed Identities und Microsoft Entra ID. Dadurch können statische Zugangsdaten vermieden und Sicherheitsrisiken reduziert werden.
+
+Diese Prinzipien stellen sicher, dass Änderungen nachvollziehbar bleiben, Deployments konsistent durchgeführt werden und der Betriebsaufwand auch bei wachsendem Projektumfang beherrschbar bleibt.
 
 ## 4.2 Lösungsdesign in Azure
 
@@ -499,6 +501,7 @@ Releases werden zusätzlich über Tags markiert, damit wichtige Projektstände w
 
 # 5 Umsetzung
 
+<<<<<<< HEAD
 ## 5.1 Erstmaliges Deployment (Bootstrap)
 
 Vor dem ersten automatisierten Deployment über die CI/CD-Pipeline müssen die Container-Images manuell gebaut und in die Azure Container Registry (ACR) gepusht werden. Hintergrund: Die Pipeline benötigt ein bereits vorhandenes Image in der ACR, bevor Azure Container Apps eine Revision erfolgreich starten kann. Beim allerersten `terraform apply` existiert dieses Image noch nicht, weshalb ein manueller Bootstrap-Schritt notwendig ist.
@@ -544,6 +547,185 @@ terraform apply
 ### Danach: Normaler Delivery-Prozess
 
 Ab dem ersten erfolgreichen Deployment läuft alles über die GitLab CI/CD-Pipeline. Ein Push auf `main` löst automatisch den Build aus, pusht neue Images mit dem Commit-SHA als Tag in die ACR und aktualisiert die Container Apps via `terraform apply` (manuell auslösbar im GitLab-UI).
+=======
+Dieses Kapitel beschreibt die technische Umsetzung der deployte Plattformarchitektur. Im Fokus stehen die konkreten Implementierungsentscheide, ihre Begründung und das Zusammenspiel der beteiligten Komponenten. Die Darstellung folgt dem natürlichen Ablauf: vom einmaligen Bootstrap über die Infrastrukturbereitstellung und die CI/CD-Pipeline bis hin zum Routing und der Netzwerkanbindung.
+
+## 5.1 Erstmaliges Deployment (Bootstrap)
+
+Der Bootstrap-Prozess löst ein strukturelles Henne-Ei-Problem, das bei vollständig codegetriebenen CI/CD-Setups mit Remote-State unvermeidbar auftritt: Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure — beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
+
+Die Lösung besteht in einem einmaligen, lokal ausgeführten `terraform apply` des Bootstrap-Stacks (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und darf nach der Ersteinrichtung nicht mehr verändert werden. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
+
+| Ressource | Zweck |
+|---|---|
+| Azure Storage Account `sttfstatescape` | Remote-Backend für alle Terraform-State-Dateien |
+| User-Assigned Managed Identity `mi-maker` | OIDC-Identität für die GitLab CI/CD-Pipeline |
+| OIDC Federated Identity Credential | Verknüpft die GitLab-Pipeline mit der Azure-Identität über Entra ID |
+
+Nach erfolgreichem Bootstrap verfügt die Pipeline über eine vertrauenswürdige Azure-Identität und einen stabilen State-Speicher. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
+
+### Kaltstart der Container Images
+
+Ein zweites strukturelles Problem ergibt sich beim allerersten `terraform apply` des Platform-Stacks: Azure Container Apps referenzieren bei ihrer Erstellung ein Container-Image aus der ACR, das zu diesem Zeitpunkt noch nicht existiert. Terraform bricht den Vorgang in diesem Fall ab, da die referenzierte Ressource nicht auflösbar ist.
+
+Um diesen Kaltstart zu ermöglichen, werden die Container-Images für Frontend und Backend einmalig manuell gebaut und in die ACR gepusht, bevor das IaC zum ersten Mal ausgeführt wird. Dafür wird `az acr build` eingesetzt, das den Build-Vorgang direkt in der Azure Cloud-Umgebung ausführt — eine lokale Container-Runtime ist nicht erforderlich:
+
+```bash
+az acr build --registry acrlabprodescape --image frontend:bootstrap ./frontend/
+az acr build --registry acrlabprodescape --image backend:bootstrap ./backend/
+```
+
+Nach diesem einmaligen Schritt werden Images ausschliesslich über die GitLab-Pipeline erstellt und mit einem Commit-SHA als Tag versioniert. Das `bootstrap`-Tag dient ausschliesslich als Platzhalter für die Erstkonfiguration.
+
+### Übergang zum automatisierten Betrieb
+
+Der Bootstrap gliedert sich in drei klar abgegrenzte Phasen:
+
+| Phase | Ausführung | Inhalt |
+|---|---|---|
+| 1 – Bootstrap | Lokal, einmalig | `bootstrap/` terraform apply — erstellt State-Backend und OIDC-Identität |
+| 2 – Kaltstart | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
+| 3 – Automatisierter Betrieb | GitLab CI/CD, dauerhaft | Quality Gates → terraform apply → Image build & push → Image-Tag-Update |
+
+Mit Abschluss von Phase 2 ist kein manueller Eingriff mehr für das Deployment von Änderungen notwendig.
+
+## 5.2 Infrastructure as Code mit OpenTofu
+
+Die gesamte Azure-Infrastruktur wird deklarativ mit OpenTofu beschrieben, das zur Terraform-CLI kompatibel ist und unter einer freien Lizenz steht. Die Wahl von OpenTofu gegenüber dem proprietären Terraform CLI folgt dem Open-Source-First-Prinzip und vermeidet Abhängigkeiten von lizenzbezogenen Einschränkungen.
+
+### State-Trennung
+
+Der Infrastrukturcode ist in drei unabhängige Stacks mit je eigenem Remote-State in Azure Blob Storage aufgeteilt:
+
+```
+bootstrap/   → key: bootstrap/terraform.tfstate    (lokal, einmalig)
+infra/        → key: platform/terraform.tfstate     (Plattform-Pipeline)
+themes/<n>/   → key: themes/<n>/terraform.tfstate   (Theme-Pipeline)
+```
+
+Diese Trennung ist architektonisch begründet: Platform- und Theme-Stacks haben unterschiedliche Release-Kadenz und klar abgegrenzte Zuständigkeiten. Ein Theme-Deployment berührt die stabile Plattform nicht; ein Platform-Upgrade destabilisiert keine laufenden Themes. Isolierte State-Dateien stellen sicher, dass Deployments vollständig entkoppelt und parallel ausführbar sind.
+
+### Modulstruktur des Platform-Stacks
+
+Der Platform-Stack (`infra/`) ist in klar abgegrenzte Terraform-Module gegliedert:
+
+| Modul | Enthaltene Ressourcen |
+|---|---|
+| `network` | Subnets `snet-aca` (delegiert an `Microsoft.App/environments`) und `snet-pe`, NSGs |
+| `acr` | Azure Container Registry (`acrlabprodescape`, Basic SKU) |
+| `aca_env` | Container App Environment `cae-lab-prod-escape` (internal LB, VNet-integriert) |
+| `aca_app` | Container App Instanzen für Frontend und Backend |
+
+Jedes Modul exponiert ausschliesslich die Outputs, die von anderen Modulen oder von der Pipeline benötigt werden. Intern bleibt die Implementierung gekapselt, sodass einzelne Module refaktoriert werden können, ohne State-Abhängigkeiten zu gefährden.
+
+### Deployte Azure-Ressourcen
+
+Die folgende Übersicht zeigt den aktuell deployte Plattformzustand:
+
+| Ressource | Name | Kenndaten |
+|---|---|---|
+| Container App Environment | `cae-lab-prod-escape` | Internal LB, `public_network_access: Disabled`, statische IP `10.20.18.156` |
+| Container App (Frontend) | `ca-lab-prod-escape-frontend` | Port 8000, HTTP, System-Assigned MI, min 1 / max 3 Replicas |
+| Container App (Backend) | `ca-lab-prod-escape-backend` | Port 5001, HTTP, System-Assigned MI, min 1 / max 1 Replica |
+| Container Registry | `acrlabprodescape` | Basic SKU, Image Pull via System-Assigned MI |
+| Log Analytics Workspace | `law-lab-prod-escape` | Retention 30 Tage |
+| Private DNS Zone | `examplepebble-00000000.northeurope.azurecontainerapps.io` | A-Records `@` und `*` → `10.20.18.156`, VNet-linked |
+| Subnet ACA | `snet-aca`, `10.20.18.128/27` | Delegiert an `Microsoft.App/environments` |
+| Subnet PE | `snet-pe`, `10.20.18.192/27` | Für zukünftige Private Endpoints |
+
+Die Private DNS Zone wird von OpenTofu automatisch beim Erstellen des Container App Environments ausgelesen und im Spoke-VNet verankert. Die A-Records `@` und `*` zeigen beide auf die statische IP des internen Load Balancers, sodass alle Container App FQDNs innerhalb des VNets auflösbar sind.
+
+## 5.3 CI/CD-Pipeline
+
+Die GitLab CI/CD-Pipeline automatisiert den gesamten Delivery-Prozess vom Code-Commit bis zum produktiven Deployment in Azure.
+
+### Pipelinestruktur
+
+Entsprechend der Trennung von Platform- und Theme-Stacks existieren zwei unabhängige Pipelines, die über `changes:`-Regeln selektiv ausgelöst werden:
+
+**Plattform-Pipeline** (ausgelöst durch Änderungen in `infra/`, `frontend/`, `backend/`):
+
+| Stage | Inhalt |
+|---|---|
+| Quality Gates | `ruff` (Python-Linting), `tflint`, `terraform fmt/validate`, `hadolint` (Dockerfile), `trivy` (Security-Scan) |
+| IaC | `terraform apply infra/` — Infrastrukturänderungen am Platform-Stack |
+| Build | Build und Push von Frontend- und Backend-Images mit Commit-SHA-Tag in die ACR |
+| Deploy | `terraform apply infra/` — Aktualisierung der Image-Tag-Referenz in den Container Apps |
+
+**Theme-Pipeline** (ausgelöst durch Änderungen in `themes/<name>/`):
+
+| Stage | Inhalt |
+|---|---|
+| Build | Build und Push des Theme-Images in die ACR |
+| IaC | `terraform apply themes/<name>/` — Deployment des Theme-Stacks |
+
+Das abschliessende `terraform apply` der Plattform-Pipeline aktualisiert ausschliesslich die Image-Tag-Referenz. Container App Revisions in Azure werden dabei automatisch erstellt, da jede Image-Tag-Änderung eine neue Revision auslöst.
+
+### Passwortlose Authentifizierung via OIDC
+
+Die Pipeline authentifiziert sich gegenüber Azure über OpenID Connect (OIDC) ohne statische Credentials. Für jede Pipeline-Ausführung stellt GitLab ein kurzlebiges OIDC-Token aus. Die Managed Identity `mi-maker` ist via Federated Identity Credential so konfiguriert, dass sie ausschliesslich Tokens von GitLab.com mit passenden Branch-Namen akzeptiert.
+
+Dabei ist zu beachten: Azure Federated Identity Credentials erlauben keinen Wildcard-Match über `/`-Zeichen in Branch-Namen. Ein Branch `feature/xyz` würde die OIDC-Authentifizierung stillschweigend fehlschlagen lassen. Die Projekt-Konvention `feature-xyz` (Bindestrich statt Schrägstrich) ist deshalb eine direkte technische Anforderung dieser Azure-seitigen Einschränkung — keine rein stilistische Entscheidung.
+
+### Quality Gates als technisches Merge-Gate
+
+Die Quality-Stage ist als Pflichtvoraussetzung für jeden Merge Request nach `main` definiert. Ein Merge ist erst möglich, wenn alle Checks grün sind. Dies verhindert, dass syntaktisch fehlerhafter Terraform-Code, Container-Images mit kritischen CVEs oder Python-Code unterhalb des definierten Qualitätsniveaus in den Hauptbranch gelangen. Die Linter — `ruff`, `tflint`, `hadolint` und `trivy` — wurden bewusst früh im Sprint integriert, um Qualitätsprobleme bereits auf Entwicklerebene zu erkennen, bevor sie die Azure-Umgebung erreichen.
+
+## 5.4 Öffentlicher Zugriff, DNS und Routing
+
+### Architektonische Einordnung
+
+Der öffentliche Zugriff auf die Plattform erfolgt ausschliesslich über den zentralen Application Gateway WAFv2 in der Hub-Subscription der Contoso. Dieses Hub-and-Spoke-Modell hat drei direkte Auswirkungen auf das Projekt:
+
+- **Governance:** TLS-Zertifikate, WAF-Policies und Firewall-Regeln werden von Contoso zentral verwaltet. Das Projekt muss diese Aspekte nicht selbst betreiben.
+- **Security:** Die WAF mit OWASP CRS schützt vor häufigen Angriffsvektoren, ohne eine eigene WAF-Konfiguration im Spoke zu erfordern.
+- **Einschränkung:** Das Projekt hat keinen direkten schreibenden Zugriff auf die Application-Gateway-Konfiguration. Neue Routing-Einträge werden einmalig pro Theme via Change Request an Contoso beantragt.
+
+### DNS-Konfiguration
+
+Der Hostname `escape.contoso.example` ist im Contoso-internen DNS (IPAM) als CNAME-Eintrag eingetragen, der auf den öffentlichen DNS-Namen des Application Gateways zeigt. Dieser Schritt liegt ausserhalb der automatisierten Infrastruktur und wurde einmalig manuell über ein Change Request an Contoso vorgenommen.
+
+### TLS-Terminierung und internes Routing
+
+Das Application Gateway terminiert TLS am Edge mit dem zentral verwalteten Wildcard-Zertifikat `*.contoso.example`. Die interne Verbindung vom Application Gateway zu den Container Apps im Spoke erfolgt über **HTTP auf Port 80**. TLS-Terminierung geschieht ausschliesslich am Edge; innerhalb des Hub-VNets ist der Traffic unverschlüsselt, da er nie das Netzwerkperimeter verlässt.
+
+Das Application Gateway löst die Container App FQDNs über die Private DNS Zone im Spoke auf:
+
+```
+escape.contoso.example  →  CNAME  →  AppGW Public FQDN (Hub)
+  AppGW → Private DNS → examplepebble-00000000.northeurope.azurecontainerapps.io
+    @ / * → 10.20.18.156 (ACA internal LB)
+      ├─ frontend FQDN → ca-lab-prod-escape-frontend (Port 8000)
+      └─ backend FQDN  → ca-lab-prod-escape-backend  (Port 5001)
+```
+
+### Path-basiertes Routing
+
+Auf dem Listener `escape.contoso.example:443` leitet das Application Gateway Anfragen anhand des URL-Pfads an die zuständige Container App weiter:
+
+| URL-Pfad | Ziel | Backend |
+|---|---|---|
+| `/` und alle übrigen Pfade | Frontend Container App | `ca-lab-prod-escape-frontend`, HTTP:80 |
+| `/tutorial-room`, `/tutorial-room/*` | Backend Container App | `ca-lab-prod-escape-backend`, HTTP:80 |
+
+Der Health-Check-Probe des Application Gateways trifft auf `/healthz` der Frontend Container App.
+
+Das Frontend Container App ist mit `BACKEND_URL = "https://escape.contoso.example"` konfiguriert. API-Requests des Frontends an das Backend laufen damit über den öffentlichen Hostnamen und werden vom Application Gateway erneut geroutet — ein pragmatischer Ansatz für den POC, der eine direkte interne Service-to-Service-Kommunikation noch nicht voraussetzt.
+
+## 5.5 Managed Identity und ACR-Zugriff
+
+Beide Container Apps verwenden eine **System-Assigned Managed Identity**, über die sie Container-Images direkt aus der ACR beziehen. Die Managed Identity erhält auf der ACR die Rolle `AcrPull`, die ausschliesslich das Lesen und Pullen von Images erlaubt — keine Write-Rechte. Statische Zugangsdaten für die Registry sind damit vollständig eliminiert.
+
+```
+Container App (System MI)
+  └─ AcrPull-Rollenzuweisung
+       └─ acrlabprodescape.azurecr.io
+            ├─ frontend:bootstrap  (Kaltstart)
+            └─ frontend:<sha>      (CI/CD-Betrieb)
+```
+
+Dieses Muster gilt identisch für die Backend Container App. Die Rollenzuweisungen werden durch OpenTofu als `azurerm_role_assignment`-Ressourcen verwaltet und sind damit reproduzierbar und auditierbar.
+>>>>>>> 35b35a3 (S3M-25: format files)
 
 ---
 

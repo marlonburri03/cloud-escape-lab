@@ -8,7 +8,6 @@ repos:
       - id: check-yaml
       - id: check-merge-conflict
       - id: detect-private-key
-
   # lints and formats python code in frontend/ (replaces flake8 + black + isort)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.4
@@ -18,14 +17,13 @@ repos:
         files: ^frontend/
       - id: ruff-format
         files: ^frontend/
-
-  # checks dockerfiles for best-practice violations
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.13.0-beta
+  # formats terraform/opentofu files recursively
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.0
     hooks:
-      - id: hadolint-docker
-        files: Dockerfile$
-
+      - id: terraform_fmt
+        args:
+          - --args=-recursive
   # scans for accidentally committed secrets and credentials
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2

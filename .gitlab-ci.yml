@@ -1,13 +1,14 @@
 stages:
   - lint
+  - infra
   - build
-  - test
   - deploy
 
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+<<<<<<< HEAD
     - if: $CI_COMMIT_TAG
 
 variables:
@@ -15,40 +16,52 @@ variables:
   ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000003"
   ARM_TENANT_ID: "00000000-0000-0000-0000-000000000001"
   ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000002"
+=======
+>>>>>>> 35b35a3 (S3M-25: format files)
 
 default:
   tags:
     - saas-linux-small-amd64
   interruptible: true
 
-# reusable rule sets (jobs always run on main)
-# on mrs only when the respective files changed
+# reusable rule sets
 .rules-python: &rules-python
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - frontend/**/*
+        - backend/**/*
+        - .gitlab-ci.yml
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - frontend/**/*
+        - backend/**/*
         - .gitlab-ci.yml
 
 .rules-terraform: &rules-terraform
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - infra/**/*
+        - .gitlab-ci.yml
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        - bootstrap/**/*
         - infra/**/*
         - .gitlab-ci.yml
 
+<<<<<<< HEAD
 .rules-docker-frontend: &rules-docker-frontend
+=======
+.rules-main-deploy: &rules-main-deploy
+>>>>>>> 35b35a3 (S3M-25: format files)
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        - frontend/Dockerfile
         - frontend/**/*
-        - .gitlab-ci.yml
+        - backend/**/*
+        - infra/**/*
 
+<<<<<<< HEAD
 .rules-docker-backend: &rules-docker-backend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -70,6 +83,9 @@ python-lint:
     - ruff check frontend/
 
 # base template for all terraform jobs, authenticates against azure via oidc
+=======
+# base template for terraform jobs (OIDC auth)
+>>>>>>> 35b35a3 (S3M-25: format files)
 .terraform-base: &terraform-base
   image:
     name: hashicorp/terraform:1.9
@@ -81,15 +97,35 @@ python-lint:
     ARM_USE_OIDC: "true"
     TF_IN_AUTOMATION: "true"
 
-# checks terraform code for correct formatting and syntactic validity
+# base template for azure cli jobs (OIDC auth)
+.azure-base: &azure-base
+  image: mcr.microsoft.com/azure-cli:2.65.0
+  id_tokens:
+    ARM_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - az login --service-principal -u "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$ARM_OIDC_TOKEN" --output none
+    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
+
+# stage 1: lint
+python-lint:
+  <<: *rules-python
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install --quiet ruff
+  script:
+    - ruff check frontend/
+    - ruff check backend/
+
 terraform-fmt-validate:
   <<: [*rules-terraform, *terraform-base]
   stage: lint
   script:
     - terraform fmt -check -recursive bootstrap/ infra/
     - cd infra && terraform init -input=false && terraform validate
-    - cd ../bootstrap && terraform init -input=false && terraform validate
 
+<<<<<<< HEAD
 # checks both dockerfiles for best-practice violations (e.g. missing version pins, root user)
 dockerfile-lint:
   stage: lint
@@ -255,39 +291,33 @@ terraform-plan:
       - infra/tfplan
       - infra/.terraform.lock.hcl
     expire_in: 1 week
-
-# stage 3: test
-# runs pytest and produces a coverage report (cobertura format for gitlab coverage display)
-# skipped if no tests/ directory exists
-python-test:
-  <<: *rules-python
-  stage: test
-  image: python:3.12-slim
-  before_script:
-    - pip install --quiet -r frontend/requirements.txt
-    - pip install --quiet pytest pytest-cov
+=======
+# stage 2: infra deploy (always first on main)
+infra-apply:
+  <<: [*rules-main-deploy, *terraform-base]
+  stage: infra
   script:
-    - |
-      if [ -d "frontend/tests" ]; then
-        cd frontend && pytest --cov=app --cov-report=term --cov-report=xml
-      else
-        echo "No tests found, skipping step."
-      fi
-  coverage: '/TOTAL.*\s+(\d+%)$/'
-  artifacts:
-    when: always
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: frontend/coverage.xml
-    expire_in: 1 week
+    - cd infra
+    - terraform init -input=false
+    - terraform apply -input=false -auto-approve
+>>>>>>> 35b35a3 (S3M-25: format files)
 
-# stage 4: deploy
-# applies the terraform plan to the production environment, must be triggered manually in gitlab
-terraform-apply:
-  <<: *terraform-base
+# stage 3: build and push both application images
+build-container-images:
+  <<: [*rules-main-deploy, *azure-base]
+  stage: build
+  needs:
+    - infra-apply
+  script:
+    - az acr build --registry "$ACR_NAME" --image "frontend:$CI_COMMIT_SHORT_SHA" ./frontend
+    - az acr build --registry "$ACR_NAME" --image "backend:$CI_COMMIT_SHORT_SHA" ./backend
+
+# stage 4: deploy frontend and backend container versions
+deploy-app-images:
+  <<: [*rules-main-deploy, *terraform-base]
   stage: deploy
   needs:
+<<<<<<< HEAD
     - job: terraform-plan
       artifacts: true
     - job: frontend-acr-build
@@ -327,3 +357,10 @@ release:
       Pipeline: $CI_PIPELINE_URL
 
       See merge requests merged since the previous tag for details.
+=======
+    - build-container-images
+  script:
+    - cd infra
+    - terraform init -input=false
+    - terraform apply -input=false -auto-approve -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA" -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
+>>>>>>> 35b35a3 (S3M-25: format files)

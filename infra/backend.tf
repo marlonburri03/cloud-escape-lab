@@ -8,6 +8,6 @@ terraform {
     container_name       = "tfstate"
     key                  = "infrastructure.tfstate"
     use_oidc             = true
-    use_azuread_auth     = true
+    # use_azuread_auth     = true
   }
 }
