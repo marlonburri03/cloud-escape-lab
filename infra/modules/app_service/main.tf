@@ -92,7 +92,7 @@ resource "azurerm_role_assignment" "acr_pull" {
   role_definition_name = "AcrPull"
   principal_id         = azurerm_linux_web_app.frontend.identity[0].principal_id
 
-    lifecycle {
+  lifecycle {
     ignore_changes = [
       tags
     ]
