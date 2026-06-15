@@ -11,7 +11,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # -----------------------------
-# GLOBAL DEFAULTS (NO IMAGE HERE!)
+# GLOBAL DEFAULTS
 # -----------------------------
 default:
   tags:
