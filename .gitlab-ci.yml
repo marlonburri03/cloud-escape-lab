@@ -42,12 +42,10 @@ default:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
-        - bootstrap/**/*
         - infra/**/*
         - .gitlab-ci.yml
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        - bootstrap/**/*
         - infra/**/*
         - .gitlab-ci.yml
 
@@ -62,7 +60,6 @@ default:
         - frontend/**/*
         - backend/**/*
         - infra/**/*
-        - bootstrap/**/*
 
 <<<<<<< HEAD
 .rules-docker-backend: &rules-docker-backend
@@ -127,7 +124,6 @@ terraform-fmt-validate:
   script:
     - terraform fmt -check -recursive bootstrap/ infra/
     - cd infra && terraform init -input=false && terraform validate
-    - cd ../bootstrap && terraform init -input=false && terraform validate
 
 <<<<<<< HEAD
 # checks both dockerfiles for best-practice violations (e.g. missing version pins, root user)
