@@ -1,8 +1,10 @@
 stages:
   - validate
+  - scan
   - plan
   - apply
   - build
+  - image-scan
   - deploy
 
 workflow:
@@ -10,7 +12,6 @@ workflow:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-# global defaults
 default:
   tags:
     - saas-linux-small-amd64
@@ -19,9 +20,9 @@ variables:
   TF_DIR: "infra"
   TF_IN_AUTOMATION: "true"
 
-# hidden job for build jobs - oidc login to acr without static credentials
+# anchor: oidc build (docker + azure cli)
 .build_oidc:
-  image: mcr.microsoft.com/azure-cli
+  image: docker:24
   services:
     - docker:24-dind
   variables:
@@ -31,18 +32,19 @@ variables:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
-    - curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-24.0.9.tgz" | tar xz --strip-components=1 -C /usr/local/bin docker/docker
-    - ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2 | tr -d ' ')
-    - ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
-    - az login --service-principal --federated-token "$GITLAB_OIDC_TOKEN" --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID"
+    - apk add --no-cache python3 py3-pip bash grep coreutils
+    - pip install --no-cache-dir azure-cli
+    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
+    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
     - az account set --subscription "$ARM_SUBSCRIPTION_ID"
-    - ACR_TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+    - export ACR_TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
     - echo "$ACR_TOKEN" | docker login "$ACR_LOGIN_SERVER" -u 00000000-0000-0000-0000-000000000000 --password-stdin
 
-# oidc anchor reused across all terraform jobs that need azure
+# anchor: terraform oidc
 .terraform_oidc: &terraform_oidc
   image:
-    name: hashicorp/terraform:1.7
+    name: hashicorp/terraform:1.7.5
     entrypoint: [""]
   id_tokens:
     GITLAB_OIDC_TOKEN:
@@ -57,34 +59,72 @@ variables:
     - cd $TF_DIR
     - terraform init -backend-config="oidc_token=$GITLAB_OIDC_TOKEN"
 
-# step 1 - validate: syntax and format check without backend connection
-# runs on every push and every merge request
+# stage: validate
 terraform:validate:
   stage: validate
   image:
-    name: hashicorp/terraform:1.7
+    name: hashicorp/terraform:1.7.5
     entrypoint: [""]
   script:
     - cd $TF_DIR
     - terraform fmt -check
     - terraform init -backend=false
     - terraform validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
 
-# step 2 - plan: connects to azure and shows planned changes
-# saves the plan as artifact for the apply step (main only)
+# stage: scan - checkov iac security scanning
+checkov:scan:
+  stage: scan
+  image: python:3.12-slim
+  needs:
+    - terraform:validate
+  before_script:
+    - pip install --no-cache-dir checkov
+  script:
+    - >
+      checkov
+      --directory $TF_DIR
+      --framework terraform
+      --output cli
+      --output sarif
+      --output-file-path console,checkov-report.sarif
+      --soft-fail
+      --compact
+      --quiet
+  artifacts:
+    name: checkov-report
+    paths:
+      - checkov-report.sarif
+    reports:
+      sast: checkov-report.sarif
+    expire_in: 7 days
+    when: always
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# stage: plan (FIXED → NO MR anymore)
 terraform:plan:
   <<: *terraform_oidc
   stage: plan
+  needs:
+    - checkov:scan
   script:
     - terraform plan -out=tfplan
+    - terraform show -no-color tfplan > tfplan.txt
   artifacts:
     paths:
-      - infra/tfplan
+      - $TF_DIR/tfplan
+      - $TF_DIR/tfplan.txt
     expire_in: 1 day
+    when: always
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# step 3 - apply: applies the saved plan, requires manual trigger
+# stage: apply
 terraform:apply:
   <<: *terraform_oidc
   stage: apply
@@ -96,7 +136,7 @@ terraform:apply:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
 
-# step 4a - build backend: builds and pushes the backend image to acr
+# stage: build
 build:backend:
   extends: .build_oidc
   stage: build
@@ -106,7 +146,6 @@ build:backend:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# step 4b - build frontend: builds and pushes the frontend image to acr
 build:frontend:
   extends: .build_oidc
   stage: build
@@ -116,19 +155,96 @@ build:frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# step 5 - deploy: updates image tags via terraform apply
-# each new tag automatically creates a new aca revision, requires manual trigger
+# stage: image-scan - trivy container scanning
+.trivy_scan: &trivy_defaults
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache"
+    TRIVY_SEVERITY: "HIGH,CRITICAL"
+    TRIVY_EXIT_CODE: "1"
+    TRIVY_IGNORE_UNFIXED: "true"
+  cache:
+    key: trivy-db-$CI_COMMIT_REF_SLUG
+    paths:
+      - .trivycache/
+  before_script:
+    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
+    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+
+trivy:scan:backend:
+  <<: *trivy_defaults
+  stage: image-scan
+  needs:
+    - build:backend
+  script:
+    - >
+      trivy image
+      --format sarif
+      --output trivy-backend.sarif
+      "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
+    - >
+      trivy image
+      --format table
+      "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
+  artifacts:
+    name: trivy-backend-report
+    paths:
+      - trivy-backend.sarif
+    reports:
+      container_scanning: trivy-backend.sarif
+    expire_in: 7 days
+    when: always
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+trivy:scan:frontend:
+  <<: *trivy_defaults
+  stage: image-scan
+  needs:
+    - build:frontend
+  script:
+    - >
+      trivy image
+      --format sarif
+      --output trivy-frontend.sarif
+      "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
+    - >
+      trivy image
+      --format table
+      "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
+  artifacts:
+    name: trivy-frontend-report
+    paths:
+      - trivy-frontend.sarif
+    reports:
+      container_scanning: trivy-frontend.sarif
+    expire_in: 7 days
+    when: always
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# stage: deploy
 deploy:images:
   <<: *terraform_oidc
   stage: deploy
+  environment:
+    name: production
+    url: https://your-app.example.com
   script:
-    - >-
+    - >
       terraform apply -auto-approve
       -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA"
       -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
   dependencies:
     - build:backend
     - build:frontend
+    - trivy:scan:backend
+    - trivy:scan:frontend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
