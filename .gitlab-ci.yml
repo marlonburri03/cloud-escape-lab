@@ -106,7 +106,7 @@ checkov:scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: plan
+# stage: plan (FIXED → NO MR anymore)
 terraform:plan:
   <<: *terraform_oidc
   stage: plan
@@ -122,7 +122,6 @@ terraform:plan:
     expire_in: 1 day
     when: always
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
 # stage: apply
@@ -157,7 +156,6 @@ build:frontend:
     - if: $CI_COMMIT_BRANCH == "main"
 
 # stage: image-scan - trivy container scanning
-# shared anchor for trivy configuration
 .trivy_scan: &trivy_defaults
   image:
     name: aquasec/trivy:latest
