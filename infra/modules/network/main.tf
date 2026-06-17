@@ -4,22 +4,12 @@ data "azurerm_virtual_network" "spoke" {
   resource_group_name = var.spoke_vnet_resource_group
 }
 
-<<<<<<< HEAD
-# create ACA infrastructure subnet with delegation to Microsoft.App/environments
-# service endpoint for ACR bypasses the UDR/Firewall for image pulls (Basic ACR, public access)
-=======
 # create aca subnet with delegation to Microsoft.App/environments
->>>>>>> 35b35a3 (S3M-25: format files)
 resource "azurerm_subnet" "aca" {
   name                 = "snet-aca"
   resource_group_name  = var.spoke_vnet_resource_group
   virtual_network_name = data.azurerm_virtual_network.spoke.name
   address_prefixes     = [var.subnet_aca_address_prefix]
-<<<<<<< HEAD
-  service_endpoints    = ["Microsoft.ContainerRegistry"]
-=======
->>>>>>> 35b35a3 (S3M-25: format files)
-
   delegation {
     name = "delegation-aca"
     service_delegation {

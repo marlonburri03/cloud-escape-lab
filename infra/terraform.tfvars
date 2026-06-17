@@ -29,11 +29,5 @@ frontend_image_tag  = "bootstrap"
 backend_image_name = "backend"
 backend_image_tag  = "bootstrap"
 
-<<<<<<< HEAD
-# backend api url
-# Within the ACA environment (server-side): http://ca-lab-prod-escape-backend
-# Once AppGW is configured with /tutorial-room/* path routing, update to the AppGW public hostname.
-=======
 # backend api base url used by frontend
->>>>>>> 35b35a3 (S3M-25: format files)
 backend_api_url = "https://escape.contoso.example"
