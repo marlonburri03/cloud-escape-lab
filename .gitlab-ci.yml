@@ -151,14 +151,11 @@ terraform:plan:
 
 # terraform apply is manual to prevent accidental production changes
 terraform:apply:
+  <<: *terraform_oidc
   stage: apply
-  image:
-    name: hashicorp/terraform:1.7.5
-    entrypoint: [""]
   environment:
     name: production
   script:
-    - cd $TF_DIR
     - terraform apply -auto-approve tfplan
   dependencies:
     - terraform:plan
@@ -296,15 +293,12 @@ trivy:scan:frontend:
 
 # deploy application using terraform with injected image tags
 deploy:images:
+  <<: *terraform_oidc
   stage: deploy
-  image:
-    name: hashicorp/terraform:1.7.5
-    entrypoint: [""]
   environment:
     name: production
     url: https://your-app.example.com
   script:
-    - cd $TF_DIR
     - terraform apply -auto-approve -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA" -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
   dependencies:
     - build:backend
