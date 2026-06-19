@@ -1,4 +1,5 @@
 stages:
+  - debug
   - validate
   - scan
   - plan
@@ -9,8 +10,10 @@ stages:
 
 workflow:
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    # allow merge request pipelines (for validation + security checks)
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # allow main branch pipelines (for deployment)
+    - if: $CI_COMMIT_BRANCH == "main"
 
 default:
   tags:
@@ -20,67 +23,28 @@ variables:
   TF_DIR: "infra"
   TF_IN_AUTOMATION: "true"
 
-# anchor: oidc build (custom ci image mit azure-cli + docker-cli)
-.build_oidc:
-  image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+# debug job to inspect oidc token claims in merge requests
+debug:jwt:
+  stage: debug
+  image: alpine
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
-  before_script:
-    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
-    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
-    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
-    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
-    - export ACR_TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
-    - echo "$ACR_TOKEN" | docker login "$ACR_LOGIN_SERVER" -u 00000000-0000-0000-0000-000000000000 --password-stdin
+  rules:
+    # only run in merge requests for troubleshooting oidc issues
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
+  script:
+    - apk add --no-cache jq
+    # decode jwt payload for debugging claims like sub, ref, pipeline_source
+    - |
+      payload=$(echo "$GITLAB_OIDC_TOKEN" | cut -d '.' -f2)
+      len=$((4 - ${#payload} % 4))
+      [ "$len" -lt 4 ] && payload="${payload}$(printf '=%.0s' $(seq 1 $len))"
+      echo "$payload" | base64 -d | jq '{sub,ref,ref_type,pipeline_source,aud}'
 
-# anchor: terraform oidc
-.terraform_oidc: &terraform_oidc
-  image:
-    name: hashicorp/terraform:1.7.5
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  variables:
-    ARM_USE_OIDC: "true"
-    ARM_OIDC_TOKEN: $GITLAB_OIDC_TOKEN
-    TF_VAR_tenant_id: $ARM_TENANT_ID
-    TF_VAR_subscription_id: $ARM_SUBSCRIPTION_ID
-    TF_VAR_use_oidc: "true"
-  before_script:
-    - cd $TF_DIR
-    - terraform init -backend-config="oidc_token=$GITLAB_OIDC_TOKEN"
-
-# anchor: trivy scan (remote ACR auth via OIDC, kein Docker Socket nötig)
-.trivy_scan: &trivy_defaults
-  image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
-  variables:
-    TRIVY_NO_PROGRESS: "true"
-    TRIVY_CACHE_DIR: ".trivycache"
-    TRIVY_SEVERITY: "HIGH,CRITICAL"
-    TRIVY_IGNORE_UNFIXED: "true"
-  cache:
-    key: trivy-db-$CI_COMMIT_REF_SLUG
-    paths:
-      - .trivycache/
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  before_script:
-    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
-    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
-    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
-    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
-    - export TRIVY_USERNAME="00000000-0000-0000-0000-000000000000"
-    - export TRIVY_PASSWORD=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
-
-# stage: validate
+# terraform validation (format + syntax check)
 terraform:validate:
   stage: validate
   image:
@@ -92,10 +56,11 @@ terraform:validate:
     - terraform init -backend=false
     - terraform validate
   rules:
+    # run validation on merge requests and main branch
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: scan
+# static security analysis for terraform code
 checkov:scan:
   stage: scan
   image: python:3.12-slim
@@ -104,6 +69,7 @@ checkov:scan:
   before_script:
     - pip install --no-cache-dir checkov
   script:
+    # run checkov with soft-fail to not block pipelines immediately
     - >
       checkov
       --directory $TF_DIR
@@ -124,16 +90,39 @@ checkov:scan:
     when: always
   allow_failure: true
   rules:
+    # security scan runs on both MR and main
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: plan
+# terraform oidc authentication base template
+.terraform_oidc: &terraform_oidc
+  image:
+    name: hashicorp/terraform:1.7.5
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    ARM_USE_OIDC: "true"
+    ARM_OIDC_TOKEN: $GITLAB_OIDC_TOKEN
+    TF_VAR_tenant_id: $ARM_TENANT_ID
+    TF_VAR_subscription_id: $ARM_SUBSCRIPTION_ID
+    TF_VAR_use_oidc: "true"
+  before_script:
+    # initialize terraform backend using oidc token
+    - cd $TF_DIR
+    - terraform init -backend-config="oidc_token=$GITLAB_OIDC_TOKEN"
+
+# terraform plan only runs on main (prevents noisy MR infra changes)
 terraform:plan:
-  <<: *terraform_oidc
   stage: plan
+  image:
+    name: hashicorp/terraform:1.7.5
+    entrypoint: [""]
   needs:
     - checkov:scan
   script:
+    - cd $TF_DIR
     - terraform plan -out=tfplan
     - terraform show -no-color tfplan > tfplan.txt
   artifacts:
@@ -145,11 +134,14 @@ terraform:plan:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: apply
+# terraform apply is manual to prevent accidental production changes
 terraform:apply:
-  <<: *terraform_oidc
   stage: apply
+  image:
+    name: hashicorp/terraform:1.7.5
+    entrypoint: [""]
   script:
+    - cd $TF_DIR
     - terraform apply -auto-approve tfplan
   dependencies:
     - terraform:plan
@@ -157,7 +149,28 @@ terraform:apply:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
 
-# stage: build
+# build docker images and push to azure container registry using oidc auth
+.build_oidc:
+  image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    # resolve acr name from terraform config
+    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
+    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+    # login to azure using federated oidc token
+    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
+    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
+    # login docker to acr using access token
+    - export ACR_TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+    - echo "$ACR_TOKEN" | docker login "$ACR_LOGIN_SERVER" -u 00000000-0000-0000-0000-000000000000 --password-stdin
+
 build:backend:
   extends: .build_oidc
   stage: build
@@ -176,13 +189,37 @@ build:frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: image-scan
+# trivy scan for container images pulled from acr using oidc auth
+.trivy_scan: &trivy_defaults
+  image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache"
+    TRIVY_SEVERITY: "HIGH,CRITICAL"
+    TRIVY_IGNORE_UNFIXED: "true"
+  cache:
+    key: trivy-db-$CI_COMMIT_REF_SLUG
+    paths:
+      - .trivycache/
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    # authenticate to azure to fetch acr access token
+    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
+    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
+    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
+    - export TRIVY_USERNAME="00000000-0000-0000-0000-000000000000"
+    - export TRIVY_PASSWORD=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+
 trivy:scan:backend:
   <<: *trivy_defaults
   stage: image-scan
   needs:
     - build:backend
   script:
+    # scan backend container image for vulnerabilities
     - >
       trivy image
       --image-src remote
@@ -212,6 +249,7 @@ trivy:scan:frontend:
   needs:
     - build:frontend
   script:
+    # scan frontend container image for vulnerabilities
     - >
       trivy image
       --image-src remote
@@ -235,18 +273,18 @@ trivy:scan:frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: deploy
+# deploy application using terraform with injected image tags
 deploy:images:
-  <<: *terraform_oidc
   stage: deploy
+  image:
+    name: hashicorp/terraform:1.7.5
+    entrypoint: [""]
   environment:
     name: production
     url: https://your-app.example.com
   script:
-    - >
-      terraform apply -auto-approve
-      -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA"
-      -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
+    - cd $TF_DIR
+    - terraform apply -auto-approve -var "frontend_image_tag=$CI_COMMIT_SHORT_SHA" -var "backend_image_tag=$CI_COMMIT_SHORT_SHA"
   dependencies:
     - build:backend
     - build:frontend
