@@ -32,8 +32,8 @@ variables:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
-    - apk add --no-cache python3 py3-pip bash grep coreutils
-    - pip install --no-cache-dir azure-cli
+    - apk add --no-cache bash grep coreutils curl
+    - apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community azure-cli
     - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
     - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
     - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
@@ -106,7 +106,7 @@ checkov:scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: plan (FIXED → NO MR anymore)
+# stage: plan
 terraform:plan:
   <<: *terraform_oidc
   stage: plan
