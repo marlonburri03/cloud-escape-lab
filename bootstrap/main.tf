@@ -47,18 +47,6 @@ resource "azurerm_federated_identity_credential" "mi_maker_fic" {
   audience                  = ["https://gitlab.com"]
 }
 
-
-# add federated credential to managed identity for GitLab OIDC (merge request pipelines)
-# note: for MR pipelines the sub claim is always branch-based even when environment is set,
-# so a branch wildcard is required here
-resource "azurerm_federated_identity_credential" "mi_maker_fic_mr" {
-  name                      = "${var.managed_identity_name}-fic-mr"
-  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
-  issuer                    = "https://gitlab.com"
-  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:*"
-  audience                  = ["https://gitlab.com"]
-}
-
 # grant managed identity access to read/write Terraform state in storage account
 resource "azurerm_role_assignment" "mi_maker_storage_blob_contributor" {
   scope                = azurerm_storage_account.st_tfstate.id
