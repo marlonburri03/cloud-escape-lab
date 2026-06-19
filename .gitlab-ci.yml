@@ -33,9 +33,10 @@ debug:jwt:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   rules:
-    # only run in merge requests for troubleshooting oidc issues
+    # available on demand in merge requests for troubleshooting oidc issues
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
+      when: manual
+      allow_failure: true
     - when: never
   script:
     - apk add --no-cache jq
@@ -62,14 +63,33 @@ terraform:validate:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
+# tflint checks azure provider best practices using .tflint.hcl ruleset
+tflint:
+  stage: validate
+  image:
+    name: ghcr.io/terraform-linters/tflint:latest
+    entrypoint: [""]
+  script:
+    - cd $TF_DIR
+    - tflint --config ../.tflint.hcl --init
+    - tflint --config ../.tflint.hcl
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
 # static security analysis for terraform code
 checkov:scan:
   stage: scan
   image: python:3.12-slim
   needs:
     - terraform:validate
+  cache:
+    key: pip-checkov
+    paths:
+      - .pip-cache/
   before_script:
-    - pip install --no-cache-dir checkov
+    - pip install --cache-dir .pip-cache checkov
   script:
     # run checkov with soft-fail to not block pipelines immediately
     - >
@@ -93,6 +113,39 @@ checkov:scan:
   allow_failure: true
   rules:
     # security scan runs on both MR and main
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# dependency scanning for known CVEs in python packages
+dependency:scan:backend:
+  stage: scan
+  image: python:3.12-slim
+  cache:
+    key: pip-pip-audit
+    paths:
+      - .pip-cache/
+  before_script:
+    - pip install --cache-dir .pip-cache pip-audit
+  script:
+    - pip-audit -r backend/requirements.txt
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+dependency:scan:frontend:
+  stage: scan
+  image: python:3.12-slim
+  cache:
+    key: pip-pip-audit
+    paths:
+      - .pip-cache/
+  before_script:
+    - pip install --cache-dir .pip-cache pip-audit
+  script:
+    - pip-audit -r frontend/requirements.txt
+  allow_failure: true
+  rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -124,7 +177,17 @@ terraform:plan:mr:
   needs:
     - checkov:scan
   script:
-    - terraform plan
+    - terraform plan -no-color 2>&1 | tee /tmp/plan.txt
+    # post plan output as MR comment (requires GITLAB_API_TOKEN CI variable)
+    - |
+      if [ -n "$GITLAB_API_TOKEN" ]; then
+        PLAN=$(cat /tmp/plan.txt | tail -c 60000)
+        BODY=$(printf '## Terraform Plan\n```hcl\n%s\n```' "$PLAN")
+        curl --silent --request POST \
+          "https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" \
+          --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+          --data-urlencode "body=${BODY}"
+      fi
   allow_failure: false
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -193,6 +256,8 @@ build:backend:
   script:
     - docker build -t "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA" ./backend
     - docker push "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA" "$ACR_LOGIN_SERVER/backend:latest"
+    - docker push "$ACR_LOGIN_SERVER/backend:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -204,6 +269,8 @@ build:frontend:
   script:
     - docker build -t "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA" ./frontend
     - docker push "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA" "$ACR_LOGIN_SERVER/frontend:latest"
+    - docker push "$ACR_LOGIN_SERVER/frontend:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -216,7 +283,7 @@ build:frontend:
     TRIVY_SEVERITY: "HIGH,CRITICAL"
     TRIVY_IGNORE_UNFIXED: "true"
   cache:
-    key: trivy-db-$CI_COMMIT_REF_SLUG
+    key: trivy-db
     paths:
       - .trivycache/
   id_tokens:
