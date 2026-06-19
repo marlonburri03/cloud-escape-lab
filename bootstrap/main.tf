@@ -38,22 +38,12 @@ resource "azurerm_user_assigned_identity" "mi_maker" {
   }
 }
 
-# add federated credential to managed identity for GitLab OIDC (main branch deploys)
+# add federated credential to managed identity for GitLab OIDC (main branch / production environment)
 resource "azurerm_federated_identity_credential" "mi_maker_fic" {
   name                      = "${var.managed_identity_name}-fic"
   user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
   issuer                    = "https://gitlab.com"
-  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:main"
-  audience                  = ["https://gitlab.com"]
-}
-
-
-# add federated credentials to managed identity for GitLab OIDC (all branches via wildcard)
-resource "azurerm_federated_identity_credential" "mi_maker_fic_mr" {
-  name                      = "${var.managed_identity_name}-fic-mr"
-  user_assigned_identity_id = azurerm_user_assigned_identity.mi_maker.id
-  issuer                    = "https://gitlab.com"
-  subject                   = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:*"
+  subject                   = "project_path:${var.gitlab_project_path}:environment:production"
   audience                  = ["https://gitlab.com"]
 }
 
