@@ -27,6 +27,8 @@ variables:
 debug:jwt:
   stage: debug
   image: alpine
+  environment:
+    name: merge-request
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
@@ -42,7 +44,7 @@ debug:jwt:
       payload=$(echo "$GITLAB_OIDC_TOKEN" | cut -d '.' -f2)
       len=$((4 - ${#payload} % 4))
       [ "$len" -lt 4 ] && payload="${payload}$(printf '=%.0s' $(seq 1 $len))"
-      echo "$payload" | base64 -d | jq '{sub,ref,ref_type,pipeline_source,aud}'
+      echo "$payload" | base64 -d | jq '{sub,ref,ref_type,pipeline_source,aud,environment}'
 
 # terraform validation (format + syntax check)
 terraform:validate:
@@ -112,6 +114,8 @@ checkov:scan:
     # initialize terraform backend using oidc token
     - cd $TF_DIR
     - terraform init -backend-config="oidc_token=$GITLAB_OIDC_TOKEN"
+  environment:
+    name: merge-request
 
 # terraform plan only runs on main (prevents noisy MR infra changes)
 terraform:plan:
@@ -119,6 +123,8 @@ terraform:plan:
   image:
     name: hashicorp/terraform:1.7.5
     entrypoint: [""]
+  environment:
+    name: production
   needs:
     - checkov:scan
   script:
@@ -140,6 +146,8 @@ terraform:apply:
   image:
     name: hashicorp/terraform:1.7.5
     entrypoint: [""]
+  environment:
+    name: production
   script:
     - cd $TF_DIR
     - terraform apply -auto-approve tfplan
@@ -174,6 +182,8 @@ terraform:apply:
 build:backend:
   extends: .build_oidc
   stage: build
+  environment:
+    name: production
   script:
     - docker build -t "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA" ./backend
     - docker push "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
@@ -183,6 +193,8 @@ build:backend:
 build:frontend:
   extends: .build_oidc
   stage: build
+  environment:
+    name: production
   script:
     - docker build -t "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA" ./frontend
     - docker push "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
