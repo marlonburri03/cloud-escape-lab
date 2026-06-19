@@ -20,7 +20,7 @@ variables:
   TF_DIR: "infra"
   TF_IN_AUTOMATION: "true"
 
-# anchor: oidc build (custom ci image with azure-cli + docker-cli)
+# anchor: oidc build (custom ci image mit azure-cli + docker-cli)
 .build_oidc:
   image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
   services:
@@ -57,6 +57,29 @@ variables:
     - cd $TF_DIR
     - terraform init -backend-config="oidc_token=$GITLAB_OIDC_TOKEN"
 
+# anchor: trivy scan (remote ACR auth via OIDC, kein Docker Socket nötig)
+.trivy_scan: &trivy_defaults
+  image: registry.gitlab.com/<your-gitlab-group>/cloud-escape-lab/ci-build:latest
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache"
+    TRIVY_SEVERITY: "HIGH,CRITICAL"
+    TRIVY_IGNORE_UNFIXED: "true"
+  cache:
+    key: trivy-db-$CI_COMMIT_REF_SLUG
+    paths:
+      - .trivycache/
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
+    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+    - az login --service-principal --username "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
+    - az account set --subscription "$ARM_SUBSCRIPTION_ID"
+    - export TRIVY_USERNAME="00000000-0000-0000-0000-000000000000"
+    - export TRIVY_PASSWORD=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+
 # stage: validate
 terraform:validate:
   stage: validate
@@ -72,7 +95,7 @@ terraform:validate:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: scan - checkov iac security scanning
+# stage: scan
 checkov:scan:
   stage: scan
   image: python:3.12-slim
@@ -153,25 +176,7 @@ build:frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# stage: image-scan - trivy container scanning
-.trivy_scan: &trivy_defaults
-  image:
-    name: aquasec/trivy:latest
-    entrypoint: [""]
-  variables:
-    TRIVY_NO_PROGRESS: "true"
-    TRIVY_CACHE_DIR: ".trivycache"
-    TRIVY_SEVERITY: "HIGH,CRITICAL"
-    TRIVY_EXIT_CODE: "1"
-    TRIVY_IGNORE_UNFIXED: "true"
-  cache:
-    key: trivy-db-$CI_COMMIT_REF_SLUG
-    paths:
-      - .trivycache/
-  before_script:
-    - export ACR_NAME=$(grep '^acr_name' infra/terraform.tfvars | tr -d ' "' | cut -d'=' -f2)
-    - export ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
-
+# stage: image-scan
 trivy:scan:backend:
   <<: *trivy_defaults
   stage: image-scan
@@ -180,11 +185,13 @@ trivy:scan:backend:
   script:
     - >
       trivy image
+      --image-src remote
       --format sarif
       --output trivy-backend.sarif
       "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
     - >
       trivy image
+      --image-src remote
       --format table
       "$ACR_LOGIN_SERVER/backend:$CI_COMMIT_SHORT_SHA"
   artifacts:
@@ -207,11 +214,13 @@ trivy:scan:frontend:
   script:
     - >
       trivy image
+      --image-src remote
       --format sarif
       --output trivy-frontend.sarif
       "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
     - >
       trivy image
+      --image-src remote
       --format table
       "$ACR_LOGIN_SERVER/frontend:$CI_COMMIT_SHORT_SHA"
   artifacts:

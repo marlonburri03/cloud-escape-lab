@@ -388,7 +388,7 @@ __Sprint Planning:__
 **Beschreibung:**
 Der Sprint 2 dient der Weiterentwicklung des bestehenden MVPs hin zu einem Minimum Lovable Product (MLP). Im Rahmen dieses Sprints wird die Cloud-Infrastruktur sowie die Implementierung einer durchgängigen Deployment-Pipeline für die Escape-Room-Plattform aufgebaut. Ziel ist eine robustere, besser strukturierte und leichter erweiterbare Gesamtarchitektur.
 
-Meilenstein: Erweiterte interaktive Escape-Room-Plattform mit mehreren Szenarien, erster Cloud-Deployment-Version und initialer Microservice-Architektur umgesetzt.
+**Meilenstein:** Erweiterte interaktive Escape-Room-Plattform mit mehreren Szenarien, erster Cloud-Deployment-Version und initialer Microservice-Architektur umgesetzt.
 
 __Sprint Review:__
 
