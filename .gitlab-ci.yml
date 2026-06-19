@@ -117,18 +117,27 @@ checkov:scan:
   environment:
     name: merge-request
 
-# terraform plan only runs on main (prevents noisy MR infra changes)
-terraform:plan:
+# terraform plan in MR: checks infra changes before merge (read-only, uses merge-request credential)
+terraform:plan:mr:
+  <<: *terraform_oidc
   stage: plan
-  image:
-    name: hashicorp/terraform:1.7.5
-    entrypoint: [""]
+  needs:
+    - checkov:scan
+  script:
+    - terraform plan
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# terraform plan on main: produces artifact for apply job
+terraform:plan:
+  <<: *terraform_oidc
+  stage: plan
   environment:
     name: production
   needs:
     - checkov:scan
   script:
-    - cd $TF_DIR
     - terraform plan -out=tfplan
     - terraform show -no-color tfplan > tfplan.txt
   artifacts:
