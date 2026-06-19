@@ -67,11 +67,10 @@ terraform:validate:
 tflint:
   stage: validate
   image:
-    name: ghcr.io/terraform-linters/tflint:latest
+    name: ghcr.io/terraform-linters/tflint-bundle:latest
     entrypoint: [""]
   script:
     - cd $TF_DIR
-    - tflint --config ../.tflint.hcl --init
     - tflint --config ../.tflint.hcl
   allow_failure: true
   rules:
