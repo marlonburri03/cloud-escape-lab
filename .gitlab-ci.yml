@@ -1,6 +1,5 @@
 stages:
-  - validate
-  - scan
+  - lint
   - plan
   - apply
   - build
@@ -24,7 +23,7 @@ variables:
 
 # terraform validation (format + syntax check)
 terraform:validate:
-  stage: validate
+  stage: lint
   image:
     name: hashicorp/terraform:1.7.5
     entrypoint: [""]
@@ -38,7 +37,7 @@ terraform:validate:
 
 # tflint checks azure provider best practices using .tflint.hcl ruleset
 tflint:
-  stage: validate
+  stage: lint
   image:
     name: ghcr.io/terraform-linters/tflint-bundle:latest
     entrypoint: [""]
@@ -51,7 +50,7 @@ tflint:
 
 # static security analysis for terraform code
 checkov:scan:
-  stage: scan
+  stage: lint
   image: python:3.12-slim
   needs:
     - terraform:validate
@@ -76,7 +75,7 @@ checkov:scan:
   artifacts:
     name: checkov-report
     paths:
-      - checkov-report.sarif
+      - lintov-report.sarif
     reports:
       sast: checkov-report.sarif
     expire_in: 7 days
@@ -87,7 +86,7 @@ checkov:scan:
 
 # dependency scanning for known CVEs in python packages
 dependency:scan:backend:
-  stage: scan
+  stage: lint
   image: python:3.12-slim
   cache:
     key: pip-pip-audit
@@ -102,7 +101,7 @@ dependency:scan:backend:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 dependency:scan:frontend:
-  stage: scan
+  stage: lint
   image: python:3.12-slim
   cache:
     key: pip-pip-audit
