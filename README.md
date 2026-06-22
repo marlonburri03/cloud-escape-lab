@@ -342,14 +342,14 @@ Der Sprint wurde erfolgreich abgeschlossen. Der definierte Meilenstein wurde err
 **Übersicht des Backlogs:**
 Die folgenden Aufgaben wurden innerhalb des Sprints geplant, bearbeitet und erfolgreich abgeschlossen:
 
-* [S3M-6, Define project structure and architecture]()✅-DONE
-* [S3M-12, Define CI/CD pipeline concept]()✅-DONE
-* [S3M-13, Basic Frontend UI]()✅-DONE
-* [S3M-14, Game State Management]()✅-DONE
-* [S3M-15, Tutorial Escape Room]()✅-DONE
-* [S3M-16, Interaction System]()✅-DONE
-* [S3M-17, Feedback System]()✅-DONE
-* [S3M-19, Define Project Documentation]()✅-DONE
+* [S3M-6, Define project structure and architecture](https://marlon-burri.atlassian.net/browse/S3M-6)✅-DONE
+* [S3M-12, Define CI/CD pipeline concept](https://marlon-burri.atlassian.net/browse/S3M-12)✅-DONE
+* [S3M-13, Basic Frontend UI](https://marlon-burri.atlassian.net/browse/S3M-13)✅-DONE
+* [S3M-14, Game State Management](https://marlon-burri.atlassian.net/browse/S3M-14)✅-DONE
+* [S3M-15, Tutorial Escape Room](https://marlon-burri.atlassian.net/browse/S3M-15)✅-DONE
+* [S3M-16, Interaction System](https://marlon-burri.atlassian.net/browse/S3M-16)✅-DONE
+* [S3M-17, Feedback System](https://marlon-burri.atlassian.net/browse/S3M-17)✅-DONE
+* [S3M-19, Define Project Documentation](https://marlon-burri.atlassian.net/browse/S3M-19)✅-DONE
 
 **Risikoverlauf:**
 
@@ -386,24 +386,69 @@ __Sprint Planning:__
 01.06.2026 – 21.06.2026
 
 **Beschreibung:**
-Der Sprint 2 dient der Weiterentwicklung des bestehenden MVPs hin zu einem Minimum Lovable Product (MLP). Im Rahmen dieses Sprints wird die Cloud-Infrastruktur sowie die Implementierung einer durchgängigen Deployment-Pipeline für die Escape-Room-Plattform aufgebaut. Ziel ist eine robustere, besser strukturierte und leichter erweiterbare Gesamtarchitektur.
+Der zweite Sprint führt das bestehende MVP in Richtung Minimum Lovable Product (MLP) weiter. Im Fokus stehen die Containerisierung der Anwendungskomponenten, der Aufbau der Azure-Zielumgebung mit OpenTofu, die Integration in die bestehende Landing Zone sowie eine durchgängige GitLab-CI/CD-Pipeline für Build, Deployment, Routing und Observability. Ziel ist eine belastbare Delivery-Kette, mit der die Plattform reproduzierbar in der Cloud betrieben und schrittweise erweitert werden kann.
 
-**Meilenstein:** Erweiterte interaktive Escape-Room-Plattform mit mehreren Szenarien, erster Cloud-Deployment-Version und initialer Microservice-Architektur umgesetzt.
+**Meilenstein:** Erstes Ende-zu-Ende-Deployment der containerisierten Plattform nach Azure mit OpenTofu, GitLab CI/CD, OIDC-Authentifizierung, Monitoring & Logging sowie funktionierendem Routing über das zentrale Application Gateway umgesetzt.
 
 __Sprint Review:__
 
-Abgeschlossene User Stories:
+**Status:**
+Der Sprint wurde erfolgreich abgeschlossen. Der definierte Meilenstein wurde erreicht und die zentralen technischen Grundlagen für den produktiven Cloud-Betrieb wurden umgesetzt. Der Integrationsaufwand in der Landing Zone sowie die Fehlersuche rund um Routing und OIDC waren höher als ursprünglich erwartet, konnten im Sprint jedoch gelöst werden.
 
-__Risikoverlauf Sprint 2:__
+**Übersicht des Backlogs:**
+Die folgenden Aufgaben wurden innerhalb des Sprints geplant, bearbeitet und erfolgreich abgeschlossen:
+
+* [S3M-20, Monitoring & Logging](https://marlon-burri.atlassian.net/browse/S3M-20)✅-DONE
+* [S3M-21, Azure Infrastructure Deployment](https://marlon-burri.atlassian.net/browse/S3M-21)✅-DONE
+* [S3M-22, OpenTofu Infrastructure as Code](https://marlon-burri.atlassian.net/browse/S3M-22)✅-DONE
+* [S3M-23, Frontend Containerization](https://marlon-burri.atlassian.net/browse/S3M-23)✅-DONE
+* [S3M-24, Azure Container Registry Integration](https://marlon-burri.atlassian.net/browse/S3M-24)✅-DONE
+* [S3M-25, GitLab CI/CD Implementation](https://marlon-burri.atlassian.net/browse/S3M-25)✅-DONE
+* [S3M-26, Frontend Deployment to Azure](https://marlon-burri.atlassian.net/browse/S3M-26)✅-DONE
+* [S3M-27, Azure Landing Zone Integration](https://marlon-burri.atlassian.net/browse/S3M-27)✅-DONE
+
+**Risikoverlauf:**
+
+Die nachfolgende Tabelle zeigt den Stand aller Risiken aus der initialen Risikoanalyse am Ende von Sprint 2.
+
+| Risiko-ID | Beschreibung | Score vorher | Score nachher | Status | Bemerkung |
+|-----------|--------------|:------------:|:-------------:|:------:|-----------|
+| R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🟠 12 | 🟡 8 | ↓ | Mit Container Apps, Private DNS und Application Gateway wurde die Zielarchitektur erfolgreich integriert und erstmals produktiv deployed. Die Komplexität bleibt relevant, ist durch die validierte Zielumgebung und die gewonnenen Betriebskenntnisse jedoch spürbar besser beherrschbar. |
+| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🔴 16 | 🟠 12 | ↓ | Der Aufwand für Landing-Zone-Integration, OIDC-Debugging und externe Abhängigkeiten war zwar hoch, durch das erfolgreiche Deployment der Umgebung wurden jedoch wesentliche Unsicherheiten abgebaut. Die verbleibende Umsetzung bleibt zeitlich anspruchsvoll, ist nun aber besser planbar als zu Sprintbeginn. |
+| R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟡 8 | 🟢 4 | ↓ | Die GitLab-Pipeline deckt nun Linting, Build, Deploy und Image-Promotion ab. Durch das eigene CI/CD-Image und regelmässige End-to-End-Deployments sinkt die Eintrittswahrscheinlichkeit von 2 auf 1. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟡 8 | ↓ | Die Azure-Authentifizierung der Pipeline via OIDC und Federated Credentials funktioniert produktiv. Die applikationsseitige Entra-ID-Absicherung des Frontends bleibt für Sprint 3 bestehen. |
+| R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 6 | 🟢 4 | ↓ | Die Infrastruktur wurde erfolgreich mit OpenTofu in Azure ausgerollt. Reale Deployments haben Konfigurationsfehler bei Routing und DNS sichtbar gemacht und bereinigt, wodurch das Restrisiko weiter sinkt. |
 
 __Sprint Retrospective:__
 
-__Lessons Learned:__
+Für die Retrospektive habe ich erneut die Mad, Sad, Glad Methode auf einem Miro-Board angewendet. Sie hat sich bereits im vorherigen Sprint bewährt und erlaubt eine strukturierte Reflexion über technische Fortschritte, Blocker und persönliche Rahmenbedingungen.
+
+![Sprint2Retro](./img/sprint2retro.png)
+*Screenshot vom Miro-Board für die Retrospektive des Sprint 2.*
+
+**Lessons Learned:**
+
+- **Application Gateway und DNS frühzeitig vollständig planen:** Die Fehlersuche rund um das Application Gateway entstand durch einen fehlenden Backend-Hostname sowie einen nicht konfigurierten internen DNS-Eintrag. Netzwerk- und Routing-Anforderungen sollten bereits vor dem ersten Deployment vollständig dokumentiert und validiert werden.
+- **Landing-Zone-Integrationen benötigen grosszügige Zeitreserven:** Die technische Integration in die bestehende Azure-Landing-Zone war deutlich komplexer als erwartet. Künftige Sprintplanungen sollten für bestehende Governance-, Netzwerk- und Sicherheitsvorgaben zusätzliche Pufferzeiten berücksichtigen.
+- **Federated Credentials früh validieren:** Das Debugging der GitLab-OIDC-Anbindung zeigte, dass bereits kleine Abweichungen im Subject-Matching dazu führen können, dass Azure keine passende Federated Identity findet. Die Authentifizierung sollte deshalb möglichst früh im Projekt validiert werden, bevor weitere Pipeline-Komponenten aufgebaut werden.
+- **Branch-Strategie und OIDC-Design gemeinsam betrachten:** Die Einschränkungen beim Subject-Matching haben gezeigt, dass CI/CD-Architektur und Branching-Konzept eng zusammenhängen. Namenskonventionen und Federated-Credential-Regeln sollten bereits in der Designphase aufeinander abgestimmt werden.
+- **Eigene CI/CD-Images können langfristig Aufwand reduzieren:** Da kein geeignetes öffentliches Image mit Azure CLI und Docker CLI verfügbar war, wurde ein eigenes CI/CD-Image erstellt. Obwohl dies initial Mehraufwand verursacht, vereinfacht es die Pipeline-Konfiguration und sorgt für reproduzierbare Build-Umgebungen.
+- **End-to-End-Deployments decken Infrastrukturprobleme zuverlässig auf:** Viele der identifizierten Probleme wurden erst während vollständiger Deployments sichtbar. Regelmässige End-to-End-Tests helfen dabei, Integrationsfehler frühzeitig zu erkennen und die Fehlersuche einzugrenzen.
+- **Containerisierung vereinfacht den Betrieb erheblich:** Die erfolgreiche Containerisierung von Frontend und Backend hat die Grundlage für konsistente Deployments geschaffen. Unterschiede zwischen Entwicklungs- und Zielumgebung konnten dadurch deutlich reduziert werden.
+- **Sprintplanung sollte auch persönliche Faktoren berücksichtigen:** Begrenzte Verfügbarkeit durch private Termine und das Sommerwetter hatten einen spürbaren Einfluss auf die Produktivität. Eine realistische Kapazitätsplanung verbessert die Vorhersagbarkeit zukünftiger Sprints.
 
 
 ### 3.4.4 Sprint 3   – MMP Release
 
 __Sprint Planning:__
+
+**Zeitplan:**
+22.06.2026 – 06.07.2026
+
+**Beschreibung:**
+Der dritte produktive Sprint dient der Fertigstellung des Projekts in Richtung Minimum Marketable Product (MMP). Aufbauend auf der in Sprint 2 erfolgreich deployten Azure-Umgebung liegt der Schwerpunkt auf der Absicherung des Frontends mit Microsoft Entra ID inklusive gruppenbasiertem Zugriff, der weiteren Automatisierung des Betriebs über GitLab-Pipelines sowie auf Testing, Bugfixing und technischer Härtung der Gesamtlösung. Parallel dazu werden die Projektdokumentation finalisiert und die Inhalte für die Schlusspräsentation vorbereitet.
+
+**Meilenstein:** Einsatzfähige und dokumentierte MMP-Version der Escape-Room-Plattform mit Entra-ID-geschütztem Frontend, stabilen End-to-End-Deployments, abgeschlossenen Tests sowie finalisierter Dokumentation und Präsentationsgrundlage umgesetzt.
 
 __Sprint Review:__
 
