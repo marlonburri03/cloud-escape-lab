@@ -136,7 +136,7 @@ dependency:scan:frontend:
   environment:
     name: merge-request
 
-# terraform plan: produces artifact for the apply job
+# terraform plan: produces plan artifacts for review in the pipeline
 terraform:plan:
   <<: *terraform_oidc
   stage: plan
@@ -154,16 +154,17 @@ terraform:plan:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-# terraform apply is manual to prevent accidental production changes
+# terraform apply is manual to prevent accidental production changes.
+# the apply job creates a fresh plan because saved plans can capture short-lived
+# OIDC credentials and fail when they are applied later.
 terraform:apply:
   <<: *terraform_oidc
   stage: apply
   environment:
     name: production
   script:
-    - terraform apply -auto-approve tfplan
-  dependencies:
-    - terraform:plan
+    - terraform plan -out=tfplan-apply
+    - terraform apply -auto-approve tfplan-apply
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
