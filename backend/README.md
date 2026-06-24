@@ -62,6 +62,7 @@ Alle Endpunkte sind unter dem Prefix `/tutorial-room` erreichbar.
 
 > Die vollständige interaktive API-Dokumentation (OpenAPI/Swagger) ist unter
 > `http://localhost:5001/docs` verfügbar wenn das Backend läuft.
+> Im Azure-Deployment ist das Backend öffentlich über `https://escape.contoso.example/tutorial-room/*` hinter dem zentralen Application Gateway erreichbar.
 
 ---
 
@@ -114,3 +115,4 @@ python wsgi.py
 ```
 
 Die SQLite-Datenbank (`app.db`) wird beim ersten Start automatisch erstellt.
+Im Azure-Deployment wird ebenfalls standardmaessig diese lokale SQLite-Datei verwendet, solange keine `DATABASE_URI` als Umgebungsvariable gesetzt wird.

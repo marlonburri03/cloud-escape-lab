@@ -15,7 +15,7 @@
 
 In dieser Arbeit wird eine Cloud-basierte Escape-Room-Plattform entwickelt, welche zur interaktiven Vermittlung von IT-Wissen dient. Die Plattform ermöglicht es Lernenden, technische Herausforderungen und Rätsel in einer praxisnahen und spielerischen Umgebung zu lösen. Ziel ist es, theoretische Inhalte aus der IT-Ausbildung mit realitätsnahen Szenarien zu kombinieren und dadurch den Lernerfolg nachhaltig zu verbessern.
 
-Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Escape Rooms werden automatisiert über GitLab CI/CD Pipelines bereitgestellt und betrieben. Zusätzlich erfolgt die Authentifizierung über Microsoft Entra ID, wodurch eine sichere und kontrollierte Nutzung gewährleistet wird. Die Infrastruktur wird mithilfe von Infrastructure as Code (OpenTofu / Terraform) automatisiert und reproduzierbar bereitgestellt.
+Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Escape Rooms werden automatisiert über GitLab CI/CD Pipelines bereitgestellt und betrieben. Die Azure-seitige Deployment-Authentifizierung erfolgt passwortlos über Microsoft Entra ID via OIDC; eine frontendseitige Entra-ID-Absicherung ist im Code bereits vorbereitet, im aktuellen Azure-Stand jedoch noch nicht aktiv erzwungen. Die Infrastruktur wird mithilfe von Infrastructure as Code (OpenTofu / Terraform) automatisiert und reproduzierbar bereitgestellt.
 
 Die Arbeit dient als proof of concept (POC) für eine moderne und interaktive Lernplattform im Bereich der IT-Ausbildung. Sofern sich das Konzept bewährt, ist eine Weiterentwicklung mit zusätzlichen Szenarien und Funktionen vorgesehen.
 
@@ -108,18 +108,18 @@ Zur Umsetzung wird eine Microservice-Architektur eingesetzt, bei welcher Fronten
 
 ## 2.4 Sachmittel
 
-Microsoft Azure Portal & CLI
-GitLab
-Jira (SCRUM-Board)
-Visual Studio Code
-Docker / Docker Compose
-OpenTofu (Terraform)
-Microsoft Entra ID
-AI-Tools (ChatGPT, Claude, Copilot etc.)
-JavaScript / TypeScript
-Python
-PostgreSQL
-Azure Functions
+- Microsoft Azure Portal & CLI
+- GitLab
+- Jira (SCRUM-Board)
+- Visual Studio Code
+- Docker / Docker Compose
+- OpenTofu (Terraform)
+- Microsoft Entra ID
+- AI-Tools (ChatGPT, Claude, Copilot etc.)
+- JavaScript / TypeScript
+- Python
+- PostgreSQL
+- Azure Functions
 
 ## 2.5 Vorgaben, Methoden und Werkzeuge
 
@@ -234,16 +234,15 @@ gantt
   axisFormat %b '%y
 
   section Sprints
-  Sprint 0 :crit, sprint0, 2025-10-31, 2025-11-06
-  Sprint 1 :sprint1, 2025-11-07, 2025-11-27
-  Sprint 2 :sprint2, 2025-11-28, 2025-12-18
-  Sprint 3 :sprint3, 2025-12-19, 2026-01-08
-  Sprint 4 :sprint4, 2026-01-09, 2026-01-28
+  Sprint 0 :crit, sprint0, 2026-04-27, 2026-05-08
+  Sprint 1 :sprint1, 2026-05-11, 2026-05-31
+  Sprint 2 :sprint2, 2026-06-01, 2026-06-21
+  Sprint 3 :sprint3, 2026-06-22, 2026-07-06
 
   section Releases
-  MVP :crit, mvp, 2025-11-27, 1d
-  MLP :crit, mlp, 2025-12-18, 1d
-  MMP :crit, mmp, 2026-01-08, 1d
+  MVP :crit, mvp, 2026-05-31, 1d
+  MLP :crit, mlp, 2026-06-21, 1d
+  MMP :crit, mmp, 2026-07-06, 1d
 ```
 
 *Gantt‑Übersicht der Sprints und Releases*
@@ -359,9 +358,9 @@ Die nachfolgende Tabelle zeigt den Stand aller Risiken aus der initialen Risikoa
 |-----------|--------------|:------------:|:-------------:|:------:|-----------|
 | R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🔴 16 | 🟠 12 | ↓ | MVP erfolgreich umgesetzt; schrittweise Umsetzungsstrategie bewährt sich. Eintrittswahrscheinlichkeit sinkt von 4 auf 3. |
 | R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🔴 16 | 🔴 16 | → | Sprint-Ziele erreicht, jedoch hat das Erkunden von GitLab-Plattform-Features mehr Zeit gekostet als geplant. Risiko bleibt unverändert hoch. |
-| R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟠 12 | 🟡 8 | ↓ | Lint-Pipeline (ruff, tflint, hadolint, trivy) sowie terraform validate eingeführt. Pipeline wird auf MRs automatisch ausgeführt. Eintrittswahrscheinlichkeit sinkt von 3 auf 2. |
-| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟠 12 | → | Entra ID Integration ist erst für Sprint 3 geplant; noch nicht adressiert. Zusätzliche Erkenntnis: Azure FIC-Wildcard matcht keine Schrägstriche – Branch-Benennung auf Bindestriche (`feature-xyz`) umgestellt, um OIDC-Auth-Fehler zu verhindern. |
-| R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 9 | 🟡 6 | ↓ | tflint und terraform validate sind in der Pipeline integriert. Infrastruktur noch nicht deployed (Pipeline auf `when: never`); Eintrittswahrscheinlichkeit sinkt von 3 auf 2. |
+| R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟠 12 | 🟡 8 | ↓ | Frühe Pipeline-Checks für `terraform validate`, `terraform fmt -check` und `tflint` wurden eingeführt. Merge-Request-Pipelines laufen automatisiert und reduzieren Integrationsfehler frühzeitig. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟠 12 | → | Entra-ID-Absicherung der Anwendung war in Sprint 1 noch nicht umgesetzt. Die produktive Azure-OIDC-Anbindung für Deployments wurde später über ein environment-basiertes Federated Credential realisiert. |
+| R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 9 | 🟡 6 | ↓ | `tflint` und `terraform validate` sind früh in der Pipeline verankert. Die eigentliche produktive Infrastruktur wurde zu diesem Zeitpunkt noch nicht ausgerollt. |
 
 __Sprint Retrospective:__
 
@@ -373,9 +372,9 @@ Für die Retrospektive habe ich wie im vergangenen Semester die Mad, Sad, Glad M
 **Lessons Learned:**
 
 - **GitLab Managed Terraform State von Anfang an nutzen:** Der Self-managed Remote State im Azure Storage Account hat den Bootstrap-Code unnötig vergrössert. Mit dem GitLab-integrierten Backend wäre der Bootstrap etwa halb so gross – und die Pipeline-Konfiguration für State-Locking deutlich einfacher.
-- **Branch-Namenskonvention beachten (Bindestriche statt Schrägstriche):** Azure Managed Identity Federated Identity Credentials erlauben keinen Wildcard-Match über `/`. Ein Branch `feature/xyz` würde in der OIDC-Pipeline nie authentifiziert werden. Die Konvention `feature-xyz` löst dieses Problem vollständig.
+- **OIDC-Vertrauensmodell früh festlegen:** Für produktive Azure-Deployments hat sich ein klares, environment-basiertes Federated Credential als robuster erwiesen als späte Nacharbeiten an der Pipeline-Authentifizierung.
 - **Plattform-Features gezielt einführen, nicht explorativ:** GitLab bietet viele nützliche Features (Pages, Releases, Cleanup Policies). Die explorative Herangehensweise hat jedoch deutlich mehr Zeit gekostet als geplant. In zukünftigen Sprints werden Platform-Features als explizite User Stories geplant, damit der Aufwand sichtbar und steuerbar bleibt.
-- **Linting früh in der Pipeline verankern zahlt sich aus:** Die frühe Integration von ruff, tflint, hadolint und Trivy verhindert das Einschleichen von Code-Smells und Sicherheitsproblemen. Einmal eingerichtet, läuft die Pipeline wartungsarm und liefert konsistenten Mehrwert.
+- **Frühe Pipeline-Checks zahlen sich aus:** `terraform validate`, `terraform fmt -check`, `tflint`, `checkov`, `pip-audit` und später Trivy liefern früh Rückmeldung und verhindern, dass Infrastruktur- oder Dependency-Probleme erst beim Azure-Deploy sichtbar werden.
 
 
 ### 3.4.3 Sprint 2 – MLP Release
@@ -557,8 +556,8 @@ Die Lösung besteht in einem einmaligen, lokal ausgeführten `terraform apply` d
 | Ressource | Zweck |
 |---|---|
 | Azure Storage Account `sttfstatescape` | Remote-Backend für alle Terraform-State-Dateien |
-| User-Assigned Managed Identity `mi-maker` | OIDC-Identität für die GitLab CI/CD-Pipeline |
-| OIDC Federated Identity Credential | Verknüpft die GitLab-Pipeline mit der Azure-Identität über Entra ID |
+| User-Assigned Managed Identity `mi-maker-escape` | OIDC-Identität für die GitLab CI/CD-Pipeline |
+| OIDC Federated Identity Credential | Verknüpft GitLab-Jobs des Environments `production` mit der Azure-Identität |
 
 Nach erfolgreichem Bootstrap verfügt die Pipeline über eine vertrauenswürdige Azure-Identität und einen stabilen State-Speicher. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
 
@@ -583,9 +582,9 @@ Der Bootstrap gliedert sich in drei klar abgegrenzte Phasen:
 |---|---|---|
 | 1 – Bootstrap | Lokal, einmalig | `bootstrap/` terraform apply — erstellt State-Backend und OIDC-Identität |
 | 2 – Kaltstart | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
-| 3 – Automatisierter Betrieb | GitLab CI/CD, dauerhaft | Quality Gates → terraform apply → Image build & push → Image-Tag-Update |
+| 3 – Automatisierter Betrieb | GitLab CI/CD, dauerhaft | Lint / Plan → manueller Terraform-Apply → Image Build & Scan → manueller Image-Deploy |
 
-Mit Abschluss von Phase 2 ist kein manueller Eingriff mehr für das Deployment von Änderungen notwendig.
+Mit Abschluss von Phase 2 läuft der Delivery-Prozess reproduzierbar über GitLab, produktive Infrastruktur- und Image-Rollouts bleiben derzeit jedoch bewusst manuell freizugeben.
 
 ## 5.2 Infrastructure as Code mit OpenTofu
 
@@ -593,15 +592,14 @@ Die gesamte Azure-Infrastruktur wird deklarativ mit OpenTofu beschrieben, das zu
 
 ### State-Trennung
 
-Der Infrastrukturcode ist in drei unabhängige Stacks mit je eigenem Remote-State in Azure Blob Storage aufgeteilt:
+Der Infrastrukturcode ist im aktuell implementierten Stand in zwei getrennte Zuständigkeiten aufgeteilt:
 
 ```
-bootstrap/   → key: bootstrap/terraform.tfstate    (lokal, einmalig)
-infra/        → key: platform/terraform.tfstate     (Plattform-Pipeline)
-themes/<n>/   → key: themes/<n>/terraform.tfstate   (Theme-Pipeline)
+bootstrap/   → lokaler Terraform-State             (lokal, einmalig)
+infra/       → key: infrastructure.tfstate         (Remote-State in Azure Blob Storage)
 ```
 
-Diese Trennung ist architektonisch begründet: Platform- und Theme-Stacks haben unterschiedliche Release-Kadenz und klar abgegrenzte Zuständigkeiten. Ein Theme-Deployment berührt die stabile Plattform nicht; ein Platform-Upgrade destabilisiert keine laufenden Themes. Isolierte State-Dateien stellen sicher, dass Deployments vollständig entkoppelt und parallel ausführbar sind.
+Der Bootstrap-Stack erstellt nur die Voraussetzungen für OIDC und Remote-State und wird lokal ausgeführt. Der produktiv genutzte Plattform-Stack `infra/` verwaltet anschliessend die laufende Azure-Umgebung. Ein separater Theme-Stack ist architektonisch vorgesehen, im Repository aktuell aber noch nicht umgesetzt.
 
 ### Modulstruktur des Platform-Stacks
 
@@ -609,7 +607,7 @@ Der Platform-Stack (`infra/`) ist in klar abgegrenzte Terraform-Module geglieder
 
 | Modul | Enthaltene Ressourcen |
 |---|---|
-| `network` | Subnets `snet-aca` (delegiert an `Microsoft.App/environments`) und `snet-pe`, NSGs |
+| `network` | Subnets `snet-aca` (delegiert an `Microsoft.App/environments`) und `snet-pe` |
 | `acr` | Azure Container Registry (`acrlabprodescape`, Basic SKU) |
 | `aca_env` | Container App Environment `cae-lab-prod-escape` (internal LB, VNet-integriert) |
 | `aca_app` | Container App Instanzen für Frontend und Backend |
@@ -622,9 +620,9 @@ Die folgende Übersicht zeigt den aktuell deployte Plattformzustand:
 
 | Ressource | Name | Kenndaten |
 |---|---|---|
-| Container App Environment | `cae-lab-prod-escape` | Internal LB, `public_network_access: Disabled`, statische IP `10.20.18.156` |
-| Container App (Frontend) | `ca-lab-prod-escape-frontend` | Port 8000, HTTP, System-Assigned MI, min 1 / max 3 Replicas |
-| Container App (Backend) | `ca-lab-prod-escape-backend` | Port 5001, HTTP, System-Assigned MI, min 1 / max 1 Replica |
+| Container App Environment | `cae-lab-prod-escape` | Internal LB, `internal = true`, statische IP `10.20.18.156` |
+| Container App (Frontend) | `ca-lab-prod-escape-frontend` | Target Port 8000, Transport HTTP, System-Assigned MI, min 1 / max 3 Replicas |
+| Container App (Backend) | `ca-lab-prod-escape-backend` | Target Port 5001, Transport HTTP, System-Assigned MI, min 1 / max 1 Replica |
 | Container Registry | `acrlabprodescape` | Basic SKU, Image Pull via System-Assigned MI |
 | Log Analytics Workspace | `law-lab-prod-escape` | Retention 30 Tage |
 | Private DNS Zone | `examplepebble-00000000.northeurope.azurecontainerapps.io` | A-Records `@` und `*` → `10.20.18.156`, VNet-linked |
@@ -639,35 +637,28 @@ Die GitLab CI/CD-Pipeline automatisiert den gesamten Delivery-Prozess vom Code-C
 
 ### Pipelinestruktur
 
-Entsprechend der Trennung von Platform- und Theme-Stacks existieren zwei unabhängige Pipelines, die über `changes:`-Regeln selektiv ausgelöst werden:
-
-**Plattform-Pipeline** (ausgelöst durch Änderungen in `infra/`, `frontend/`, `backend/`):
+Aktuell existiert eine GitLab-Pipeline mit unterschiedlichem Verhalten für Merge Requests und `main`:
 
 | Stage | Inhalt |
 |---|---|
-| Quality Gates | `ruff` (Python-Linting), `tflint`, `terraform fmt/validate`, `hadolint` (Dockerfile), `trivy` (Security-Scan) |
-| IaC | `terraform apply infra/` — Infrastrukturänderungen am Platform-Stack |
-| Build | Build und Push von Frontend- und Backend-Images mit Commit-SHA-Tag in die ACR |
-| Deploy | `terraform apply infra/` — Aktualisierung der Image-Tag-Referenz in den Container Apps |
+| Merge Request | `terraform fmt -check`, `terraform validate`, `tflint`, `checkov` sowie `pip-audit` für Frontend und Backend |
+| `main` - Plan | automatisches `terraform plan` für `infra/` |
+| `main` - Apply | manueller `terraform apply` für Infrastrukturänderungen |
+| `main` - Build | Docker Build und Push von Frontend- und Backend-Images mit Commit-SHA-Tag plus `latest` |
+| `main` - Image Scan | Trivy-Scan der frisch publizierten Images |
+| `main` - Deploy | manueller `terraform apply` mit `frontend_image_tag` und `backend_image_tag` zur Revision-Aktualisierung der Container Apps |
 
-**Theme-Pipeline** (ausgelöst durch Änderungen in `themes/<name>/`):
-
-| Stage | Inhalt |
-|---|---|
-| Build | Build und Push des Theme-Images in die ACR |
-| IaC | `terraform apply themes/<name>/` — Deployment des Theme-Stacks |
-
-Das abschliessende `terraform apply` der Plattform-Pipeline aktualisiert ausschliesslich die Image-Tag-Referenz. Container App Revisions in Azure werden dabei automatisch erstellt, da jede Image-Tag-Änderung eine neue Revision auslöst.
+Das abschliessende Deploy aktualisiert ausschliesslich die Image-Tag-Referenz. Container App Revisions in Azure werden dabei automatisch erstellt, da jede Image-Tag-Änderung eine neue Revision auslöst.
 
 ### Passwortlose Authentifizierung via OIDC
 
-Die Pipeline authentifiziert sich gegenüber Azure über OpenID Connect (OIDC) ohne statische Credentials. Für jede Pipeline-Ausführung stellt GitLab ein kurzlebiges OIDC-Token aus. Die Managed Identity `mi-maker` ist via Federated Identity Credential so konfiguriert, dass sie ausschliesslich Tokens von GitLab.com mit passenden Branch-Namen akzeptiert.
+Die Pipeline authentifiziert sich gegenüber Azure über OpenID Connect (OIDC) ohne statische Credentials. Für jede Pipeline-Ausführung stellt GitLab ein kurzlebiges OIDC-Token aus. Die Managed Identity `mi-maker-escape` vertraut dabei auf das Subject `project_path:<your-gitlab-group>/cloud-escape-lab:environment:production`. Azure-Zugriff ist damit auf die GitLab-Jobs beschränkt, die explizit im Environment `production` laufen.
 
-Dabei ist zu beachten: Azure Federated Identity Credentials erlauben keinen Wildcard-Match über `/`-Zeichen in Branch-Namen. Ein Branch `feature/xyz` würde die OIDC-Authentifizierung stillschweigend fehlschlagen lassen. Die Projekt-Konvention `feature-xyz` (Bindestrich statt Schrägstrich) ist deshalb eine direkte technische Anforderung dieser Azure-seitigen Einschränkung — keine rein stilistische Entscheidung.
+Die MR-Lint-Jobs benötigen keinen Azure-Login. Azure-authentifizierte Schritte werden erst auf `main` aktiv, wenn ein Job das produktive GitLab-Environment verwendet.
 
 ### Quality Gates als technisches Merge-Gate
 
-Die Quality-Stage ist als Pflichtvoraussetzung für jeden Merge Request nach `main` definiert. Ein Merge ist erst möglich, wenn alle Checks grün sind. Dies verhindert, dass syntaktisch fehlerhafter Terraform-Code, Container-Images mit kritischen CVEs oder Python-Code unterhalb des definierten Qualitätsniveaus in den Hauptbranch gelangen. Die Linter — `ruff`, `tflint`, `hadolint` und `trivy` — wurden bewusst früh im Sprint integriert, um Qualitätsprobleme bereits auf Entwicklerebene zu erkennen, bevor sie die Azure-Umgebung erreichen.
+Die Quality-Stage auf Merge Requests prüft aktuell vor allem Terraform-Syntax und grundlegende Sicherheits-/Abhängigkeitsbefunde. Verbindlich ausgeführt werden `terraform fmt -check` und `terraform validate`; `tflint`, `checkov` und `pip-audit` liefern zusätzliche Hinweise, sind im momentanen Stand jedoch als `allow_failure` beziehungsweise `soft-fail` konfiguriert. Dockerfile-spezifische Linter wie `hadolint` oder Python-Linting via `ruff` sind im aktuellen Pipeline-Code nicht enthalten.
 
 ## 5.4 Öffentlicher Zugriff, DNS und Routing
 
@@ -681,20 +672,20 @@ Der öffentliche Zugriff auf die Plattform erfolgt ausschliesslich über den zen
 
 ### DNS-Konfiguration
 
-Der Hostname `escape.contoso.example` ist im Contoso-internen DNS (IPAM) als CNAME-Eintrag eingetragen, der auf den öffentlichen DNS-Namen des Application Gateways zeigt. Dieser Schritt liegt ausserhalb der automatisierten Infrastruktur und wurde einmalig manuell über ein Change Request an Contoso vorgenommen.
+Der Hostname `escape.contoso.example` ist im Contoso-internen DNS als CNAME-Eintrag auf `contoso-appgw-prod.northeurope.cloudapp.azure.com` hinterlegt. Dieser Schritt liegt ausserhalb der automatisierten Infrastruktur und wurde einmalig über ein Change Request an Contoso vorgenommen.
 
 ### TLS-Terminierung und internes Routing
 
-Das Application Gateway terminiert TLS am Edge mit dem zentral verwalteten Wildcard-Zertifikat `*.contoso.example`. Die interne Verbindung vom Application Gateway zu den Container Apps im Spoke erfolgt über **HTTP auf Port 80**. TLS-Terminierung geschieht ausschliesslich am Edge; innerhalb des Hub-VNets ist der Traffic unverschlüsselt, da er nie das Netzwerkperimeter verlässt.
+Das Application Gateway terminiert TLS am Edge mit dem zentral verwalteten Wildcard-Zertifikat `*.contoso.example`. Die Weiterleitung in den Spoke erfolgt im aktuellen Azure-Stand ebenfalls über **HTTPS auf Port 443**. Die Backend-Pools zeigen auf die internen Hostnamen `cel-frontend.internal.contoso.example` und `cel-backend.internal.contoso.example`; für den TLS-Handshake setzt das Application Gateway dabei den Host-Header auf die jeweiligen Container-App-FQDNs `ca-lab-prod-escape-frontend.examplepebble-00000000.northeurope.azurecontainerapps.io` bzw. `ca-lab-prod-escape-backend.examplepebble-00000000.northeurope.azurecontainerapps.io` und verwendet das Trusted Root Certificate `backend-trusted-root-ca`.
 
 Das Application Gateway löst die Container App FQDNs über die Private DNS Zone im Spoke auf:
 
 ```
-escape.contoso.example  →  CNAME  →  AppGW Public FQDN (Hub)
-  AppGW → Private DNS → examplepebble-00000000.northeurope.azurecontainerapps.io
-    @ / * → 10.20.18.156 (ACA internal LB)
-      ├─ frontend FQDN → ca-lab-prod-escape-frontend (Port 8000)
-      └─ backend FQDN  → ca-lab-prod-escape-backend  (Port 5001)
+escape.contoso.example  →  CNAME  →  contoso-appgw-prod.northeurope.cloudapp.azure.com
+  AppGW → Backend Pool `pool-escape-contoso-example`     → cel-frontend.internal.contoso.example
+      TLS host override                                   → ca-lab-prod-escape-frontend.examplepebble-00000000.northeurope.azurecontainerapps.io
+  AppGW → Backend Pool `pool-escape-contoso-example-pr0` → cel-backend.internal.contoso.example
+      TLS host override                                   → ca-lab-prod-escape-backend.examplepebble-00000000.northeurope.azurecontainerapps.io
 ```
 
 ### Path-basiertes Routing
@@ -703,12 +694,12 @@ Auf dem Listener `escape.contoso.example:443` leitet das Application Gateway Anf
 
 | URL-Pfad | Ziel | Backend |
 |---|---|---|
-| `/` und alle übrigen Pfade | Frontend Container App | `ca-lab-prod-escape-frontend`, HTTP:80 |
-| `/tutorial-room`, `/tutorial-room/*` | Backend Container App | `ca-lab-prod-escape-backend`, HTTP:80 |
+| `/` und alle übrigen Pfade | Frontend Container App | `ca-lab-prod-escape-frontend`, HTTPS:443 via `pool-escape-contoso-example` |
+| `/tutorial-room`, `/tutorial-room/*` | Backend Container App | `ca-lab-prod-escape-backend`, HTTPS:443 via `pool-escape-contoso-example-pr0` |
 
-Der Health-Check-Probe des Application Gateways trifft auf `/healthz` der Frontend Container App.
+Die produktive Health-Probe des Application Gateways trifft aktuell auf `/tutorial-room/ping` der Backend Container App. Der öffentliche Pfad `/healthz` wird über das Default-Routing weiterhin vom Frontend beantwortet und liefert `200 {"status":"ok"}`.
 
-Das Frontend Container App ist mit `BACKEND_URL = "https://escape.contoso.example"` konfiguriert. API-Requests des Frontends an das Backend laufen damit über den öffentlichen Hostnamen und werden vom Application Gateway erneut geroutet — ein pragmatischer Ansatz für den POC, der eine direkte interne Service-to-Service-Kommunikation noch nicht voraussetzt.
+Das Frontend Container App ist mit `BACKEND_URL = "https://escape.contoso.example"` konfiguriert. API-Requests des Frontends an das Backend laufen damit über den öffentlichen Hostnamen und werden vom Application Gateway erneut geroutet. Die Anwendung ist unter `/` und `/tutorial` aktuell ohne Entra-ID-Redirect erreichbar; die Header-Auswertung für einen später vorgeschalteten Auth-Layer ist im Frontend-Code bereits vorhanden, in Azure aber noch nicht aktiviert.
 
 ## 5.5 Managed Identity und ACR-Zugriff
 

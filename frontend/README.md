@@ -49,7 +49,7 @@ Das Routing wird in `app/main/routes.py` definiert. Jede Funktion ist einer URL 
 @bp.get("/healthz")   # → JSON {"status": "ok"} (Gesundheitsprüfung für Azure)
 ```
 
-Flask übergibt der Seite Variablen wie `user` (aus dem Azure Easy Auth Header) oder `title` (aus `config.py`).
+Flask übergibt der Seite Variablen wie `user` (falls ein vorgeschalteter Auth-Layer den Header `X-MS-CLIENT-PRINCIPAL-NAME` setzt) oder `title` (aus `config.py`).
 
 ---
 
@@ -58,7 +58,7 @@ Flask übergibt der Seite Variablen wie `user` (aus dem Azure Easy Auth Header) 
 Das Tutorial-Room-Template (`tutorial.html`) enthält JavaScript, das beim Spielen direkt **REST-API-Anfragen** an das Backend schickt:
 
 ```
-Browser → JavaScript fetch() → Backend API (Port 5001)
+Browser → JavaScript fetch() → Backend API
                                       ↓
                               Spielzustand berechnen
                                       ↓
@@ -66,6 +66,7 @@ Browser ← JSON-Antwort ←─────────────┘
 ```
 
 Die Backend-URL kommt aus der Konfiguration (`config.py` → `BACKEND_URL`).
+Lokal zeigt sie standardmaessig auf `http://localhost:5001`, im produktiven Azure-Deployment wird sie per Container-App-Umgebungsvariable auf `https://escape.contoso.example` gesetzt.
 Das Frontend selbst bleibt jederzeit erreichbar; über die Runtime-Endpunkte (`/tutorial-room/runtime/stop`, `/tutorial-room/runtime`) kann die aktive Room-Instanz im Backend gestoppt oder gelöscht und danach neu gestartet werden.
 
 ---
@@ -98,5 +99,6 @@ python wsgi.py
 # → http://localhost:5000
 ```
 
-> Das Frontend benötigt das Backend auf Port 5001 damit das Spiel funktioniert.
+> Lokal lauscht das Frontend auf Port 5000, im Container-Deployment auf Port 8000 (`gunicorn -b 0.0.0.0:8000`).
+> Das Frontend benötigt lokal das Backend auf Port 5001 damit das Spiel funktioniert.
 > Ohne Backend ist die Oberfläche weiterhin erreichbar, aber "Start Game" und Room-Aktionen zeigen eine Fehlermeldung.

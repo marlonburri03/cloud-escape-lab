@@ -65,7 +65,7 @@ Durch CSS Custom Properties (`--blue`, `--navy` etc.) muss eine Farbe nur einmal
 ### `index.html` – Startseite
 
 **Inhalt:**
-- Begrüssungskarte mit dem Nutzernamen (`{{ user }}` aus Azure Easy Auth)
+- Begrüssungskarte mit dem Nutzernamen (`{{ user }}` aus dem optionalen Upstream-Auth-Header oder `"anonymous"`)
 - Drei Feature-Chips (Azure Labs, DevOps, Security)
 - Button zum Tutorial Room
 
