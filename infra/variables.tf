@@ -95,6 +95,18 @@ variable "backend_image_tag" {
   type        = string
 }
 
+# entra app registration (created by bootstrap, passed in as secrets)
+variable "entra_client_id" {
+  description = "Client ID of the Entra ID app registration (output from bootstrap)."
+  type        = string
+}
+
+variable "entra_client_secret" {
+  description = "Client secret of the Entra ID app registration (output from bootstrap)."
+  type        = string
+  sensitive   = true
+}
+
 # environment variables
 variable "backend_api_url" {
   description = "Public backend API base URL passed to the frontend container as BACKEND_URL."

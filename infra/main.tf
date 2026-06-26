@@ -54,6 +54,18 @@ module "aca_app_frontend" {
   }
 }
 
+# entra auth module for frontend
+module "aca_auth_frontend" {
+  source = "./modules/aca_auth"
+
+  container_app_id = module.aca_app_frontend.id
+
+  tenant_id = var.tenant_id
+
+  client_id     = var.entra_client_id
+  client_secret = var.entra_client_secret
+}
+
 # backend container app
 module "aca_app_backend" {
   source              = "./modules/aca_app"

@@ -10,3 +10,7 @@ container_name        = "tfstate"
 managed_identity_name = "mi-maker-escape"
 user_object_id        = "00000000-0000-0000-0000-000000000004" # marlon.burri@contoso.example
 gitlab_project_path   = "<your-gitlab-group>/cloud-escape-lab"
+
+# entra app registration
+application_name = "cloud-escape-lab"
+backend_api_url  = "https://escape.contoso.example"

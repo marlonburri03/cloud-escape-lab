@@ -15,7 +15,7 @@
 
 In dieser Arbeit wird eine Cloud-basierte Escape-Room-Plattform entwickelt, welche zur interaktiven Vermittlung von IT-Wissen dient. Die Plattform ermöglicht es Lernenden, technische Herausforderungen und Rätsel in einer praxisnahen und spielerischen Umgebung zu lösen. Ziel ist es, theoretische Inhalte aus der IT-Ausbildung mit realitätsnahen Szenarien zu kombinieren und dadurch den Lernerfolg nachhaltig zu verbessern.
 
-Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Escape Rooms werden automatisiert über GitLab CI/CD Pipelines bereitgestellt und betrieben. Die Azure-seitige Deployment-Authentifizierung erfolgt passwortlos über Microsoft Entra ID via OIDC; eine frontendseitige Entra-ID-Absicherung ist im Code bereits vorbereitet, im aktuellen Azure-Stand jedoch noch nicht aktiv erzwungen. Die Infrastruktur wird mithilfe von Infrastructure as Code (OpenTofu / Terraform) automatisiert und reproduzierbar bereitgestellt.
+Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Escape Rooms werden automatisiert über GitLab CI/CD Pipelines bereitgestellt und betrieben. Die Azure-seitige Deployment-Authentifizierung erfolgt passwortlos über Microsoft Entra ID via OIDC. Das Frontend ist mit Azure Container Apps Built-in Authentication (EasyAuth) abgesichert: unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet. Die Infrastruktur wird mithilfe von Infrastructure as Code (OpenTofu / Terraform) automatisiert und reproduzierbar bereitgestellt.
 
 Die Arbeit dient als proof of concept (POC) für eine moderne und interaktive Lernplattform im Bereich der IT-Ausbildung. Sofern sich das Konzept bewährt, ist eine Weiterentwicklung mit zusätzlichen Szenarien und Funktionen vorgesehen.
 
@@ -551,15 +551,25 @@ Dieses Kapitel beschreibt die technische Umsetzung der deployte Plattformarchite
 
 Der Bootstrap-Prozess löst ein strukturelles Henne-Ei-Problem, das bei vollständig codegetriebenen CI/CD-Setups mit Remote-State unvermeidbar auftritt: Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure — beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
 
-Die Lösung besteht in einem einmaligen, lokal ausgeführten `terraform apply` des Bootstrap-Stacks (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und darf nach der Ersteinrichtung nicht mehr verändert werden. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
+Die Lösung besteht in einem einmaligen, lokal ausgeführten `terraform apply` des Bootstrap-Stacks (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und wird ausschliesslich von einem Admin-Account (mit Entra-ID-Berechtigungen) ausgeführt. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
 
 | Ressource | Zweck |
 |---|---|
 | Azure Storage Account `sttfstatescape` | Remote-Backend für alle Terraform-State-Dateien |
 | User-Assigned Managed Identity `mi-maker-escape` | OIDC-Identität für die GitLab CI/CD-Pipeline |
 | OIDC Federated Identity Credential | Verknüpft GitLab-Jobs des Environments `production` mit der Azure-Identität |
+| Entra ID App Registration `cloud-escape-lab` | Identität für die Frontend-Authentifizierung via EasyAuth |
+| Service Principal + Client Secret | Credential für die EasyAuth-Konfiguration auf der Container App |
 
-Nach erfolgreichem Bootstrap verfügt die Pipeline über eine vertrauenswürdige Azure-Identität und einen stabilen State-Speicher. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
+Der Bootstrap-Stack ist intern in drei Module gegliedert:
+
+| Modul | Enthaltene Ressourcen |
+|---|---|
+| `state_backend` | Resource Group, Storage Account, Blob Container, User RBAC auf Storage |
+| `maker_identity` | Managed Identity, Federated Credential, Rolle Contributor + UAA auf Subscription, Storage Blob Data Contributor |
+| `entra_auth` | App Registration, Service Principal, Client Secret, Owner-Zuweisungen |
+
+Nach erfolgreichem Bootstrap stehen zwei Outputs zur Verfügung: `entra_client_id` und `entra_client_secret`. Diese werden lokal in `infra/secrets.auto.tfvars` (gitignored) eingetragen und in der GitLab-Pipeline als Protected Variables (`TF_VAR_entra_client_id`, `TF_VAR_entra_client_secret`) hinterlegt. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
 
 ### Kaltstart der Container Images
 
@@ -580,7 +590,7 @@ Der Bootstrap gliedert sich in drei klar abgegrenzte Phasen:
 
 | Phase | Ausführung | Inhalt |
 |---|---|---|
-| 1 – Bootstrap | Lokal, einmalig | `bootstrap/` terraform apply — erstellt State-Backend und OIDC-Identität |
+| 1 – Bootstrap | Lokal, einmalig (Admin-Account) | `bootstrap/` terraform apply — erstellt State-Backend, OIDC-Identität und Entra App Registration. Outputs (`entra_client_id`, `entra_client_secret`) in `infra/secrets.auto.tfvars` und als GitLab Protected Variables hinterlegen. |
 | 2 – Kaltstart | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
 | 3 – Automatisierter Betrieb | GitLab CI/CD, dauerhaft | Lint / Plan → manueller Terraform-Apply → Image Build & Scan → manueller Image-Deploy |
 
@@ -595,11 +605,11 @@ Die gesamte Azure-Infrastruktur wird deklarativ mit OpenTofu beschrieben, das zu
 Der Infrastrukturcode ist im aktuell implementierten Stand in zwei getrennte Zuständigkeiten aufgeteilt:
 
 ```
-bootstrap/   → lokaler Terraform-State             (lokal, einmalig)
+bootstrap/   → lokaler Terraform-State             (lokal, einmalig, Admin-Account)
 infra/       → key: infrastructure.tfstate         (Remote-State in Azure Blob Storage)
 ```
 
-Der Bootstrap-Stack erstellt nur die Voraussetzungen für OIDC und Remote-State und wird lokal ausgeführt. Der produktiv genutzte Plattform-Stack `infra/` verwaltet anschliessend die laufende Azure-Umgebung. Ein separater Theme-Stack ist architektonisch vorgesehen, im Repository aktuell aber noch nicht umgesetzt.
+Der Bootstrap-Stack erstellt die Voraussetzungen für OIDC, Remote-State und Frontend-Authentifizierung und wird lokal mit einem Admin-Account ausgeführt. Die Entra-Credentials (`entra_client_id`, `entra_client_secret`) werden als Output bereitgestellt und dem `infra/`-Stack als Variablen übergeben — lokal via `secrets.auto.tfvars`, in der Pipeline via GitLab Protected Variables. Der produktiv genutzte Plattform-Stack `infra/` verwaltet anschliessend die laufende Azure-Umgebung. Ein separater Theme-Stack ist architektonisch vorgesehen, im Repository aktuell aber noch nicht umgesetzt.
 
 ### Modulstruktur des Platform-Stacks
 
@@ -611,6 +621,7 @@ Der Platform-Stack (`infra/`) ist in klar abgegrenzte Terraform-Module geglieder
 | `acr` | Azure Container Registry (`acrlabprodescape`, Basic SKU) |
 | `aca_env` | Container App Environment `cae-lab-prod-escape` (internal LB, VNet-integriert) |
 | `aca_app` | Container App Instanzen für Frontend und Backend |
+| `aca_auth` | EasyAuth-Konfiguration auf der Frontend Container App (Entra ID, Redirect zu Login, Audience-Validierung) |
 
 Jedes Modul exponiert ausschliesslich die Outputs, die von anderen Modulen oder von der Pipeline benötigt werden. Intern bleibt die Implementierung gekapselt, sodass einzelne Module refaktoriert werden können, ohne State-Abhängigkeiten zu gefährden.
 
@@ -699,7 +710,7 @@ Auf dem Listener `escape.contoso.example:443` leitet das Application Gateway Anf
 
 Die produktive Health-Probe des Application Gateways trifft aktuell auf `/tutorial-room/ping` der Backend Container App. Der öffentliche Pfad `/healthz` wird über das Default-Routing weiterhin vom Frontend beantwortet und liefert `200 {"status":"ok"}`.
 
-Das Frontend Container App ist mit `BACKEND_URL = "https://escape.contoso.example"` konfiguriert. API-Requests des Frontends an das Backend laufen damit über den öffentlichen Hostnamen und werden vom Application Gateway erneut geroutet. Die Anwendung ist unter `/` und `/tutorial` aktuell ohne Entra-ID-Redirect erreichbar; die Header-Auswertung für einen später vorgeschalteten Auth-Layer ist im Frontend-Code bereits vorhanden, in Azure aber noch nicht aktiviert.
+Das Frontend Container App ist mit `BACKEND_URL = "https://escape.contoso.example"` konfiguriert. API-Requests des Frontends an das Backend laufen damit über den öffentlichen Hostnamen und werden vom Application Gateway erneut geroutet. Der Zugriff auf das Frontend ist über EasyAuth mit Microsoft Entra ID gesichert: unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet. Nur Benutzer des Contoso-Tenants können sich anmelden; die Audience-Validierung (`api://<client_id>`) stellt sicher, dass ausschliesslich Tokens für diese Applikation akzeptiert werden.
 
 ## 5.5 Managed Identity und ACR-Zugriff
 

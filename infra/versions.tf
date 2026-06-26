@@ -6,13 +6,13 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 3.0"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.0"
     }
   }
 }
@@ -25,6 +25,6 @@ provider "azurerm" {
   use_oidc        = var.use_oidc
 }
 
-provider "azuread" {
+provider "azapi" {
   tenant_id = var.tenant_id
 }
