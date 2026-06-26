@@ -19,6 +19,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+**/secrets.auto.tfvars
 
 # python
 __pycache__/

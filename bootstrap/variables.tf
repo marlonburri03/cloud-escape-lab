@@ -42,3 +42,13 @@ variable "gitlab_project_path" {
   description = "Full GitLab project path (group/subgroup/project) used as OIDC subject"
   type        = string
 }
+
+variable "application_name" {
+  description = "Display name for the Entra ID application registration."
+  type        = string
+}
+
+variable "backend_api_url" {
+  description = "Public backend API base URL used as redirect URI in the Entra ID app registration."
+  type        = string
+}

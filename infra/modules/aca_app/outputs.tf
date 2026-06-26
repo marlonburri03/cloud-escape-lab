@@ -13,3 +13,7 @@ output "principal_id" {
 output "app_name" {
   value = azurerm_container_app.app.name
 }
+
+output "id" {
+  value = azurerm_container_app.app.id
+}

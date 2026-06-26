@@ -75,7 +75,7 @@ checkov:scan:
   artifacts:
     name: checkov-report
     paths:
-      - lintov-report.sarif
+      - checkov-report.sarif
     reports:
       sast: checkov-report.sarif
     expire_in: 7 days
