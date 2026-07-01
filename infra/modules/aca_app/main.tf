@@ -8,7 +8,8 @@ resource "azurerm_container_app" "app" {
 
   lifecycle {
     ignore_changes = [
-      tags
+      tags,
+      secret
     ]
   }
 
