@@ -58,7 +58,8 @@ module "aca_app_frontend" {
 module "aca_auth_frontend" {
   source = "./modules/aca_auth"
 
-  container_app_id = module.aca_app_frontend.id
+  container_app_id       = module.aca_app_frontend.id
+  container_app_revision = module.aca_app_frontend.latest_revision_name
 
   tenant_id = var.tenant_id
 

@@ -23,7 +23,7 @@ module "entra_auth" {
   source = "./modules/entra_auth"
 
   application_name = var.application_name
-  redirect_uris    = ["${trimsuffix(var.backend_api_url, "/")}/"]
+  redirect_uris    = ["${trimsuffix(var.backend_api_url, "/")}/.auth/login/aad/callback"]
   owner_object_ids = {
     admin_user     = var.user_object_id
     maker_identity = module.maker_identity.principal_id

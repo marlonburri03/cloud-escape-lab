@@ -1,3 +1,7 @@
+output "latest_revision_name" {
+  value = azurerm_container_app.app.latest_revision_name
+}
+
 output "name" {
   value = azurerm_container_app.app.name
 }
