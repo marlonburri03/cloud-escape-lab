@@ -34,3 +34,6 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# openspec
+*openspec/
