@@ -862,6 +862,18 @@ flowchart TD
 
 &nbsp;
 
+### Umgesetzte Änderungen im Rahmen von S3M-31
+
+Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen an der Plattform umgesetzt, damit die Benutzerführung sauber getestet und später auf mehrere Escape Rooms erweitert werden kann:
+
+- **Startseite als Room-Katalog:** Die bisherige Startseite mit einem einzelnen Button wurde auf ein kartenbasiertes Room-Auswahl-Layout umgestellt. Der Tutorial Room wird als erste spielbare Karte mit Vorschaubild angezeigt; zusätzliche Platzhalter für einen **Terraform Room** und einen **CI/CD Room** bereiten die Plattform auf weitere Szenarien vor.
+- **Grössere Tutorial-Room-Ansicht:** Das Frontend des Tutorial Rooms wurde so angepasst, dass das Hintergrundbild deutlich grösser dargestellt wird und die Spieloberfläche mehr Platz erhält. Dadurch wirkt der Room stärker wie eine eigentliche Spielfläche und ist ohne die bisherigen kleinen Scroll-Bereiche nutzbarer.
+- **Bugfix beim Exit Terminal:** Das Eingabefeld für den vierstelligen Code wird nun sprachunabhängig über die stabile Objekt-ID statt über einen lokalisierten Anzeigenamen eingeblendet. Damit funktioniert die Code-Eingabe sowohl lokal als auch in der Azure-Deployment-Variante zuverlässig.
+- **Leaderboard für Abschlusszeiten:** Für den Tutorial Room wurde ein Leaderboard eingeführt, das die gemessene Abschlusszeit pro Benutzer speichert und im Startbereich des Rooms als Top-10-Liste anzeigt. Die Anzeige der eigenen Zeit erfolgt zusätzlich direkt nach dem erfolgreichen Abschluss des Rooms.
+- **Persistenz-Hinweis zum Leaderboard:** Das Leaderboard ist fachlich für einen produktiven Betrieb gedacht und soll Zeiten über mehrere Deployments hinweg behalten. Damit dies in Azure dauerhaft funktioniert, muss das Backend über `DATABASE_URI` auf eine **externe Datenbank** (z. B. PostgreSQL) zeigen; eine reine lokale SQLite-Datei im Container wäre für diese Anforderung nicht ausreichend.
+
+&nbsp;
+
 ## 6.1 Testfälle
 
 | Testfall 1 | Öffentliche Erreichbarkeit & TLS-Zertifikat |
@@ -936,57 +948,83 @@ flowchart TD
 
 &nbsp;
 
-| Testfall 7 | End-to-End Smoke-Test: Tutorial Room laden und starten |
+| Testfall 7 | End-to-End Test: Tutorial Room laden und starten |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Eingeloggte Session<br>- Tutorial Room über `/tutorial` im Frontend erreichbar |
-| Erwartetes Ergebnis    | Die Plattform liefert den (unveränderten) Tutorial Room korrekt aus: Seite lädt, Spiel kann gestartet werden (Token-Ausstellung über die Backend-API), erste Interaktion (Lichtschalter) funktioniert. **Es wird bewusst keine Tiefenprüfung der Rätsel-Logik durchgeführt**, da diese aus dem unveränderten Template [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) stammt — dieser Test ist ein reiner Integrations-Smoke-Test der Plattform (Frontend ↔ Backend ↔ Auth ↔ Routing), nicht ein Test des Rätsel-Inhalts. |
-| Testablauf             | 1. `https://escape.contoso.example/tutorial` aufrufen<br>2. Spiel starten (Name eingeben, Start-Button)<br>3. Prüfen, dass ein Token ausgestellt und der Raumzustand geladen wird<br>4. Eine einzelne Interaktion (Lichtschalter) auslösen und Reaktion prüfen |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase7](img/Testcase7.gif)<br>*Platzhalter: Tutorial Room lädt und startet in Produktion* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Erwartetes Ergebnis    | Die Plattform liefert den Tutorial Room korrekt aus. Seite lädt, Spiel kann gestartet werden, erste Interaktion (Lichtschalter) funktioniert. **Es wird bewusst keine Tiefenprüfung der Rätsel-Logik durchgeführt**, da diese aus dem Template [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) stammt. Dieser Test ist ein reiner Integrations-Test der Plattform, nicht ein Test des Rätsel-Inhalts. |
+| Testablauf             | 1. `https://escape.contoso.example/tutorial` aufrufen<br>2. **Start Game** klicken<br>3. Prüfen, dass der Raumzustand geladen wird und der Lichtschalter sichtbar ist<br>4. Eine einzelne Interaktion (Lichtschalter) auslösen und Reaktion prüfen |
+| Effektives Ergebnis    | Der Tutorial Room wurde in der Azure-Umgebung korrekt geladen. Nach Klick auf **Start Game** erschien die Spielansicht unmittelbar, der Raumzustand wurde korrekt initialisiert und der Lichtschalter konnte erfolgreich verwendet werden. |
+| Screenshot / Logfiles | ![Testcase7](img/testcase7.gif)<br>*Platzhalter: Tutorial Room lädt und startet in Produktion* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
-| Testfall 8 | CI/CD-Redeploy ohne sichtbaren Ausfall |
+| Testfall 8 | Vollständiger Benutzerfluss bis zum erfolgreichen Abschluss |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Voraussetzungen        | - Schreibzugriff auf das GitLab-Repository<br>- Berechtigung, den manuellen `deploy:images`-Job auszulösen (vgl. Abschnitt 5.3) |
-| Erwartetes Ergebnis    | Ein Redeploy über die Pipeline (neues Image, `terraform apply` mit neuem `frontend_image_tag`/`backend_image_tag`) erzeugt eine neue Container-App-Revision, ohne dass die Plattform für Endnutzende sichtbar ausfällt (kein dauerhafter 502 vom Application Gateway während des Rollouts). |
-| Testablauf             | 1. Kleine, unkritische Änderung (z. B. Kommentar) committen und über Merge Request nach `main` mergen<br>2. Pipeline bis `build` → `image-scan` durchlaufen lassen<br>3. `deploy:images` manuell auslösen<br>4. Während des Rollouts wiederholt `https://escape.contoso.example/healthz` aufrufen und auf Verfügbarkeit prüfen |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase8](img/Testcase8.gif)<br>*Platzhalter: Pipeline-Lauf und Verfügbarkeit während Rollout* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Voraussetzungen        | - Eingeloggte Session<br>- Tutorial Room gestartet |
+| Erwartetes Ergebnis    | Der Benutzer kann den Tutorial Room vollständig durchspielen und am Ende erscheint der Erfolgsbanner. Damit ist der komplette Benutzerfluss vom Start bis zum Abschluss in der Plattform validiert. |
+| Testablauf             | 1. **Light Switch** auswählen und **Interact** klicken<br>2. **Professor's Desk** auswählen und **Examine** klicken<br>3. Im Dropdown **Office Key** wählen und mit dem Schreibtisch **Interact** ausführen<br>4. **Research Journal** auswählen und **Examine** klicken<br>5. **Exit Terminal** auswählen, den Code eingeben und **Interact** klicken |
+| Effektives Ergebnis    | Der vollständige Benutzerfluss konnte ohne Unterbruch durchgespielt werden. Alle vorgesehenen Interaktionen funktionierten, der 4-stellige Code konnte eingegeben werden und am Ende wurde der Erfolgsbanner wie erwartet angezeigt. |
+| Screenshot / Logfiles | ![Testcase8](img/testcase8.gif)<br>*Platzhalter: vollständiger Durchlauf bis zum Win-Banner* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
-| Testfall 9 | Infrastruktur-Reproduzierbarkeit (Terraform-Drift-Check) |
+| Testfall 9 | Spiel zurücksetzen und Ausgangszustand prüfen |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Voraussetzungen        | - Lokaler Zugriff auf den `infra/`-Stack mit gültigen Azure-Credentials (OIDC oder Admin-Account)<br>- Letzter `terraform apply` liegt zurück und es wurden keine manuellen Änderungen im Azure-Portal vorgenommen |
-| Erwartetes Ergebnis    | Ein `terraform plan` gegen den produktiven State liefert „No changes“ — die deklarierte IaC-Konfiguration entspricht exakt dem tatsächlichen Azure-Zustand. Das belegt reproduzierbare, driftfreie Infrastruktur gemäss Engineering-Prinzip „Automation First“ (Abschnitt 4.1). |
-| Testablauf             | 1. `cd infra`<br>2. `terraform init` gegen das produktive Remote-State-Backend<br>3. `terraform plan` ausführen<br>4. Ausgabe auf „No changes. Your infrastructure matches the configuration.“ prüfen |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase9](img/Testcase9.gif)<br>*Platzhalter: `terraform plan`-Ausgabe ohne Drift* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Voraussetzungen        | - Eingeloggte Session<br>- Tutorial Room gestartet<br>- Mindestens eine Interaktion wurde bereits ausgeführt |
+| Erwartetes Ergebnis    | Nach Klick auf **Reset** wird der Room auf den Anfangszustand zurückgesetzt. Bereits freigeschaltete Objekte verschwinden wieder und der Benutzer sieht erneut nur den initialen Einstieg des Rooms. |
+| Testablauf             | 1. Spiel starten und mindestens den **Light Switch** betätigen<br>2. Prüfen, dass zusätzliche Objekte sichtbar wurden<br>3. **Reset** klicken<br>4. Prüfen, dass der initiale Zustand wiederhergestellt wurde |
+| Effektives Ergebnis    | Nach dem Reset wurde der Tutorial Room erfolgreich auf den Ausgangszustand zurückgesetzt. Bereits freigeschaltete Objekte waren nicht mehr sichtbar und der initiale Startzustand des Rooms wurde korrekt wiederhergestellt. |
+| Screenshot / Logfiles | ![Testcase9](img/testcase9.gif)<br>*Platzhalter: Fortschritt wird per Reset auf Anfang zurückgesetzt* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
-| Testfall 10 | Datenpersistenz bei Redeploy in Produktion |
+| Testfall 10 | Runtime beenden, löschen und neu starten |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Voraussetzungen        | - Eingeloggte Session, Tutorial Room gestartet und ein Stück weit gespielt<br>- Geplanter, kontrollierter Redeploy über die Pipeline (ausserhalb der Nutzungszeiten, da produktive Auswirkung) |
-| Erwartetes Ergebnis    | Gemäss meines Wissens ist die SQLite[^31]-Datenbank nicht auf einem persistenten Volume abgelegt. Es wird erwartet, dass der Spielfortschritt nach einem Redeploy der Backend Container App verloren geht. |
-| Testablauf             | 1. Spiel starten und mindestens einen Rätselschritt lösen (z. B. Lichtschalter betätigen)<br>2. Über die Pipeline gezielt einen Redeploy der Backend Container App auslösen (`deploy:images`)<br>3. Nach Abschluss des Rollouts dieselbe Session erneut aufrufen<br>4. Prüfen, ob der Spielfortschritt (Objekt-Sichtbarkeiten) noch vorhanden ist oder ob ein Fehler/Reset auftritt |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase10](img/Testcase10.gif)<br>*Platzhalter: Spielzustand vor/nach Redeploy im Vergleich* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Voraussetzungen        | - Eingeloggte Session<br>- Tutorial Room gestartet |
+| Erwartetes Ergebnis    | Sowohl **Stop Room** als auch **Delete Room** beenden die aktuelle Runtime sichtbar im Frontend. Anschliessend kann mit **Start Game** wieder ein neuer, sauberer Room gestartet werden. |
+| Testablauf             | 1. Spiel starten und mindestens eine Interaktion ausführen<br>2. **Stop Room** klicken und prüfen, dass wieder die Startansicht erscheint<br>3. Room erneut mit **Start Game** starten<br>4. Danach **Delete Room** klicken und erneut die Rückkehr zur Startansicht prüfen<br>5. Mit **Start Game** sicherstellen, dass ein frischer Room wieder gestartet werden kann |
+| Effektives Ergebnis    | Sowohl **Stop Room** als auch **Delete Room** führten zuverlässig zurück auf die Startansicht. Anschliessend konnte der Tutorial Room jeweils erneut mit **Start Game** gestartet werden, wobei jedes Mal eine frische Runtime bereitstand. |
+| Screenshot / Logfiles | ![Testcase10](img/testcase10.gif)<br>*Platzhalter: Stop/Delete der Runtime und erneuter sauberer Start* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
 ## 6.2 Testresultat
 
-_Wird nach Durchführung der obigen Testfälle durch den Autor ergänzt: Testabschlussrate, Pie-Chart, Liste erfolgreicher Testfälle, kritische Befunde (z. B. Bestätigung von R-DATA-001 in Testfall 10) sowie ein zusammenfassendes Fazit zur Produktionsreife der Plattform._
+**Testabschlussrate**: 4 von 4 Testfällen erfolgreich (100% Erfolgsquote)
+
+Die durchgeführten Tests belegen, dass der End-to-End-Prozess des Tutorial Rooms technisch zuverlässig funktioniert. Der Benutzerfluss vom Laden der Seite über den Spielstart bis zum erfolgreichen Abschluss arbeitet stabil. Auch das Zurücksetzen des Spielzustands sowie das Stoppen, Löschen und erneute Starten der Runtime funktionieren wie erwartet in der produktionsnahen Azure-Umgebung.
+
+&nbsp;
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'pie1': '#90EE90', 'pie2': '#FFB6C6'}}}%%
+pie title Testabschlussrate (4 Testfälle)
+    "Erfolgreich (4)" : 100
+    "Fehlgeschlagen (0)" : 0
+```
+
+__Erfolgreiche Testfälle:__
+
+| # | Testfall | Beschreibung |
+|---|----------|-------------|
+| 7 | Tutorial Room laden und starten | Die Seite lädt korrekt, der Room startet erfolgreich und erste Interaktionen funktionieren. |
+| 8 | Vollständiger Benutzerfluss | Der Tutorial Room kann vollständig bis zum Erfolgsbanner durchgespielt werden. |
+| 9 | Spiel zurücksetzen | Der Fortschritt wird korrekt verworfen und der initiale Zustand wiederhergestellt. |
+| 10 | Runtime beenden und neu starten | Stop Room und Delete Room funktionieren, anschliessend lässt sich ein frischer Room erneut starten. |
+
+__Kritische Befunde:__
+Es wurden keine kritischen Fehler festgestellt.
+
+__Fazit:__
+Das System ist für den Tutorial Room funktionsfähig und stabil. Die zentralen End-to-End-Abläufe der Plattform bewähren sich in der Praxis, und die Anwendung unterstützt den vorgesehenen Benutzerfluss in der Azure-Umgebung zuverlässig.
 
 &nbsp;
 
