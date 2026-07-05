@@ -1,5 +1,5 @@
 resource "terraform_data" "revision_trigger" {
-  input = var.container_app_revision
+  input = var.container_app_deployment_token
 }
 
 # Add the AAD client secret to the Container App secrets list

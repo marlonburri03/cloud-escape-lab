@@ -760,7 +760,9 @@ Das Modul `aca_auth` verwendet daher den `azure/azapi`-Provider:
 |---|---|
 | `azapi_resource.auth_config` | Erstellt / aktualisiert `authConfigs/current` |
 | `azapi_update_resource.app_secret` | Patcht das AAD-Client-Secret in die Secrets-Liste der Container App, ohne andere Felder zu überschreiben |
-| `terraform_data.revision_trigger` + `replace_triggered_by` | Erzwingt bei jeder neuen ACA-Revision eine Neuanwendung von EasyAuth (da eine neue Revision technisch eine neue Ressourcenversion ist) |
+| `terraform_data.revision_trigger` + `replace_triggered_by` | Erzwingt bei Änderungen an der Frontend-Deployment-Konfiguration eine Neuanwendung von EasyAuth über einen stabilen Deployment-Hash |
+
+Das Reapply wird bewusst **nicht** an den von Azure zur Laufzeit vergebenen Revisionsnamen gekoppelt. Dieser Wert kann sich während `terraform apply` erneut ändern und zu Fehlern wie `Provider produced inconsistent final plan` führen. Stattdessen verwendet das Modul einen stabilen Hash der gewünschten Frontend-Konfiguration und führt das EasyAuth-Reapply mit `depends_on = [module.aca_app_frontend]` erst nach dem Container-App-Update aus.
 
 In der `azurerm_container_app`-Ressource ist zusätzlich `lifecycle { ignore_changes = [secret] }` gesetzt, damit Terraform die von EasyAuth verwalteten Secrets nicht beim nächsten Apply löscht.
 
