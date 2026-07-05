@@ -8,6 +8,21 @@ resource "azurerm_resource_group" "workload" {
   }
 }
 
+locals {
+  frontend_auth_reapply_token = sha256(jsonencode({
+    name_prefix  = var.name_prefix
+    app_name     = "frontend"
+    image_name   = var.frontend_image_name
+    image_tag    = var.frontend_image_tag
+    target_port  = 8000
+    min_replicas = 1
+    max_replicas = 3
+    app_settings = {
+      BACKEND_URL = var.backend_api_url
+    }
+  }))
+}
+
 # call network module
 module "network" {
   source                    = "./modules/network"
@@ -58,8 +73,10 @@ module "aca_app_frontend" {
 module "aca_auth_frontend" {
   source = "./modules/aca_auth"
 
-  container_app_id       = module.aca_app_frontend.id
-  container_app_revision = module.aca_app_frontend.latest_revision_name
+  depends_on = [module.aca_app_frontend]
+
+  container_app_id               = module.aca_app_frontend.id
+  container_app_deployment_token = local.frontend_auth_reapply_token
 
   tenant_id = var.tenant_id
 
