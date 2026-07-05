@@ -869,10 +869,10 @@ flowchart TD
 | Voraussetzungen        | - Browser mit Netzwerkzugriff auf das Internet<br>- Keine VPN-/Contoso-Netz-Pflicht, da Zugriff über das öffentliche Application Gateway erfolgt |
 | Erwartetes Ergebnis    | `https://escape.contoso.example/` ist öffentlich erreichbar. Der Browser zeigt ein gültiges TLS-Zertifikat für `*.contoso.example` (Contoso-verwaltetes Wildcard-Zertifikat am Application Gateway, vgl. Abschnitt 5.4), keine Zertifikatswarnung. |
 | Testablauf             | 1. `https://escape.contoso.example/` im Browser aufrufen<br>2. Zertifikatsdetails prüfen (Aussteller, Gültigkeit, Domain)<br>3. Sicherstellen, dass kein „Nicht sicher“-Hinweis erscheint |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase1](img/Testcase1.gif)<br>*Platzhalter: TLS-Zertifikatsdetails im Browser* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | `https://escape.contoso.example/` war öffentlich erreichbar. Der Browser zeigt ein gültiges TLS-Zertifikat für `*.contoso.example` an, keine Zertifikatswarnung wurde angezeigt. Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase1](img/testcase1.gif)<br>*TLS-Zertifikatsdetails im Browser* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
@@ -881,10 +881,10 @@ flowchart TD
 | Voraussetzungen        | - Browser ohne bestehende Session auf `escape.contoso.example` (z. B. privates/Inkognito-Fenster) |
 | Erwartetes Ergebnis    | Aufruf von `/` ohne aktive Session führt zu einem automatischen Redirect auf die Microsoft-Login-Seite (`login.microsoftonline.com`). Kein Seiteninhalt wird ohne Login ausgeliefert (vgl. Abschnitt 5.6, EasyAuth v2). |
 | Testablauf             | 1. Inkognito-Fenster öffnen<br>2. `https://escape.contoso.example/` aufrufen<br>3. Weiterleitung auf Microsoft-Login beobachten<br>4. Sicherstellen, dass keine Inhalte der Startseite sichtbar werden |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase2](img/Testcase2.gif)<br>*Platzhalter: automatischer Redirect zu Microsoft-Login* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | Der Aufruf von `/` ohne aktive Session führte zu einem automatischen Redirect auf die Microsoft-Login-Seite (`login.microsoftonline.com`). Es wurde kein Seiteninhalt ohne Login ausgeliefert. Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase2](img/testcase2.gif)<br>*automatischer Redirect zu Microsoft-Login* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
@@ -893,10 +893,10 @@ flowchart TD
 | Voraussetzungen        | - Gültiger Contoso-Account (Mitglied des Tenants `00000000-0000-0000-0000-000000000001`) |
 | Erwartetes Ergebnis    | Nach Login mit einem Contoso-Account erfolgt der Redirect zurück auf `https://escape.contoso.example/.auth/login/aad/callback` und anschliessend auf die Startseite. Der Nutzer sieht die Plattform-Startseite, die Session bleibt für Folge-Requests bestehen (Cookie). |
 | Testablauf             | 1. Auf der Microsoft-Login-Seite mit Contoso-Account anmelden<br>2. Redirect-Kette beobachten (Callback-URL, finale Landing-Page)<br>3. Seite neu laden und prüfen, dass kein erneuter Login nötig ist (Session-Cookie aktiv) |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase3](img/Testcase3.gif)<br>*Platzhalter: erfolgreicher Login und Landing-Page* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | Nach Login mit einem Contoso-Account erfolgte der Redirect zurück auf `https://escape.contoso.example/.auth/login/aad/callback` und anschliessend auf die Startseite. Die Session blieb für Folge-Requests bestehen (Cookie), ein erneutes Laden der Seite erforderte keinen erneuten Login. Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase3](img/testcase3.gif)<br>*erfolgreicher Login und Landing-Page* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
@@ -905,10 +905,10 @@ flowchart TD
 | Voraussetzungen        | - Browser/REST-Client ohne aktive Session |
 | Erwartetes Ergebnis    | `https://escape.contoso.example/healthz` (Frontend) liefert ohne Login HTTP 200 `{"status":"ok"}`, da als `excludedPath` in der EasyAuth-Konfiguration hinterlegt (vgl. Abschnitt 5.4/5.6). Dies ist Voraussetzung dafür, dass das Application Gateway den Backend-Pool als „healthy“ einstuft. |
 | Testablauf             | 1. Inkognito-Fenster/REST-Client ohne Session verwenden<br>2. `GET https://escape.contoso.example/healthz` aufrufen<br>3. Statuscode und Payload prüfen (kein Redirect zu Microsoft-Login) |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase4](img/Testcase4.gif)<br>*Platzhalter: `/healthz` ohne Login, HTTP 200* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | `GET https://escape.contoso.example/healthz` lieferte ohne aktive Session HTTP 200 mit `{"status":"ok"}`, ohne Redirect zum Microsoft-Login. Der `excludedPath` in der EasyAuth-Konfiguration funktioniert wie vorgesehen. Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase4](img/testcase4.gif)<br>*`/healthz` ohne Login, HTTP 200* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
@@ -917,10 +917,10 @@ flowchart TD
 | Voraussetzungen        | - Aktive, eingeloggte Session auf `escape.contoso.example` |
 | Erwartetes Ergebnis    | Anfragen an `/` (und übrige Pfade) werden an die Frontend Container App weitergeleitet, Anfragen an `/tutorial-room` bzw. `/tutorial-room/*` an die Backend Container App (vgl. Routing-Tabelle in Abschnitt 5.4). Beide sind über denselben Hostnamen erreichbar, liefern aber erkennbar unterschiedliche Inhalte/Antworten (Frontend-HTML vs. Backend-JSON-API). |
 | Testablauf             | 1. `https://escape.contoso.example/` aufrufen → Frontend-Seite prüfen<br>2. `https://escape.contoso.example/tutorial-room/ping` aufrufen → Backend-JSON-Antwort prüfen<br>3. Entwicklertools/Netzwerk-Tab auf Antwort-Header (z. B. Server/Content-Type) vergleichen |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase5](img/Testcase5.gif)<br>*Platzhalter: Frontend- vs. Backend-Antwort über denselben Host* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | Anfragen an `/` wurden an die Frontend Container App weitergeleitet, Anfragen an `/tutorial-room/*` an die Backend Container App. Beide waren über denselben Hostnamen erreichbar und lieferten erkennbar unterschiedliche Inhalte (Frontend-HTML vs. Backend-JSON-API). Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase5](img/testcase5.gif)<br>*Frontend- vs. Backend-Antwort über denselben Host* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
@@ -929,10 +929,10 @@ flowchart TD
 | Voraussetzungen        | - Aktive Session<br>- Zugriff auf ein Formularfeld oder einen Query-Parameter der Plattform |
 | Erwartetes Ergebnis    | Ein einfacher, offensichtlich schädlicher Payload (z. B. `<script>alert(1)</script>` oder `' OR 1=1 --` als Query-Parameter) wird von der OWASP-CRS-WAF am Application Gateway blockiert (HTTP 403), bevor er die Plattform erreicht (vgl. Abschnitt 5.4, zentrale WAFv2). |
 | Testablauf             | 1. URL mit angehängtem Test-Payload aufrufen, z. B. `https://escape.contoso.example/?q=<script>alert(1)</script>`<br>2. Statuscode der Antwort prüfen<br>3. Sicherstellen, dass kein Payload-Reflect in der Antwort enthalten ist |
-| Effektives Ergebnis    | _(nach Durchführung zu ergänzen)_ |
-| Screenshot / Logfiles | ![Testcase6](img/Testcase6.gif)<br>*Platzhalter: WAF-Blockierung (403) im Netzwerk-Tab* |
-| Problemstellungen      | _(nach Durchführung zu ergänzen)_ |
-| Testergebnis           | _(nach Durchführung zu ergänzen)_ |
+| Effektives Ergebnis    | Der Test-Payload (`<script>alert(1)</script>` als Query-Parameter) wurde von der OWASP-CRS-WAF am zentralen Application Gateway mit HTTP 403 blockiert, bevor er die Plattform erreichte. Kein Payload-Reflect in der Antwort feststellbar. Ergebnis entspricht dem erwarteten Verhalten. |
+| Screenshot / Logfiles | ![Testcase6](img/testcase6.gif)<br>*WAF-Blockierung (403) im Netzwerk-Tab* |
+| Problemstellungen      | Keine. |
+| Testergebnis           | ✅ Erfolgreich |
 
 &nbsp;
 
