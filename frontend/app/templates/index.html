@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  /* ── Welcome card ─────────────────────────────────────────── */
-  .welcome-card {
-    background: #1E293B;
+  .app-shell {
+    max-width: min(96vw, 1320px);
+  }
+
+  .landing-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .hero-card {
+    background:
+      radial-gradient(circle at top right, rgba(34,211,238,0.14), transparent 28%),
+      linear-gradient(135deg, rgba(30,41,59,0.98), rgba(15,23,42,0.98));
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 2.5rem 2rem;
-    margin-top: 1rem;
+    border-radius: 18px;
+    padding: 2.5rem;
+    overflow: hidden;
+    position: relative;
   }
 
   .welcome-eyebrow {
@@ -20,115 +31,355 @@
   }
 
   .welcome-heading {
-    font-size: 1.75rem;
+    font-size: clamp(2rem, 4vw, 3rem);
     font-weight: 700;
-    line-height: 1.25;
-    margin-bottom: 0.75rem;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    max-width: 760px;
   }
 
   .welcome-sub {
     color: #94A3B8;
-    font-size: 0.9375rem;
-    margin-bottom: 2rem;
-    max-width: 480px;
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+    max-width: 700px;
   }
 
-  /* ── Feature list ─────────────────────────────────────────── */
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
-    margin-bottom: 2rem;
-  }
-  .feature-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.625rem;
-    background: rgba(0, 120, 212, 0.07);
-    border: 1px solid rgba(0, 120, 212, 0.18);
-    border-radius: 10px;
-    padding: 0.875rem 1rem;
-  }
-  .feature-item .fi-icon {
-    color: #22D3EE;
-    font-size: 1.125rem;
-    margin-top: 0.1rem;
-    flex-shrink: 0;
-  }
-  .feature-item .fi-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #F1F5F9;
-    line-height: 1.4;
-  }
-  .feature-item .fi-sub {
-    font-size: 0.78rem;
-    color: #94A3B8;
-    margin-top: 0.1rem;
   }
 
-  /* ── Footer note ──────────────────────────────────────────── */
-  .welcome-footer {
-    border-top: 1px solid rgba(255,255,255,0.07);
-    padding-top: 1.25rem;
-    margin-top: 0.5rem;
-    display: flex;
+  .hero-pill {
+    display: inline-flex;
     align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(34,211,238,0.18);
+    background: rgba(34,211,238,0.08);
+    color: #CBD5E1;
+    font-size: 0.85rem;
+  }
+
+  .hero-pill i {
+    color: #22D3EE;
+  }
+
+  .rooms-header {
+    display: flex;
+    align-items: end;
     justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .rooms-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .rooms-header p {
+    color: #94A3B8;
+    max-width: 720px;
+  }
+
+  .room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .room-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: rgba(30,41,59,0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+  }
+
+  .room-card-image {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #0b1120;
+  }
+
+  .room-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .room-card-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15,23,42,0.72), rgba(15,23,42,0.08));
+  }
+
+  .room-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.25rem;
+    gap: 0.9rem;
+  }
+
+  .room-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .room-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .room-card-sub {
+    color: #94A3B8;
+    font-size: 0.9rem;
+  }
+
+  .room-badge,
+  .room-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .room-badge.available {
+    background: rgba(34,197,94,0.14);
+    border: 1px solid rgba(34,197,94,0.24);
+    color: #86EFAC;
+  }
+
+  .room-badge.coming-soon {
+    background: rgba(148,163,184,0.12);
+    border: 1px solid rgba(148,163,184,0.18);
+    color: #CBD5E1;
+  }
+
+  .room-meta {
+    display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  .welcome-footer .user-hint {
-    font-size: 0.8125rem;
-    color: #64748B;
+
+  .room-tag {
+    background: rgba(0,120,212,0.08);
+    border: 1px solid rgba(0,120,212,0.16);
+    color: #BFDBFE;
   }
-  .welcome-footer .user-hint strong { color: #94A3B8; }
+
+  .room-description {
+    color: #CBD5E1;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .room-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 1rem;
+    margin-top: auto;
+  }
+
+  .room-note {
+    color: #64748B;
+    font-size: 0.82rem;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: .55rem 1rem;
+    background: rgba(255,255,255,0.06);
+    color: #CBD5E1;
+    text-decoration: none;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-family: var(--font);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: not-allowed;
+  }
+
+  .site-footer-note {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    color: #64748B;
+    font-size: 0.8125rem;
+    padding: 0 0.15rem 1rem;
+  }
+
+  .site-footer-note strong {
+    color: #94A3B8;
+  }
+
+  @media (max-width: 760px) {
+    .hero-card {
+      padding: 1.5rem;
+    }
+  }
 </style>
 
-<div class="welcome-card">
-  <p class="welcome-eyebrow"><i class="bi bi-terminal-fill"></i> &nbsp;Interactive Cloud Learning</p>
+{% set tutorial_preview = url_for('static', filename='img/tutorial_room.png') %}
 
-  <h1 class="welcome-heading">
-    Welcome back, {{ user }}.<br>
-    Ready to escape?
-  </h1>
+<div class="landing-grid">
+  <section class="hero-card">
+    <p class="welcome-eyebrow"><i class="bi bi-terminal-fill"></i> &nbsp;Interactive Cloud Learning</p>
 
-  <p class="welcome-sub">
-    Solve hands-on cloud challenges, collect XP, and work your way through
-    Azure, DevOps, and Security escape rooms.
-  </p>
+    <h1 class="welcome-heading">
+      Welcome back, {{ user }}.<br>
+      Choose your next escape room.
+    </h1>
 
-  <div class="features">
-    <div class="feature-item">
-      <i class="bi bi-cloud-check fi-icon"></i>
+    <p class="welcome-sub">
+      Explore cloud-native challenges through guided escape rooms. Start with the tutorial room today,
+      then expand into Azure, DevOps, networking, and security themes as new rooms go live.
+    </p>
+
+    <div class="hero-meta">
+      <span class="hero-pill"><i class="bi bi-cloud-check"></i> Real platform integration</span>
+      <span class="hero-pill"><i class="bi bi-controller"></i> Multiple rooms ready to scale</span>
+      <span class="hero-pill"><i class="bi bi-shield-lock"></i> Protected with Entra ID</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="rooms-header">
       <div>
-        <div class="fi-label">Azure-based Labs</div>
-        <div class="fi-sub">Real cloud environments</div>
+        <h2>Available rooms</h2>
+        <p>
+          The homepage now acts as a room catalog. Each room gets its own preview, status, difficulty,
+          and entry point, so new scenarios can be added without redesigning the landing page.
+        </p>
       </div>
     </div>
-    <div class="feature-item">
-      <i class="bi bi-infinity fi-icon"></i>
-      <div>
-        <div class="fi-label">DevOps Challenges</div>
-        <div class="fi-sub">CI/CD, Terraform, K8s</div>
-      </div>
-    </div>
-    <div class="feature-item">
-      <i class="bi bi-shield-lock fi-icon"></i>
-      <div>
-        <div class="fi-label">Security Missions</div>
-        <div class="fi-sub">IAM, networking, zero-trust</div>
-      </div>
-    </div>
-  </div>
 
-  <a class="btn" href="/tutorial">
-    <i class="bi bi-play-fill"></i> Start Tutorial Room
-  </a>
+    <div class="room-grid">
+      <article class="room-card">
+        <div class="room-card-image">
+          <img src="{{ tutorial_preview }}" alt="Tutorial room preview">
+        </div>
+        <div class="room-card-body">
+          <div class="room-card-top">
+            <div>
+              <div class="room-card-title">Tutorial Room</div>
+              <div class="room-card-sub">Prof. Dr. Mike Roservice's Office</div>
+            </div>
+            <span class="room-badge available">Available</span>
+          </div>
 
-  <div class="welcome-footer">
-    <span class="user-hint">Logged in as <strong>{{ user }}</strong></span>
-    <span class="user-hint">{{ title }}</span>
+          <div class="room-meta">
+            <span class="room-tag">Beginner</span>
+            <span class="room-tag">Azure Basics</span>
+            <span class="room-tag">Guided Flow</span>
+          </div>
+
+          <p class="room-description">
+            Start with the playable onboarding room and learn how the platform works end to end:
+            launch the room, inspect objects, solve the flow, and escape before the professor returns.
+          </p>
+
+          <div class="room-footer">
+            <span class="room-note">Recommended first room</span>
+            <a class="btn" href="/tutorial">
+              <i class="bi bi-play-fill"></i> Enter Room
+            </a>
+          </div>
+        </div>
+      </article>
+
+      <article class="room-card">
+        <div class="room-card-image">
+          <img src="{{ tutorial_preview }}" alt="Future Terraform room preview" style="filter: saturate(0.6) brightness(0.72);">
+        </div>
+        <div class="room-card-body">
+          <div class="room-card-top">
+            <div>
+              <div class="room-card-title">Terraform Room</div>
+              <div class="room-card-sub">Provisioning, drift, and infrastructure puzzles</div>
+            </div>
+            <span class="room-badge coming-soon">Coming soon</span>
+          </div>
+
+          <div class="room-meta">
+            <span class="room-tag">Intermediate</span>
+            <span class="room-tag">Terraform</span>
+            <span class="room-tag">Infrastructure as Code</span>
+          </div>
+
+          <p class="room-description">
+            Planned expansion room focused on infrastructure provisioning, state handling,
+            dependency troubleshooting, and fixing broken cloud environments through Terraform.
+          </p>
+
+          <div class="room-footer">
+            <span class="room-note">Reserved slot for infrastructure challenges</span>
+            <span class="btn-ghost"><i class="bi bi-hourglass-split"></i> Not yet available</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="room-card">
+        <div class="room-card-image">
+          <img src="{{ tutorial_preview }}" alt="Future CI/CD room preview" style="filter: hue-rotate(30deg) saturate(0.7) brightness(0.68);">
+        </div>
+        <div class="room-card-body">
+          <div class="room-card-top">
+            <div>
+              <div class="room-card-title">CI/CD Room</div>
+              <div class="room-card-sub">Pipelines, deployments, and automation under pressure</div>
+            </div>
+            <span class="room-badge coming-soon">Coming soon</span>
+          </div>
+
+          <div class="room-meta">
+            <span class="room-tag">Advanced</span>
+            <span class="room-tag">GitLab CI/CD</span>
+            <span class="room-tag">Automation</span>
+          </div>
+
+          <p class="room-description">
+            Planned delivery-focused scenario around failing pipelines, broken deployments,
+            release troubleshooting, and restoring the path from commit to production.
+          </p>
+
+          <div class="room-footer">
+            <span class="room-note">Future room catalog entry for delivery workflows</span>
+            <span class="btn-ghost"><i class="bi bi-lock"></i> Coming with next theme</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <div class="site-footer-note">
+    <span>Logged in as <strong>{{ user }}</strong></span>
+    <span>{{ title }}</span>
   </div>
 </div>
 {% endblock %}

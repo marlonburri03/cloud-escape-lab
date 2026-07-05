@@ -14,6 +14,20 @@ class IndexOut(Schema):
     title = String()
 
 
+def _player_identity(raw_user: str) -> tuple[str, str | None]:
+    if not raw_user or raw_user == "anonymous":
+        return "Local Player", None
+
+    if "@" not in raw_user:
+        return raw_user, None
+
+    local_part = raw_user.split("@", 1)[0]
+    display_name = (
+        local_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+    )
+    return (display_name.title() if display_name else raw_user, raw_user)
+
+
 @bp.get("/healthz")
 @bp.output(HealthOut, status_code=200)
 def healthz():
@@ -34,8 +48,11 @@ def index():
 @bp.get("/tutorial")
 @bp.doc(summary="Tutorial escape room", responses=[200])
 def tutorial():
+    player_name, player_email = _player_identity(g.get("user", "anonymous"))
     return render_template(
         "tutorial.html",
         title=current_app.config["SITE_TITLE"],
         backend_url=current_app.config["BACKEND_URL"],
+        player_name=player_name,
+        player_email=player_email,
     )
