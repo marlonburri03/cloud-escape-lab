@@ -22,6 +22,8 @@ class RoomStateOut(Schema):
     exits_locked = Boolean()
     message = String()
     game_uuid = String()
+    completion_seconds = Integer(allow_none=True)
+    completion_time = String(allow_none=True)
 
 
 class PlayerIn(Schema):
@@ -57,6 +59,18 @@ class RuntimeOut(Schema):
     game_uuid = String()
     status = String()
     message = String()
+
+
+class LeaderboardEntryOut(Schema):
+    player_name = String()
+    completion_seconds = Integer()
+    completion_time = String()
+    completed_on = String()
+
+
+class LeaderboardOut(Schema):
+    room_name = String()
+    entries = Nested(LeaderboardEntryOut(many=True))
 
 
 class InteractionIn(Schema):

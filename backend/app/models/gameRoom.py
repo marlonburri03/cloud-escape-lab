@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from app.models.leaderboardEntry import LeaderboardEntry
 from app.models.roomState import RoomState
 from app.models.objectState import ObjectState
 from app.models.player import Player
@@ -113,6 +116,9 @@ class GameRoom:
         return GameObject(obj_dict, obj_state)
 
     def assemble_json_room_state(self, message):
+        return self._assemble_json_room_state(message)
+
+    def _assemble_json_room_state(self, message, completion_seconds=None):
         objects = []
         for obj_state in self.room_state.object_states:
             room_object = next(
@@ -141,6 +147,12 @@ class GameRoom:
                 "exits_locked": self.room_state.exits_locked,
                 "game_uuid": self.room_state.game_uuid,
                 "message": message,
+                "completion_seconds": completion_seconds,
+                "completion_time": (
+                    self.format_completion_time(completion_seconds)
+                    if completion_seconds is not None
+                    else None
+                ),
             }
         )
 
@@ -154,7 +166,83 @@ class GameRoom:
                 obj_state.locked = initial_data["initial-locked"]
                 obj_state.state = initial_data["initial-state"]
                 obj_state.object_name = None
+        self.room_state.started_on = datetime.now()
+        self.room_state.solved = False
         db.session.commit()
+
+    def mark_completed(self):
+        if self.room_state.solved:
+            return None
+
+        self.room_state.solved = True
+        completion_seconds = self.get_elapsed_seconds()
+        player = self.room_state.player
+        leaderboard_entry = LeaderboardEntry(
+            room_name=self.room_name,
+            game_uuid=self.room_state.game_uuid,
+            player_name=(
+                player.name
+                if player and player.name
+                else "Anonymous Player"
+            ),
+            player_email=player.email if player else None,
+            completion_seconds=completion_seconds,
+        )
+        db.session.add(leaderboard_entry)
+        return completion_seconds
+
+    def assemble_completed_room_state(self, message, completion_seconds):
+        return self._assemble_json_room_state(
+            message, completion_seconds=completion_seconds
+        )
+
+    def get_elapsed_seconds(self):
+        elapsed = int((datetime.now() - self.room_state.started_on).total_seconds())
+        return max(elapsed, 1)
+
+    @staticmethod
+    def format_completion_time(seconds):
+        total_seconds = max(int(seconds or 0), 0)
+        minutes, remaining_seconds = divmod(total_seconds, 60)
+        hours, remaining_minutes = divmod(minutes, 60)
+        if hours:
+            return f"{hours:02d}:{remaining_minutes:02d}:{remaining_seconds:02d}"
+        return f"{minutes:02d}:{remaining_seconds:02d}"
+
+    @staticmethod
+    def get_leaderboard(room_name, limit=10):
+        entries = (
+            LeaderboardEntry.query.filter_by(room_name=room_name)
+            .order_by(
+                LeaderboardEntry.completion_seconds.asc(),
+                LeaderboardEntry.completed_on.asc(),
+            )
+            .all()
+        )
+
+        leaderboard = []
+        seen_players = set()
+
+        for entry in entries:
+            player_key = (entry.player_email or entry.player_name or "").strip().lower()
+            if not player_key or player_key in seen_players:
+                continue
+
+            seen_players.add(player_key)
+            leaderboard.append(
+                {
+                    "player_name": entry.player_name,
+                    "completion_seconds": entry.completion_seconds,
+                    "completion_time": GameRoom.format_completion_time(
+                        entry.completion_seconds
+                    ),
+                    "completed_on": entry.completed_on.isoformat(),
+                }
+            )
+            if len(leaderboard) >= limit:
+                break
+
+        return leaderboard
 
     @staticmethod
     def create_initial_state(game_uuid, room_name, player_in, room_objects):

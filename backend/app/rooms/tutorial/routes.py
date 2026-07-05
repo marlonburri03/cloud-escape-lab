@@ -7,8 +7,17 @@
 from app.rooms.tutorial import bp
 from app.extensions import db
 from app.models.gameRoom import GameRoom
-from app.models.roomState import RoomStateIn, RoomStateOut, RuntimeOut, TokenOut
-from app.models.roomState import PingOut, DescriptionOut, ExitsOut, InteractionIn
+from app.models.roomState import (
+    RoomStateIn,
+    RoomStateOut,
+    RuntimeOut,
+    TokenOut,
+    PingOut,
+    DescriptionOut,
+    ExitsOut,
+    InteractionIn,
+    LeaderboardOut,
+)
 from app.auth import token_auth
 
 from flask import g
@@ -235,6 +244,12 @@ def get_exits():
     }
 
 
+@bp.get("/leaderboard")
+@bp.output(LeaderboardOut, status_code=200)
+def get_leaderboard():
+    return {"room_name": room_name, "entries": GameRoom.get_leaderboard(room_name)}
+
+
 @bp.post("/start")
 @bp.input(RoomStateIn, location="json")
 @bp.output(TokenOut, status_code=200)
@@ -337,6 +352,7 @@ def interact_with_object(object_id, form_and_files_data):
     current_object = game_room.get_object_by_id(object_id)
 
     message = t("interact.default")
+    completion_seconds = None
 
     match current_object.name:
         case "Light Switch":
@@ -364,6 +380,7 @@ def interact_with_object(object_id, form_and_files_data):
                 if form_and_files_data.get("parameter") == "1234":
                     game_room.exits_locked = False
                     current_object.state = "unlocked"
+                    completion_seconds = game_room.mark_completed()
                     message = t("interact.column.success")
                 else:
                     message = t("interact.column.wrong")
@@ -374,4 +391,6 @@ def interact_with_object(object_id, form_and_files_data):
             message = t("interact.default")
 
     db.session.commit()
+    if completion_seconds is not None:
+        return game_room.assemble_completed_room_state(message, completion_seconds)
     return game_room.assemble_json_room_state(message)

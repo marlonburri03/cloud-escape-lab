@@ -11,6 +11,14 @@ Changes in this repository: UI/CSS redesign, Cloud Escape Lab layout integration
 and minor JavaScript error handling adjustments.
 -->
 <style>
+  .app-shell {
+    max-width: min(96vw, 1480px);
+  }
+
+  .site-main {
+    width: 100%;
+  }
+
   /* ── Page header ──────────────────────────────────────────── */
   .room-header {
     display: flex;
@@ -50,7 +58,7 @@ and minor JavaScript error handling adjustments.
     border-radius: 10px;
     padding: .5rem .75rem;
     margin-bottom: 1.25rem;
-    height: 220px;
+    height: 260px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -121,14 +129,8 @@ and minor JavaScript error handling adjustments.
     display: flex;
     flex-wrap: wrap;
     gap: .5rem;
-    max-height: 160px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.12) transparent;
+    align-content: flex-start;
   }
-  #objects-grid::-webkit-scrollbar { width: 4px; }
-  #objects-grid::-webkit-scrollbar-track { background: transparent; }
-  #objects-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
   .obj-card {
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
@@ -253,6 +255,107 @@ and minor JavaScript error handling adjustments.
   .runtime-status.error { color: #FCA5A5; }
   .runtime-status.success { color: #86EFAC; }
 
+  .start-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 420px);
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .start-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    text-align: center;
+  }
+
+  .leaderboard-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 1.25rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(15,23,42,0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    text-align: left;
+  }
+
+  .leaderboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .leaderboard-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #F1F5F9;
+  }
+
+  .leaderboard-subtitle {
+    color: #64748B;
+    font-size: 0.78rem;
+    margin-bottom: 1rem;
+  }
+
+  .leaderboard-state {
+    color: #94A3B8;
+    font-size: 0.86rem;
+    min-height: 1.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .leaderboard-entry {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.7rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .leaderboard-rank {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(34,211,238,0.12);
+    color: #22D3EE;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .leaderboard-player {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #F1F5F9;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  .leaderboard-time {
+    color: #86EFAC;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
   /* ── Win banner ───────────────────────────────────────────── */
   #win-banner {
     display: none;
@@ -268,6 +371,12 @@ and minor JavaScript error handling adjustments.
   #win-banner.visible { display: flex; }
   #win-banner .win-icon { font-size: 2.5rem; margin-bottom: .75rem; }
   #win-banner strong { font-size: 1.25rem; color: #FDE68A; }
+  .win-time {
+    color: #86EFAC;
+    font-size: .95rem;
+    font-weight: 600;
+    margin-top: .5rem;
+  }
 
   /* ── Top bar (message + reset row) ───────────────────────── */
   .game-topbar {
@@ -296,13 +405,79 @@ and minor JavaScript error handling adjustments.
     font-size: .875rem;
   }
 
+  .room-stage {
+    position: relative;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    min-height: clamp(760px, 82vh, 1040px);
+    background: #0b1120;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+
+  .room-stage-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  #room-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    padding: 2rem 2.5rem 2.5rem;
+    overflow: hidden;
+  }
+
   /* ── Game UI overlay (absolute, fills image bounds, scrolls) ── */
   #game-ui {
     position: absolute;
     inset: 0;
-    overflow-y: auto;
-    padding: 1rem;
+    overflow: hidden;
+    padding: 1.5rem;
     background: rgba(15,23,42,0.65);
+  }
+
+  @media (max-width: 1100px) {
+    .app-shell {
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+
+    .room-stage {
+      min-height: 680px;
+    }
+
+    #room-overlay,
+    #game-ui {
+      padding: 1.25rem;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .start-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .room-stage {
+      min-height: 0;
+    }
+
+    .room-stage-image {
+      min-height: 560px;
+    }
+
+    #room-overlay,
+    #game-ui {
+      overflow-y: auto;
+    }
+
+    #game-log {
+      height: 220px;
+    }
   }
 </style>
 
@@ -316,10 +491,9 @@ and minor JavaScript error handling adjustments.
 </div>
 
 <!-- ── Bild als Hintergrund, Inhalte transparent darüber ────── -->
-<div style="position:relative; border-radius:12px; margin-bottom:1.5rem; overflow:hidden;">
-  <img src="{{ room_img }}" alt="Prof. Dr. Mike Roservice's Office"
-       style="display:block; width:100%; height:auto;">
-  <div id="room-overlay" style="position:absolute; inset:0; background:rgba(15,23,42,0.65); padding:1.75rem 2rem 2.5rem; overflow-y:auto;">
+<div class="room-stage">
+  <img src="{{ room_img }}" alt="Prof. Dr. Mike Roservice's Office" class="room-stage-image">
+  <div id="room-overlay">
 
     <div class="room-header" style="margin-bottom:1.5rem">
       <a href="/" class="room-back"><i class="bi bi-arrow-left"></i> Back</a>
@@ -328,14 +502,28 @@ and minor JavaScript error handling adjustments.
     </div>
 
     <!-- ── Start screen ───────────────────────────────────────── -->
-    <div id="start-screen" style="text-align:center; padding:1.5rem 1rem 0.5rem;">
-      <i class="bi bi-door-closed start-icon"></i>
-      <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso.</h2>
-      <p>Dig through the chaos, decode his cryptic notes, and escape before he returns from his lecture!</p>
-      <p id="runtime-status" class="runtime-status info" style="display:none;"></p>
-      <button class="btn btn-primary" id="start-btn" onclick="startGame()">
-        <i class="bi bi-play-fill"></i> Start Game
-      </button>
+    <div id="start-screen" style="padding:1.5rem 1rem 0.5rem;">
+      <div class="start-grid">
+        <div class="start-copy">
+          <i class="bi bi-door-closed start-icon"></i>
+          <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso.</h2>
+          <p>Dig through the chaos, decode his cryptic notes, and escape before he returns from his lecture!</p>
+          <p id="runtime-status" class="runtime-status info" style="display:none;"></p>
+          <button class="btn btn-primary" id="start-btn" onclick="startGame()">
+            <i class="bi bi-play-fill"></i> Start Game
+          </button>
+        </div>
+
+        <aside class="leaderboard-panel">
+          <div class="leaderboard-header">
+            <div class="leaderboard-title">Leaderboard</div>
+            <span class="room-badge">Top 10</span>
+          </div>
+          <p class="leaderboard-subtitle">Fastest completion time per player for this room.</p>
+          <p id="leaderboard-state" class="leaderboard-state">Loading leaderboard…</p>
+          <div id="leaderboard-list" class="leaderboard-list"></div>
+        </aside>
+      </div>
     </div>
 
   </div>
@@ -345,6 +533,7 @@ and minor JavaScript error handling adjustments.
     <div class="win-icon">🎉</div>
     <strong>You escaped!</strong>
     <p style="color:#94A3B8;font-size:.875rem;margin-top:.375rem">You slipped out just before Prof. Dr. Mike Roservice returned. Tutorial complete!</p>
+    <p id="win-time" class="win-time" style="display:none;"></p>
     <div style="display:flex;gap:.625rem;justify-content:center;margin-top:.875rem">
       <button class="btn btn-secondary" onclick="resetGame()">
         <i class="bi bi-arrow-counterclockwise"></i> Play Again
@@ -421,6 +610,8 @@ and minor JavaScript error handling adjustments.
 <script>
 const BACKEND = "{{ backend_url }}";
 const ROOM    = "tutorial-room";
+const PLAYER_NAME = {{ player_name|tojson }};
+const PLAYER_EMAIL = {{ player_email|tojson }};
 
 let gameToken   = '';
 let roomObjects = [];
@@ -442,6 +633,55 @@ function clearRuntimeStatus() {
   setRuntimeStatus('', 'info');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderLeaderboard(entries) {
+  const list = document.getElementById('leaderboard-list');
+  list.innerHTML = '';
+
+  entries.forEach((entry, index) => {
+    const row = document.createElement('div');
+    row.className = 'leaderboard-entry';
+    row.innerHTML = `
+      <div class="leaderboard-rank">#${index + 1}</div>
+      <div class="leaderboard-player" title="${escapeHtml(entry.player_name)}">${escapeHtml(entry.player_name)}</div>
+      <div class="leaderboard-time">${escapeHtml(entry.completion_time)}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function refreshLeaderboard() {
+  const state = document.getElementById('leaderboard-state');
+  const list = document.getElementById('leaderboard-list');
+
+  state.textContent = 'Loading leaderboard…';
+
+  try {
+    const data = await apiGet('/leaderboard');
+    const entries = data.entries || [];
+
+    if (!entries.length) {
+      list.innerHTML = '';
+      state.textContent = 'No recorded completions yet. Be the first to escape.';
+      return;
+    }
+
+    state.textContent = '';
+    renderLeaderboard(entries);
+  } catch (error) {
+    list.innerHTML = '';
+    state.textContent = `Leaderboard unavailable: ${error.message}`;
+  }
+}
+
 function showGameUi() {
   document.getElementById('room-overlay').style.display = 'none';
   document.getElementById('game-header').style.display = 'flex';
@@ -453,6 +693,7 @@ function showStartUi() {
   document.getElementById('game-header').style.display = 'none';
   document.getElementById('game-ui').style.display = 'none';
   document.getElementById('win-banner').classList.remove('visible');
+  document.getElementById('win-time').style.display = 'none';
 }
 
 function setTopbarButtonsDisabled(disabled) {
@@ -473,6 +714,7 @@ function resetRuntimeUi(message, type = 'info') {
   showStartUi();
   setTopbarButtonsDisabled(false);
   setRuntimeStatus(message, type);
+  refreshLeaderboard();
 }
 
 function isUnauthorizedError(error) {
@@ -537,9 +779,14 @@ async function startGame() {
 
   let data;
   try {
+    const playerPayload = {
+      name: PLAYER_NAME || 'Local Player',
+      email: PLAYER_EMAIL || null
+    };
+
     data = await apiPost('/start', {
       game_uuid: generateUUID(),
-      player: { name: 'Player', email: 'player@escape.lab' }
+      player: playerPayload
     });
 
     if (!data.token) {
@@ -678,7 +925,8 @@ async function refreshState(data, wasInteraction = false) {
   renderObjects();
 
   if (!data.exits_locked) {
-    showWin(data.message);
+    showWin(data.message, data.completion_time);
+    await refreshLeaderboard();
     return;
   }
 
@@ -730,7 +978,7 @@ function selectObject(id, scroll) {
   document.getElementById('selected-name').textContent = obj.name;
   document.getElementById('selected-desc').textContent = obj.description || '';
 
-  const isColumn = obj.name === 'Column' || obj.name === 'Stone Column' || obj.name === 'Exit Terminal';
+  const isColumn = obj.id === 3;
   document.getElementById('param-row').style.display = isColumn ? 'flex' : 'none';
   if (isColumn) document.getElementById('param-input').placeholder = 'Enter 4-digit code…';
 
@@ -768,10 +1016,19 @@ function logMessage(msg, type = 'action') {
   log.scrollTop = log.scrollHeight;
 }
 
-function showWin(msg) {
+function showWin(msg, completionTime = null) {
   document.getElementById('game-ui').style.display = 'none';
   document.getElementById('win-banner').classList.add('visible');
+  const timeElement = document.getElementById('win-time');
+  if (completionTime) {
+    timeElement.textContent = `Your recorded time: ${completionTime}`;
+    timeElement.style.display = 'block';
+  } else {
+    timeElement.style.display = 'none';
+  }
   logMessage(msg || 'You escaped!', 'win');
 }
+
+refreshLeaderboard();
 </script>
 {% endblock %}
