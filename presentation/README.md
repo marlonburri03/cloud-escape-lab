@@ -3,6 +3,12 @@
 Dieser Ordner enthält die reveal.js-basierte Abschlusspräsentation für die Semesterarbeit
 "Cloud-based escape room platform" (Kolloquium / Produkte Vorführung).
 
+Der visuelle Stil orientiert sich an der Contoso-Vorlage der letzten Semesterarbeit
+(`SemArbeit2_Präsentation_MB.pptx`): Farbschema (Blau `#0028A5`, Cyan, Grün, Gelb, Orange,
+Karmesin), Schrift "Source Sans Pro", sowie Kopf-/Fusszeile mit Datum, Breadcrumb und
+Seitenzahl. Foliendramaturgie: Titel → Problem → Ziel der Arbeit → Ablauf/Live-Demo →
+Lösungsübersicht → GitLab Pipeline → Mehrwert → Reflexion &amp; Ausblick.
+
 ## Öffnen
 
 Kein Build oder npm-Install nötig — reveal.js wird direkt über ein CDN geladen.
