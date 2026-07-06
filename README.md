@@ -494,7 +494,7 @@ __Lessons Learned:__
 
 Zu Beginn des Projekts wurden die grundlegenden Rahmenbedingungen für die technische Umsetzung definiert. Dabei standen insbesondere die Engineering-Prinzipien, das Delivery-Modell sowie die Zielarchitektur in Azure im Fokus. Ziel ist eine wartbare, sichere und erweiterbare Plattform, welche die Entwicklung und den Betrieb mehrerer Escape-Room-Szenarien unterstützt.
 
-## 4.1 Arbeitsweise und Engineering-Prinzipien
+## 4.1 DevOps-Prinzipien
 
 Die Umsetzung folgt einem Engineering-Ansatz, bei dem Infrastruktur, Anwendungscode und Deployment als integriertes Gesamtsystem betrachtet werden. Änderungen sollen reproduzierbar, nachvollziehbar und mit minimalem manuellem Aufwand ausgerollt werden können.
 
@@ -506,81 +506,67 @@ Daraus ergeben sich folgende Grundprinzipien:
 
 Diese Prinzipien stellen sicher, dass Änderungen nachvollziehbar bleiben, Deployments konsistent durchgeführt werden und der Betriebsaufwand auch bei wachsendem Projektumfang beherrschbar bleibt.
 
-## 4.2 Lösungsdesign in Azure
+## 4.2 Architekturkonzept
 
-Das Azure-Design trennt bewusst zwischen einer stabilen Plattform und fachlich wechselnden Escape-Room-Inhalten. Shared Services werden zentral bereitgestellt, während einzelne Themes unabhängig erweitert und ausgerollt werden können. Dadurch bleibt die Basis stabil, auch wenn sich der fachliche Inhalt regelmässig verändert.
+Das vorgesehene Azure-Design trennt bewusst zwischen einer stabilen Plattform und fachlich wechselnden Escape-Room-Inhalten. Shared Services werden zentral bereitgestellt, während einzelne Themes unabhängig erweitert und ausgerollt werden können. Dadurch bleibt die Basis stabil, auch wenn sich der fachliche Inhalt regelmässig verändert.
 
-Vor dem regulären Betrieb ist ein einmaliger Bootstrap notwendig. Dabei werden das Terraform State Backend und die Identität für die Authentifizierung gegenüber Azure vorbereitet. Danach laufen alle weiteren Änderungen automatisiert über den definierten CI/CD-Workflow.
+Bevor mit der Entwicklung der Plattform begonnen werden kann, ist ein einmaliger Bootstrap notwendig. Dabei werden das Terraform State Backend und die Managed Identity welche für das deployment der Gitlab Pipeline in Azure verantwortlich ist vorbereitet. Danach laufen alle weiteren Änderungen automatisiert über den definierten CI/CD-Workflow.
 
 | Ebene | Rolle im Lösungsdesign |
 |---|---|
 | **Bootstrap** | Schafft die technischen Voraussetzungen für automatisierte Deployments |
-| **Plattform-Stack**[^25] | Enthält die gemeinsame Azure-Basis wie Netzwerk, Security, Persistenz und zentrale Plattformdienste |
+| **Plattform-Stack**[^25] | Enthält die gemeinsame Azure-Basis wie Netzwerk, Security und zentrale Plattformdienste |
 | **Theme-Stack** | Kapselt einen einzelnen Escape Room mit seinen themenspezifischen Ressourcen |
 
-Entscheidend ist, dass Theme-Stacks nur definierte Outputs des Plattform-Stacks verwenden, diesen aber nicht verändern. Dadurch lassen sich neue Inhalte ergänzen, ohne die Gesamtarchitektur oder bestehende Deployments zu destabilisieren.
+Entscheidend für das Konzept ist, dass Theme-Stacks nur definierte Outputs des Plattform-Stacks verwenden, diese aber nicht verändern. Dadurch lassen sich neue Inhalte ergänzen, ohne die Gesamtarchitektur oder bestehende Deployments zu destabilisieren.
 
-### 4.2.1 Big Picture
+## 4.3 Azure Big Picture
 
-Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut ist. Im Fokus stehen die zentralen Plattformkomponenten, ihre Abhängigkeiten sowie der eingehende und ausgehende Traffic Flow zwischen den beteiligten Services. Damit macht die Darstellung sichtbar, über welche Entry Points Requests in die Plattform gelangen, wie sie intern weitergeleitet werden und welche Komponenten für ausgehende Kommunikation zuständig sind.
+Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut wird. Im Fokus steht dabei die Escape-Room-Subscription, welche innerhalb dieser Arbeit entwickelt wird. Dort soll ein Container Apps Environment entstehen, in welchem die Escape Rooms laufen sollen. Ziel ist es, eine möglichst robuste und skalierbare Lösung zu bauen, die möglichst wartungsfreundlich ist und im besten Fall nicht allzu viel kostet. 
 
-Im Zentrum steht der Plattform-Stack als gemeinsame Basis. Er bündelt die wiederverwendbaren Foundation-Services, auf die die einzelnen Escape-Room-Themes aufbauen. Die Theme-Stacks ergänzen darauf ihre eigenen Workloads, ohne die gemeinsame Basis zu verändern. Dadurch entsteht eine modulare Architektur mit klaren Verantwortlichkeiten, sauber getrennten Zuständigkeiten und einem nachvollziehbaren Routing- und Security-Modell.
+Die Connectivity Subscription ist Teil der Azure Landing Zone der Contoso University und wurde ebenfalls von mir entwickelt, jedoch nicht im Rahmen dieser Arbeit. Die Landing Zone stellt sicher, dass die Escape-Room-Subscriptions ihren gesamten Traffic entweder über die Web Application Firewall (für Port 80 und 443) oder über die Azure Firewall routen, sowohl für Ingoing- als auch für Outgoing-Traffic. Ausserdem sind in der Landing Zone gewisse Policies aktiv, welche die Guardrails für einen sicheren Betrieb in der Cloud sicherstellen und das Deployen von öffentlichen Ressourcen verbieten.
 
-![Architecture](data/Big_Picture.png)
+![Architecture](data/Big_Picture.png)-
 *Big Picture der Azure-Zielarchitektur inklusive Ingress- und Egress-Flow*
 
-### 4.2.2 Delivery-Flow
+## 4.4 Git- und Delivery-Flow
+
+Für die Arbeit wird ein schlankes Gitflow-Modell eingesetzt. Dabei bleibt der `main` Branch jederzeit in einem stabilen und releasefähigen Zustand. Neue Features, Fixes und Hotfixes werden isoliert in eigenen Branches umgesetzt und erst nach Review integriert.
+
+```
+main
+ ├── feature-<beschreibung>
+ ├── fix-<beschreibung>
+ └── hotfix-<beschreibung>
+```
+
+Der Merge nach `main` erfolgt ausschliesslich über Merge Requests. So bleibt jede Änderung nachvollziehbar und durchläuft vor der Integration die definierten Quality Gates. Die Pipeline fungiert dabei als technisches Merge-Gate und prüft Codequalität, Security und Build-Fähigkeit bevor ein Merge oder Deployment möglich ist.
+
 
 ```mermaid
 flowchart LR
   DEV[Entwickler<br/>git push]
+  MR[Merge Request:<br/>Lint & Security-Checks]
+  MAIN[Push auf main]
+  PIPE[main-Pipeline:<br/>Plan → Apply → Build → Scan → Deploy]
 
-  subgraph GL[GitLab CI/CD]
-    direction TB
-    PPIPE[Plattform-Pipeline]
-    TPIPE[Theme-Pipeline]
-  end
-
-  OIDC[OIDC-Föderation<br/>Azure-Identität]
-
-  PSTACK[Plattform-Stack]
-  TSTACK[Theme-Stack]
-
-  DEV --> PPIPE
-  DEV --> TPIPE
-  PPIPE --> OIDC
-  TPIPE --> OIDC
-  OIDC --> PSTACK
-  OIDC --> TSTACK
-  PSTACK -. definierte Outputs .-> TSTACK
+  DEV --> MR --> MAIN --> PIPE
 ```
 
-## 4.3 Gitflow und Delivery-Modell
 
-Für die tägliche Arbeit wird ein schlankes Gitflow-Modell eingesetzt. `main` bleibt jederzeit in einem stabilen und releasefähigen Zustand. Neue Features, Fixes und Hotfixes werden isoliert in eigenen Branches umgesetzt und erst nach Review integriert.
-
-```
-main
- ├── feature/<beschreibung>
- ├── fix/<beschreibung>
- └── hotfix/<beschreibung>
-```
-
-Der Merge nach `main` erfolgt ausschliesslich über Merge Requests. So bleibt jede Änderung nachvollziehbar und durchläuft vor der Integration die definierten Quality Gates. Die Pipeline fungiert dabei als technisches Merge-Gate und prüft Codequalität, Security, Build-Fähigkeit und geplante Infrastrukturänderungen, bevor ein Merge oder Deployment möglich ist.
-
-Releases werden zusätzlich über Tags markiert, damit wichtige Projektstände wie MVP, MLP und MMP eindeutig referenzierbar bleiben. Das unterstützt einen klaren Release-Stand, kontrollierte Integration und eine saubere Nachvollziehbarkeit über den gesamten Lifecycle.
+Die Gesamten Steps in der Pipeline werden mit OIDC Federatet Credentials der Managed Identity in Azure durchgeführt. Dadurch kann ein Secret loses Deployment durchgeführt werden. Releases werden zusätzlich über Tags markiert, damit wichtige Projektstände wie MVP, MLP und MMP eindeutig referenzierbar bleiben. Das unterstützt einen klaren Release-Stand, kontrollierte Integration und eine saubere Nachvollziehbarkeit über den gesamten Lifecycle.
 
 ---
 
 # 5 Umsetzung
 
-Dieses Kapitel beschreibt die technische Umsetzung der deployte Plattformarchitektur. Im Fokus stehen die konkreten Implementierungsentscheide, ihre Begründung und das Zusammenspiel der beteiligten Komponenten. Die Darstellung folgt dem natürlichen Ablauf: vom einmaligen Bootstrap über die Infrastrukturbereitstellung und die CI/CD-Pipeline bis hin zum Routing und der Netzwerkanbindung.
+Dieses Kapitel beschreibt die technische Umsetzung der deployten Architektur der Escape Room Plattform. Im Fokus stehen die konkreten Implementierungen, Begründung wesshalb es so Umgesetzt wurde und das Zusammenspiel der beteiligten Komponenten. Die Darstellung beschreibt mehrheitlich den natürlichen Ablauf des Projekts, vom einmaligen Bootstrap über die Infrastrukturbereitstellung mit der CI/CD-Pipeline bis hin zum Routing und der Netzwerkanbindung.
 
-## 5.1 Erstmaliges Deployment (Bootstrap)
+## 5.1 Azure Boostrap
 
-Der Bootstrap-Prozess löst ein strukturelles Henne-Ei-Problem, das bei vollständig codegetriebenen CI/CD-Setups mit Remote-State unvermeidbar auftritt: Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure — beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
+Der Bootstrap-Prozess löst das strukturelles Henne-Ei-Problem, das bei vollständig codebased CI/CD-Setups mit Remote-State unvermeidbar auftritt. Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure. Beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
 
-Die Lösung besteht in einem einmaligen, lokal ausgeführten `terraform apply` des Bootstrap-Stacks[^26] (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und wird ausschliesslich von einem Admin-Account (mit Entra-ID-Berechtigungen) ausgeführt. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
+Die Lösung besteht in einem lokal ausgeführten `terraform apply` des Bootstrap-Stacks[^26] (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und wird ausschliesslich von einem Admin-Account (mit Entra-ID-Berechtigungen) ausgeführt. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
 
 | Ressource | Zweck |
 |---|---|
@@ -598,13 +584,13 @@ Der Bootstrap-Stack ist intern in drei Module gegliedert:
 | `maker_identity` | Managed Identity, Federated Credential, Rolle Contributor + UAA auf Subscription, Storage Blob Data Contributor |
 | `entra_auth` | App Registration, Service Principal, Client Secret, Owner-Zuweisungen |
 
-Nach erfolgreichem Bootstrap stehen zwei Outputs zur Verfügung: `entra_client_id` und `entra_client_secret`. Diese werden lokal in `infra/secrets.auto.tfvars` (gitignored) eingetragen und in der GitLab-Pipeline als Protected Variables (`TF_VAR_entra_client_id`, `TF_VAR_entra_client_secret`) hinterlegt. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
+Nach erfolgreichem Bootstrap stehen zwei Outputs zur Verfügung: `entra_client_id` und `entra_client_secret`. Diese werden in der GitLab-Pipeline als Protected Variables (`TF_VAR_entra_client_id`, `TF_VAR_entra_client_secret`) hinterlegt. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
 
-### Kaltstart der Container Images
+## 5.2 Container Images Boostrap
 
-Ein zweites strukturelles Problem ergibt sich beim allerersten `terraform apply` des Platform-Stacks: Azure Container Apps referenzieren bei ihrer Erstellung ein Container-Image aus der ACR, das zu diesem Zeitpunkt noch nicht existiert. Terraform bricht den Vorgang in diesem Fall ab, da die referenzierte Ressource nicht auflösbar ist.
+Ein zweites strukturelles Problem ergibt sich beim allerersten `terraform apply` des Platform-Stacks. Die Azure Container Apps referenzieren bei ihrer Erstellung ein Container-Image aus der ACR, das zu diesem Zeitpunkt noch nicht existiert. Terraform bricht den Vorgang in diesem Fall ab, da die referenzierte Ressource nicht auflösbar ist.
 
-Um diesen Kaltstart zu ermöglichen, werden die Container-Images für Frontend und Backend einmalig manuell gebaut und in die ACR gepusht, bevor das IaC zum ersten Mal ausgeführt wird. Dafür wird `az acr build` eingesetzt, das den Build-Vorgang direkt in der Azure Cloud-Umgebung ausführt — eine lokale Container-Runtime ist nicht erforderlich:
+Um das vollständige deployment zu ermöglichen, werden die Container-Images für Frontend und Backend einmalig manuell gebaut und in die ACR gepusht, bevor das IaC zum ersten Mal ausgeführt wird. Dafür wird `az acr build` eingesetzt, das den Build-Vorgang direkt in der Azure Cloud-Umgebung ausführt.
 
 ```bash
 az acr build --registry acrlabprodescape --image frontend:bootstrap ./frontend/
@@ -613,21 +599,21 @@ az acr build --registry acrlabprodescape --image backend:bootstrap ./backend/
 
 Nach diesem einmaligen Schritt werden Images ausschliesslich über die GitLab-Pipeline erstellt und mit einem Commit-SHA als Tag versioniert. Das `bootstrap`-Tag dient ausschliesslich als Platzhalter für die Erstkonfiguration.
 
-### Übergang zum automatisierten Betrieb
+## 5.3 Übergang zum automatisierten Betrieb
 
 Der Bootstrap gliedert sich in drei klar abgegrenzte Phasen:
 
 | Phase | Ausführung | Inhalt |
 |---|---|---|
-| 1 – Bootstrap | Lokal, einmalig (Admin-Account) | `bootstrap/` terraform apply — erstellt State-Backend, OIDC-Identität und Entra App Registration. Outputs (`entra_client_id`, `entra_client_secret`) in `infra/secrets.auto.tfvars` und als GitLab Protected Variables hinterlegen. |
-| 2 – Kaltstart | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
-| 3 – Automatisierter Betrieb | GitLab CI/CD, dauerhaft | Lint / Plan → manueller Terraform-Apply → Image Build & Scan → manueller Image-Deploy |
+| 1. Azure Bootstrap | Lokal, einmalig (Admin-Account) | `bootstrap/` terraform apply — erstellt State-Backend, OIDC-Identität und Entra App Registration. Outputs (`entra_client_id`, `entra_client_secret`) in `infra/secrets.auto.tfvars` und als GitLab Protected Variables hinterlegen. |
+| 2. Container Images Boostrap | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
+| 3. Automatisiertes Deployment | GitLab CI/CD, dauerhaft | Lint / Plan → manueller Terraform-Apply → Image Build & Scan → manueller Image-Deploy |
 
 Mit Abschluss von Phase 2 läuft der Delivery-Prozess reproduzierbar über GitLab, produktive Infrastruktur- und Image-Rollouts bleiben derzeit jedoch bewusst manuell freizugeben.
 
-## 5.2 Infrastructure as Code mit OpenTofu
+## 5.4 Infrastructure as Code mit OpenTofu
 
-Die gesamte Azure-Infrastruktur wird deklarativ mit OpenTofu beschrieben, das zur Terraform-CLI kompatibel ist und unter einer freien Lizenz steht. Die Wahl von OpenTofu gegenüber dem proprietären Terraform CLI folgt dem Open-Source-First-Prinzip und vermeidet Abhängigkeiten von lizenzbezogenen Einschränkungen.
+Die gesamte Azure-Infrastruktur wird deklarativ mit OpenTofu erstellt, das mit den Terraform providern kompatibel ist und unter einer freien Lizenz steht. Die Wahl von OpenTofu gegenüber Terraform folgt persönlichem Interesse und dem Open-Source-First-Prinzip und vermeidet somit auch Abhängigkeiten von lizenzbezogenen Einschränkungen.
 
 ### State-Trennung
 
@@ -638,15 +624,13 @@ bootstrap/   → lokaler Terraform-State             (lokal, einmalig, Admin-Acc
 infra/       → key: infrastructure.tfstate         (Remote-State in Azure Blob Storage)
 ```
 
-Der Bootstrap-Stack erstellt die Voraussetzungen für OIDC, Remote-State und Frontend-Authentifizierung und wird lokal mit einem Admin-Account ausgeführt. Die Entra-Credentials (`entra_client_id`, `entra_client_secret`) werden als Output bereitgestellt und dem `infra/`-Stack als Variablen übergeben — lokal via `secrets.auto.tfvars`, in der Pipeline via GitLab Protected Variables. Der produktiv genutzte Plattform-Stack `infra/` verwaltet anschliessend die laufende Azure-Umgebung. Ein separater Theme-Stack ist architektonisch vorgesehen, im Repository aktuell aber noch nicht umgesetzt.
-
 ### Modulstruktur des Platform-Stacks
 
-Der Platform-Stack (`infra/`) ist in klar abgegrenzte Terraform-Module gegliedert:
+Der Platform-Stack (`infra/`) ist in verschiedene Terraform-Module gegliedert:
 
 | Modul | Enthaltene Ressourcen |
 |---|---|
-| `network` | Subnets `snet-aca` (delegiert an `Microsoft.App/environments`) und `snet-pe` |
+| `network` | Die beiden Subnets `snet-aca` und `snet-pe` |
 | `acr` | Azure Container Registry (`acrlabprodescape`, Basic SKU) |
 | `aca_env` | Container App Environment[^27] `cae-lab-prod-escape` (internal LB, VNet-integriert) |
 | `aca_app` | Container App Instanzen für Frontend und Backend |
@@ -654,22 +638,20 @@ Der Platform-Stack (`infra/`) ist in klar abgegrenzte Terraform-Module geglieder
 
 Jedes Modul exponiert ausschliesslich die Outputs, die von anderen Modulen oder von der Pipeline benötigt werden. Intern bleibt die Implementierung gekapselt, sodass einzelne Module refaktoriert werden können, ohne State-Abhängigkeiten zu gefährden.
 
+### Ignored Tags
+
+Praktisch jede Ressource im Platform-Stack (Resource Group, ACR, Container App Environment, Private DNS Zone etc.) setzt `lifecycle { ignore_changes = [tags] }`. Grund dafür ist, dass Tags auf Subscription ebene gesetzt und vererbt werden. Ohne dieses `ignore_changes` würde jeder `terraform plan` eine Änderung an diesen Portal-/Policy-seitig gepflegten Tags anzeigen und potenziell zurücksetzen, was zu einem State-Drift-Konflikt zwischen IaC und zentraler Governance führen könnte. Die Alternative wäre, Tags ausschliesslich über Terraform zu verwalten und jede manuelle/Policy-Änderung als Drift zu behandeln. Dies wurde bewusst nicht gewählt, um die zentrale Tag-Governance der Contoso nicht zu blockieren.
+
 ### Deployte Azure-Ressourcen
 
-Die folgende Übersicht zeigt den aktuell deployte Plattformzustand:
+Als Laufzeitumgebung für Frontend und Backend wurde ein **Azure Container Apps Environment** (`aca_env`) gewählt statt eines selbst verwalteten Kubernetes-Clusters (AKS) oder eines klassischen App Service Plans. Ausschlaggebend waren folgende Punkte:
 
-| Ressource | Name | Kenndaten |
-|---|---|---|
-| Container App Environment | `cae-lab-prod-escape` | Internal LB, `internal = true`, statische IP `10.20.18.156` |
-| Container App (Frontend) | `ca-lab-prod-escape-frontend` | Target Port 8000, Transport HTTP, System-Assigned MI, min 1 / max 3 Replicas |
-| Container App (Backend) | `ca-lab-prod-escape-backend` | Target Port 5001, Transport HTTP, System-Assigned MI, min 1 / max 1 Replica |
-| Container Registry | `acrlabprodescape` | Basic SKU, Image Pull via System-Assigned MI |
-| Log Analytics Workspace | `law-lab-prod-escape` | Retention 30 Tage |
-| Private DNS Zone[^28] | `examplepebble-00000000.northeurope.azurecontainerapps.io` | A-Records `@` und `*` → `10.20.18.156`, VNet-linked |
-| Subnet ACA | `snet-aca`, `10.20.18.128/27` | Delegiert an `Microsoft.App/environments` |
-| Subnet PE | `snet-pe`, `10.20.18.192/27` | Für zukünftige Private Endpoints |
+- **Kein Cluster-Betrieb:** Azure verwaltet die zugrunde liegende Infrastruktur (Nodes, Kubernetes-Control-Plane, Patching) vollständig selbst. Für zwei Container Apps (Frontend, Backend) wäre der Betriebsaufwand eines eigenen AKS-Clusters unverhältnismässig hoch.
+- **Consumption-basierte Skalierung:** Das Workload-Profil `Consumption` skaliert die Container Apps automatisch zwischen `min_replicas` und `max_replicas` und verursacht ausserhalb der Nutzung kaum Kosten, ohne dass dafür Node-Pools dimensioniert werden müssen.
+- **VNet-Integration und interner Load Balancer:** Das Environment lässt sich direkt in das Spoke-VNet integrieren, wodurch der gesamte Traffic wie gefordert intern bleibt und über das zentrale Application Gateway geroutet werden kann.
+- **Managed Identity & natives ACR-Login:** Container Apps unterstützen System-Assigned Managed Identities für den Image-Pull aus der ACR ohne zusätzliche Konfiguration, passend zum Security-by-Design-Prinzip aus.
 
-Die Private DNS Zone wird von OpenTofu automatisch beim Erstellen des Container App Environments ausgelesen und im Spoke-VNet verankert. Die A-Records `@` und `*` zeigen beide auf die statische IP des internen Load Balancers, sodass alle Container App FQDNs innerhalb des VNets auflösbar sind.
+**Alternative AKS:** Ein AKS-Cluster hätte deutlich mehr Kontrolle geboten (z. B. eigene Netzwerk-Policies, Sidecars, Autoscaler-Feintuning) und wäre sinnvoll, sobald deutlich mehr Workloads oder komplexere Orchestrierungs-Anforderungen (z. B. Service Mesh, StatefulSets) hinzukommen. Für den aktuellen Umfang von zwei einfachen Web-Containern stehen dem jedoch klare Nachteile gegenüber. Ein eigener Node-Pool muss betrieben, gepatcht und dimensioniert werden, Kubernetes-Know-how ist für Betrieb und Troubleshooting nötig, und die Grundkosten sind auch im Leerlauf höher, da mindestens ein Node dauerhaft läuft. Container Apps wurde daher als der für diesen Projektumfang passendere Kompromiss zwischen Betriebsaufwand und Flexibilität gewählt.
 
 ## 5.3 CI/CD-Pipeline
 
@@ -690,15 +672,24 @@ Aktuell existiert eine GitLab-Pipeline mit unterschiedlichem Verhalten für Merg
 
 Das abschliessende Deploy aktualisiert ausschliesslich die Image-Tag-Referenz. Container App Revisions in Azure werden dabei automatisch erstellt, da jede Image-Tag-Änderung eine neue Revision auslöst.
 
+### Custom CI-Image
+
+Die Build-, Scan- und Deploy-Jobs verwenden ein selbst gepflegtes Image (`ci/Dockerfile`) auf Basis von `mcr.microsoft.com/azure-cli`, das intern auf CBL-Mariner (Microsoft-Linux-Distribution) basiert. Pakete werden daher mit `tdnf` statt `apt`/`apk` installiert (`tdnf install -y moby-cli`). Diese Basis wurde gewählt, weil sie die Azure-CLI bereits vorinstalliert mitbringt (für OIDC-Login und `az acr build`). Zusätzlich installiert wird nur die Docker-CLI sowie Trivy (per offiziellem Installationsskript). Damit bleibt das Image schlank und deckt genau die drei benötigten Werkzeuge ab (Azure-CLI, Docker-CLI, Trivy).
+
 ### Passwortlose Authentifizierung via OIDC
 
 Die Pipeline authentifiziert sich gegenüber Azure über OpenID Connect (OIDC) ohne statische Credentials. Für jede Pipeline-Ausführung stellt GitLab ein kurzlebiges OIDC-Token aus. Die Managed Identity `mi-maker-escape` vertraut dabei auf das Subject `project_path:<your-gitlab-group>/cloud-escape-lab:environment:production`. Azure-Zugriff ist damit auf die GitLab-Jobs beschränkt, die explizit im Environment `production` laufen.
 
 Die MR-Lint-Jobs benötigen keinen Azure-Login. Azure-authentifizierte Schritte werden erst auf `main` aktiv, wenn ein Job das produktive GitLab-Environment verwendet.
 
-### Quality Gates als technisches Merge-Gate
+### Image-Build via Docker-in-Docker
 
-Die Quality-Stage auf Merge Requests prüft aktuell vor allem Terraform-Syntax und grundlegende Sicherheits-/Abhängigkeitsbefunde. Verbindlich ausgeführt werden `terraform fmt -check` und `terraform validate`; `tflint`, `checkov` und `pip-audit` liefern zusätzliche Hinweise, sind im momentanen Stand jedoch als `allow_failure` beziehungsweise `soft-fail` konfiguriert. Dockerfile-spezifische Linter wie `hadolint` oder Python-Linting via `ruff` sind im aktuellen Pipeline-Code nicht enthalten.
+Die Build- und Scan-Jobs nutzen den GitLab-Service `docker:24-dind` (Docker-in-Docker), um Images innerhalb des isolierten, kurzlebigen Runner-Containers zu bauen. Die TLS-Absicherung zwischen Docker-Client und -Daemon ist dabei bewusst deaktiviert (`DOCKER_TLS_CERTDIR: ""`), da Client und Daemon im selben, durch GitLab pro Job frisch erzeugten Runner-Netzwerk-Namespace laufen und keine externe Angriffsfläche besteht. Diese Vereinfachung ist für einen einzelnen, kurzlebigen CI-Job vertretbar. Für produktive, dauerhaft laufende Docker-Daemons wäre TLS zwingend.
+
+### Image-Scan mit Trivy und OIDC-Authentifizierung gegen die ACR
+
+Trivy scannt die frisch gepushten Images direkt aus der Registry (`--image-src remote`), ohne dass ein lokaler Docker-Daemon-Zugriff (Docker-Socket) nötig ist. Für die Registry-Authentifizierung wird kein statisches Passwort verwendet. Der Pipeline-Job meldet sich per OIDC-Federated-Token bei Azure an, holt darüber ein kurzlebiges ACR-Access-Token und übergibt dieses. Damit bleibt auch der Scan-Schritt vollständig ohne statische Zugangsdaten.
+
 
 ## 5.4 Öffentlicher Zugriff, DNS und Routing
 
@@ -716,7 +707,7 @@ Der Hostname `escape.contoso.example` ist im Contoso-internen DNS als CNAME-Eint
 
 ### TLS-Terminierung und internes Routing
 
-Das Application Gateway terminiert TLS am Edge mit dem zentral verwalteten Wildcard-Zertifikat `*.contoso.example`. Die Weiterleitung in den Spoke erfolgt im aktuellen Azure-Stand ebenfalls über **HTTPS auf Port 443**. Die Backend-Pools zeigen auf die internen Hostnamen `cel-frontend.internal.contoso.example` und `cel-backend.internal.contoso.example`; für den TLS-Handshake setzt das Application Gateway dabei den Host-Header auf die jeweiligen Container-App-FQDNs `ca-lab-prod-escape-frontend.examplepebble-00000000.northeurope.azurecontainerapps.io` bzw. `ca-lab-prod-escape-backend.examplepebble-00000000.northeurope.azurecontainerapps.io` und verwendet das Trusted Root Certificate `backend-trusted-root-ca`.
+Das Application Gateway terminiert TLS am Edge mit dem zentral verwalteten Wildcard-Zertifikat `*.contoso.example`. Die Weiterleitung in den Spoke erfolgt im aktuellen Azure-Stand ebenfalls über **HTTPS auf Port 443**. Die Backend-Pools zeigen auf die internen Hostnamen `cel-frontend.internal.contoso.example` und `cel-backend.internal.contoso.example`. Für den TLS-Handshake setzt der Application Gateway dabei den Host-Header auf die jeweiligen Container-App-FQDNs `ca-lab-prod-escape-frontend.examplepebble-00000000.northeurope.azurecontainerapps.io` bzw. `ca-lab-prod-escape-backend.examplepebble-00000000.northeurope.azurecontainerapps.io` und verwendet das Trusted Root Certificate `backend-trusted-root-ca`.
 
 Das Application Gateway löst die Container App FQDNs über die Private DNS Zone im Spoke auf:
 
@@ -739,7 +730,21 @@ Auf dem Listener `escape.contoso.example:443` leitet das Application Gateway Anf
 
 Die produktive Health-Probe des Application Gateways trifft auf `/tutorial-room/ping` der Backend Container App sowie auf `/healthz` der Frontend Container App. Der Pfad `/healthz` ist in der EasyAuth-Konfiguration als `excludedPath` hinterlegt und liefert ohne Login-Anforderung `200 {"status":"ok"}` zurück.
 
-Das Frontend ist mit Azure Container Apps Built-in Authentication (EasyAuth) über Microsoft Entra ID abgesichert: unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet. Nur Benutzer des Contoso-Tenants können sich anmelden; die Audience-Validierung (`api://<client_id>`) stellt sicher, dass ausschliesslich Tokens für diese Applikation akzeptiert werden. Technische Details zur EasyAuth-Implementierung und zur Proxy-Konfiguration sind in [Abschnitt 5.6](#56-entra-id-easyauth-auf-aca) und in [ADR-009](./docs/decisions/adr-009-easyauth-on-aca-behind-agw.md) beschrieben.
+Das Frontend ist mit Azure Container Apps Built-in Authentication (EasyAuth) über Microsoft Entra ID abgesichert: unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet. Nur Benutzer des Contoso-Tenants können sich anmelden, die Audience-Validierung (`api://<client_id>`) stellt sicher, dass ausschliesslich Tokens für diese Applikation akzeptiert werden.
+
+## 5.5 Managed Identity und ACR-Zugriff
+
+Beide Container Apps verwenden eine **System-Assigned Managed Identity**, über die sie Container-Images direkt aus der ACR beziehen. Die Managed Identity erhält auf der ACR die Rolle `AcrPull`, die ausschliesslich das Lesen und Pullen von Images erlaubt, keine Write-Rechte. Statische Zugangsdaten für die Registry sind damit vollständig eliminiert.
+
+```
+Container App (System MI)
+  └─ AcrPull-Rollenzuweisung
+       └─ acrlabprodescape.azurecr.io
+            ├─ frontend:bootstrap  (Kaltstart)
+            └─ frontend:<sha>      (CI/CD-Betrieb)
+```
+
+Dieses Muster gilt identisch für die Backend Container App. Die Rollenzuweisungen werden durch OpenTofu als `azurerm_role_assignment`-Ressourcen verwaltet und sind damit reproduzierbar und auditierbar.
 
 ## 5.6 Entra ID EasyAuth auf ACA
 
@@ -749,7 +754,7 @@ Die Frontend Container App `ca-lab-prod-escape-frontend` ist mit **Azure Contain
 
 ### Warum `azapi_resource` statt `azurerm_container_app`
 
-EasyAuth auf ACA wird über den ARM-Sub-Ressourcentyp `Microsoft.App/containerApps/authConfigs/current` konfiguriert — **nicht** über den Hauptresourcentyp `azurerm_container_app`. Die Gründe:
+EasyAuth auf ACA wird über den ARM-Sub-Ressourcentyp `Microsoft.App/containerApps/authConfigs/current` konfiguriert, **nicht** über den Hauptresourcentyp `azurerm_container_app`. Die Gründe:
 
 - Der `hashicorp/azurerm`-Provider stellt `authConfigs/current` nicht bereit.
 - Jeder `PUT`-Request des Providers (ausgelöst bei jeder Infrastrukturänderung oder neuem Image) setzt die EasyAuth-Einstellungen zurück.
@@ -766,25 +771,23 @@ Das Reapply wird bewusst **nicht** an den von Azure zur Laufzeit vergebenen Revi
 
 In der `azurerm_container_app`-Ressource ist zusätzlich `lifecycle { ignore_changes = [secret] }` gesetzt, damit Terraform die von EasyAuth verwalteten Secrets nicht beim nächsten Apply löscht.
 
-### Problem: AGW überschreibt den `Host`-Header
+### Redirect-URI-Problem hinter dem Application Gateway
 
-Das Contoso Application Gateway setzt im Backend-Request den `Host`-Header auf den internen ACA-FQDN:
+Weil das Contoso Application Gateway im Backend-Request den `Host`-Header auf den internen ACA-FQDN umschreibt, konstruiert EasyAuth daraus eine im Browser nicht erreichbare OAuth2-`redirect_uri`:
 
 ```
 Host: ca-lab-prod-escape-frontend.examplepebble-00000000.northeurope.azurecontainerapps.io
 ```
 
-EasyAuth konstruiert daraus die OAuth2-`redirect_uri`. Diese wird an Entra ID übergeben und im Browser als Callback-URL verwendet — der interne ACA-FQDN ist im Browser jedoch nicht erreichbar. Das Resultat ist ein Entra-Fehler `AADSTS50011` (Redirect-URI-Mismatch) oder `AADSTS900971` (fehlende Redirect-URI).
+Diese Adresse wird an Entra ID übergeben und dort als Callback-URL hinterlegt, landet im Browser nach dem Login jedoch nicht dort, sondern erhält einen Entra-Fehler (`AADSTS50011` Redirect-URI-Mismatch bzw. `AADSTS900971` fehlende Redirect-URI).
 
-### Lösung: AGW Rewrite Rule + `forwardProxy`
-
-Der Application Gateway injiziert via Rewrite Rule den Header `X-Forwarded-Host: escape.contoso.example` in alle Backend-Requests. EasyAuth liest diesen Header und baut die korrekte Redirect-URI:
+Die Lösung besteht darin, dem Application Gateway per Rewrite Rule den zusätzlichen Header `X-Forwarded-Host: escape.contoso.example` mitzugeben und EasyAuth so zu konfigurieren, dass es genau diesen Header für die Redirect-URI verwendet. Damit baut EasyAuth statt des internen FQDN die öffentlich erreichbare Callback-URL:
 
 ```
 https://escape.contoso.example/.auth/login/aad/callback
 ```
 
-Konfiguriert wird das zweiseitig:
+Das erfordert eine Konfiguration an beiden Enden der Verbindung — im `aca_auth`-Modul und im AGW-Routing:
 
 **EasyAuth (`infra/modules/aca_auth/main.tf`):**
 ```hcl
@@ -801,45 +804,10 @@ inject_request_headers:
   X-Forwarded-Host: escape.contoso.example
 ```
 
-Die `inject_request_headers`-Funktion ist ein neues Feature des AGW-Moduls in `contoso-connectivity/modules/app_gateway`, das im Rahmen dieses Projekts als Pull Request eingebracht wurde.
+Die `inject_request_headers`-Funktion existierte im AGW-Modul zuvor nicht und wurde im Rahmen dieses Projekts als Pull Request in `contoso-connectivity/modules/app_gateway` ergänzt.
 
-> **Hinweis:** Azure AGW v2 injiziert `X-Original-Host` **nicht** automatisch (entgegen einigen Dokumentationsquellen). Automatisch hinzugefügte Headers sind ausschliesslich `X-Forwarded-For`, `X-Forwarded-Proto` und `X-Forwarded-Port`.
+> **Hinweis:** Azure AGW v2 injiziert `X-Original-Host` **nicht** automatisch (entgegen einigen Dokumentationsquellen). Automatisch hinzugefügte Headers sind ausschliesslich `X-Forwarded-For`, `X-Forwarded-Proto` und `X-Forwarded-Port` — der `X-Forwarded-Host` musste daher gezielt via Rewrite Rule ergänzt werden.
 
-### Health Probe Koordination
-
-Sobald EasyAuth aktiv ist, liefert der Endpunkt `/` für nicht-authentifizierte Health-Probes HTTP 302 (Redirect zu Entra ID). Der AGW bewertet den Backend-Pool als unhealthy und antwortet allen Benutzern mit 502.
-
-Lösung:
-
-- EasyAuth: `globalValidation.excludedPaths = ["/healthz"]` — Anfragen an `/healthz` umgehen die Auth-Prüfung.
-- AGW: `probe_path: /healthz` in der Routing-Konfiguration — die Health Probe trifft auf den unauthentifizierten Endpunkt.
-
-### Entra App Registration
-
-Die App Registration wird vom `bootstrap/modules/entra_auth`-Modul verwaltet:
-
-| Eigenschaft | Wert |
-|---|---|
-| Application (Client) ID | `00000000-0000-0000-0000-000000000005` |
-| Redirect URI | `https://escape.contoso.example/.auth/login/aad/callback` |
-| Implicit Grant (`id_token`) | Aktiviert — erforderlich für den EasyAuth Hybrid Flow |
-| Tenant | `00000000-0000-0000-0000-000000000001` |
-
-
-
-## 5.5 Managed Identity und ACR-Zugriff
-
-Beide Container Apps verwenden eine **System-Assigned Managed Identity**, über die sie Container-Images direkt aus der ACR beziehen. Die Managed Identity erhält auf der ACR die Rolle `AcrPull`, die ausschliesslich das Lesen und Pullen von Images erlaubt — keine Write-Rechte. Statische Zugangsdaten für die Registry sind damit vollständig eliminiert.
-
-```
-Container App (System MI)
-  └─ AcrPull-Rollenzuweisung
-       └─ acrlabprodescape.azurecr.io
-            ├─ frontend:bootstrap  (Kaltstart)
-            └─ frontend:<sha>      (CI/CD-Betrieb)
-```
-
-Dieses Muster gilt identisch für die Backend Container App. Die Rollenzuweisungen werden durch OpenTofu als `azurerm_role_assignment`-Ressourcen verwaltet und sind damit reproduzierbar und auditierbar.
 
 ---
 
@@ -1000,35 +968,36 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 
 ## 6.2 Testresultat
 
-**Testabschlussrate**: 4 von 4 Testfällen erfolgreich (100% Erfolgsquote)
+**Testabschlussrate**: 10 von 10 Testfällen erfolgreich (100% Erfolgsquote)
 
-Die durchgeführten Tests belegen, dass der End-to-End-Prozess des Tutorial Rooms technisch zuverlässig funktioniert. Der Benutzerfluss vom Laden der Seite über den Spielstart bis zum erfolgreichen Abschluss arbeitet stabil. Auch das Zurücksetzen des Spielzustands sowie das Stoppen, Löschen und erneute Starten der Runtime funktionieren wie erwartet in der produktionsnahen Azure-Umgebung.
+Die durchgeführten Tests belegen, dass die Plattform end-to-end technisch zuverlässig funktioniert. Öffentliche Erreichbarkeit, TLS-Terminierung und WAF-Schutz durch das zentrale Contoso Application Gateway arbeiten wie erwartet. Die Entra-ID-Authentifizierung via EasyAuth erzwingt zuverlässig einen Login, hält die Session über Folge-Requests aufrecht und lässt gleichzeitig die Health-Probe-Pfade unauthentifiziert erreichbar. Das Path-basierte Routing trennt Frontend und Backend korrekt über denselben Hostnamen, und der Tutorial Room lässt sich als Integrationstest der Plattform vollständig durchspielen, zurücksetzen sowie stoppen, löschen und neu starten.
 
 &nbsp;
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'pie1': '#90EE90', 'pie2': '#FFB6C6'}}}%%
-pie title Testabschlussrate (4 Testfälle)
-    "Erfolgreich (4)" : 100
-    "Fehlgeschlagen (0)" : 0
+%%{init: {'theme': 'base', 'themeVariables': { 'pie1': '#90EE90'}}}%%
+pie title Testabschlussrate (10 Testfälle)
+    "Erfolgreich (10)" : 100
 ```
 
 __Erfolgreiche Testfälle:__
 
 | # | Testfall | Beschreibung |
 |---|----------|-------------|
-| 7 | Tutorial Room laden und starten | Die Seite lädt korrekt, der Room startet erfolgreich und erste Interaktionen funktionieren. |
-| 8 | Vollständiger Benutzerfluss | Der Tutorial Room kann vollständig bis zum Erfolgsbanner durchgespielt werden. |
-| 9 | Spiel zurücksetzen | Der Fortschritt wird korrekt verworfen und der initiale Zustand wiederhergestellt. |
-| 10 | Runtime beenden und neu starten | Stop Room und Delete Room funktionieren, anschliessend lässt sich ein frischer Room erneut starten. |
-
-__Kritische Befunde:__
-Es wurden keine kritischen Fehler festgestellt.
+| 1 | Öffentliche Erreichbarkeit & TLS-Zertifikat | Plattform ist öffentlich erreichbar, gültiges Wildcard-Zertifikat am AGW. |
+| 2 | Erzwungene Authentifizierung (EasyAuth-Redirect) | Zugriff ohne Session führt zuverlässig zum Microsoft-Login. |
+| 3 | Erfolgreicher Login via Entra ID (Contoso-Tenant) | Login funktioniert, Session bleibt über Folge-Requests bestehen. |
+| 4 | Health-Probe-Pfade ohne Login erreichbar | `/healthz` liefert ohne Session HTTP 200, AGW-Probe funktioniert. |
+| 5 | Path-basiertes Routing über das AGW | Frontend und Backend werden korrekt über denselben Host getrennt. |
+| 6 | WAF-Schutz des zentralen AGW | Schädlicher Payload wird von der OWASP-CRS-WAF mit HTTP 403 blockiert. |
+| 7 | End-to-End: Tutorial Room laden und starten | Room lädt korrekt, erste Interaktion funktioniert. |
+| 8 | Vollständiger Benutzerfluss bis Abschluss | Kompletter Rätsel-Durchlauf bis zum Erfolgsbanner funktioniert. |
+| 9 | Spiel zurücksetzen | Reset stellt zuverlässig den Ausgangszustand wieder her. |
+| 10 | Runtime beenden, löschen und neu starten | Stop/Delete und erneuter Start liefern jeweils eine frische Runtime. |
 
 __Fazit:__
-Das System ist für den Tutorial Room funktionsfähig und stabil. Die zentralen End-to-End-Abläufe der Plattform bewähren sich in der Praxis, und die Anwendung unterstützt den vorgesehenen Benutzerfluss in der Azure-Umgebung zuverlässig.
+Die Plattform ist funktionsfähig und stabil. Zentrale Architekturentscheidungen, Hub-and-Spoke mit zentralem Application Gateway/WAF, EasyAuth vor dem AGW-Proxy sowie das Path-basierte Routing zwischen Frontend und Backend bewähren sich in der produktiven Umgebung. Kritische Sicherheits- oder Funktionsmängel wurden im Rahmen dieser Tests nicht festgestellt. Die Tests decken jedoch bewusst nur die Plattform ab, nicht die Rätsel-Logik des Tutorial Rooms.
 
-&nbsp;
 
 ---
 
