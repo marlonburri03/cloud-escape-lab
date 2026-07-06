@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud-based escape room platform — Abschlusspräsentation</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css" id="theme" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+
+    <style>
+      .reveal h1, .reveal h2, .reveal h3 { text-transform: none; }
+      .reveal .slides section { text-align: left; }
+      .reveal .slides section.center { text-align: center; }
+      .cover-title { text-align: center; }
+      .subtitle { color: #9ad1ff; font-weight: normal; }
+      .two-col { display: flex; gap: 2rem; align-items: center; }
+      .two-col > div { flex: 1; }
+      .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.5rem; font-size: 0.85em; }
+      .video-fallback { padding: 1rem; border: 2px dashed #7aa; border-radius: 8px; font-size: 0.7em; }
+      footer.slide-number { opacity: 0.6; }
+      .r-fit-text { font-size: 0.85em; }
+      table { font-size: 0.75em; }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+
+        <!-- 1. Titel -->
+        <section class="center">
+          <img src="assets/cover_image.png" alt="Titelbild" style="max-height: 38vh; border-radius: 8px;" />
+          <h1 class="cover-title">Cloud-based escape room platform</h1>
+          <p class="subtitle">Abschlusspräsentation Semesterarbeit</p>
+          <p style="font-size: 0.6em;">Marlon Burri &nbsp;·&nbsp; Dipl. Informatiker HF, Vertiefung Cloud Native</p>
+          <aside class="notes">
+            Begrüssung, Vorstellung, Überblick geben was in den nächsten Minuten gezeigt wird.
+            Zeitbudget im Kopf behalten (Timer!).
+          </aside>
+        </section>
+
+        <!-- 2. Problemstellung -->
+        <section>
+          <h2>Problemstellung</h2>
+          <ul>
+            <li>IT-Ausbildung vermittelt Inhalte oft <strong>theoretisch</strong> oder isoliert</li>
+            <li>Komplexe Zusammenhänge sind schwer <strong>praxisnah</strong> zu verstehen</li>
+            <li>Gamification &amp; interaktive Challenges gewinnen an Bedeutung</li>
+          </ul>
+          <blockquote style="font-size:0.8em; border-left: 4px solid #9ad1ff; padding-left: 1rem;">
+            Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?
+          </blockquote>
+          <aside class="notes">Kurz halten — Ausgangslage in max. 30-45 Sekunden erklären.</aside>
+        </section>
+
+        <!-- 3. Ziele -->
+        <section>
+          <h2>Ziele der Arbeit</h2>
+          <div class="badge-grid">
+            <div>🎮 Spielbares Escape-Room-Szenario</div>
+            <div>🧩 Microservice-Architektur (Frontend / Backend)</div>
+            <div>🔁 Automatisierte CI/CD Pipeline (GitLab)</div>
+            <div>🔐 Auth via Microsoft Entra ID</div>
+            <div>🏗️ Infrastructure as Code (OpenTofu)</div>
+            <div>⚡ Azure Function für Spielinteraktionen</div>
+            <div>🗄️ Relationale Datenbank (PostgreSQL)</div>
+            <div>📄 Vollständige Projektdokumentation</div>
+          </div>
+          <aside class="notes">Ziele als Checkliste präsentieren, nicht alle im Detail vorlesen.</aside>
+        </section>
+
+        <!-- 4. Architekturkonzept -->
+        <section>
+          <h2>Architekturkonzept</h2>
+          <p>Trennung zwischen <strong>stabiler Plattform</strong> und <strong>fachlich wechselnden Escape-Room-Inhalten</strong>.</p>
+          <table>
+            <tr><th>Ebene</th><th>Rolle</th></tr>
+            <tr><td>Bootstrap</td><td>Voraussetzungen für automatisierte Deployments</td></tr>
+            <tr><td>Plattform-Stack</td><td>Netzwerk, Security, zentrale Plattformdienste</td></tr>
+            <tr><td>Theme-Stack</td><td>Einzelner Escape Room mit eigenen Ressourcen</td></tr>
+          </table>
+          <p style="font-size:0.75em;">➡️ Theme-Stacks nutzen nur definierte Outputs des Plattform-Stacks — die Basis bleibt stabil.</p>
+          <aside class="notes">Betonen: Erweiterbarkeit für zukünftige Escape Rooms, ohne bestehende Architektur zu gefährden.</aside>
+        </section>
+
+        <!-- 5. Azure Big Picture -->
+        <section class="center">
+          <h2>Azure Big Picture</h2>
+          <img src="assets/big_picture.png" alt="Azure Big Picture" style="max-height: 55vh; border-radius: 6px;" />
+          <p style="font-size: 0.6em;">Hub-and-Spoke: Connectivity Subscription (Contoso Landing Zone) + Escape-Room-Subscription</p>
+          <aside class="notes">
+            Ingress/Egress via zentrales Application Gateway / Azure Firewall erklären.
+            Policies der Landing Zone als Guardrails erwähnen.
+          </aside>
+        </section>
+
+        <!-- 6. Tech-Stack / DevOps -->
+        <section>
+          <h2>Tech-Stack &amp; DevOps-Prinzipien</h2>
+          <div class="two-col">
+            <div>
+              <h3 style="font-size:0.7em;">Prinzipien</h3>
+              <ul style="font-size:0.75em;">
+                <li>Infrastructure as Code (IaC)</li>
+                <li>Automation First</li>
+                <li>Security by Design (Managed Identity, Entra ID)</li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="font-size:0.7em;">Werkzeuge</h3>
+              <ul style="font-size:0.75em;">
+                <li>OpenTofu / Terraform</li>
+                <li>GitLab CI/CD (OIDC, secretless)</li>
+                <li>Azure Container Apps + EasyAuth</li>
+                <li>Python / JavaScript, PostgreSQL</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes">Nicht jedes Tool einzeln erklären — Fokus auf "warum diese Prinzipien".</aside>
+        </section>
+
+        <!-- 7. Delivery-Flow -->
+        <section>
+          <h2>Git- &amp; Delivery-Flow</h2>
+          <pre style="font-size:0.55em; background:#111; padding:1rem; border-radius:6px;"><code>main
+ ├── feature-&lt;beschreibung&gt;
+ ├── fix-&lt;beschreibung&gt;
+ └── hotfix-&lt;beschreibung&gt;
+
+Entwickler → Merge Request (Lint & Security) → main → Pipeline: Plan → Apply → Build → Scan → Deploy</code></pre>
+          <p style="font-size:0.75em;">Secretless Deployment via OIDC Federated Credentials. Releases über Tags (MVP, MLP, MMP).</p>
+          <aside class="notes">Betonen: Pipeline als technisches Merge-Gate, keine manuellen Portal-Änderungen.</aside>
+        </section>
+
+        <!-- 8. Testresultate -->
+        <section>
+          <h2>Wichtigste Projektergebnisse</h2>
+          <div class="two-col">
+            <div style="text-align:center;">
+              <h3 style="font-size:0.8em; color:#9ad1ff;">10 / 10</h3>
+              <p style="font-size:0.7em;">Testfälle erfolgreich<br/>(100% Erfolgsquote)</p>
+            </div>
+            <div>
+              <ul style="font-size:0.7em;">
+                <li>Öffentliche Erreichbarkeit &amp; TLS/WAF-Schutz</li>
+                <li>EasyAuth-Redirect &amp; Entra-ID-Login funktionieren zuverlässig</li>
+                <li>Path-basiertes Routing Frontend/Backend korrekt</li>
+                <li>Tutorial Room: laden, spielen, zurücksetzen, neu starten</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes">Kurz auf ein bis zwei Highlights fokussieren, nicht alle 10 Testfälle aufzählen.</aside>
+        </section>
+
+        <!-- 9. Live-Demo -->
+        <section class="center">
+          <h2>Live-Demo / Aufzeichnung</h2>
+          <video controls style="max-height: 55vh; border-radius: 6px;" poster="assets/cover_image.png">
+            <source src="assets/demo.mp4" type="video/mp4" />
+            Ihr Browser unterstützt das Video-Tag nicht.
+          </video>
+          <!-- Fallback falls assets/demo.mp4 noch nicht abgelegt wurde -->
+          <div class="video-fallback">
+            Hinweis: Video nicht sichtbar? Bitte Aufzeichnung unter
+            <code>presentation/assets/demo.mp4</code> ablegen.
+          </div>
+          <aside class="notes">
+            Falls Live-Demo statt Video: hier zum Browser/Terminal wechseln.
+            Zeitpuffer für Fragen einplanen.
+          </aside>
+        </section>
+
+        <!-- 10. Fazit -->
+        <section>
+          <h2>Fazit &amp; Ausblick</h2>
+          <ul>
+            <li>✅ Funktionsfähiger, stabiler POC in produktiver Azure-Umgebung</li>
+            <li>✅ Zentrale Architekturentscheidungen bewähren sich (Hub-and-Spoke, EasyAuth, Routing)</li>
+            <li>🚀 Ausblick: weitere Escape Rooms, themenbasierte Trennung, mehr Spielmechaniken</li>
+          </ul>
+          <p class="center" style="text-align:center; margin-top:2rem;">Vielen Dank für die Aufmerksamkeit — Fragen?</p>
+          <aside class="notes">Abschluss bewusst kurz und klar halten, Übergang zur Fragerunde ankündigen.</aside>
+        </section>
+
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        controls: true,
+        progress: true,
+        center: false,
+        transition: 'slide',
+        plugins: [ RevealNotes, RevealHighlight ],
+      });
+    </script>
+  </body>
+</html>
