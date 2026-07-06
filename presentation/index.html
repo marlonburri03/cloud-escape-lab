@@ -23,72 +23,501 @@
         --contoso-gray-light: #d7d7d7;
       }
 
-      .reveal { font-family: "Source Sans 3", "Source Sans Pro", sans-serif; color: #1a1a1a; }
-      .reveal .slides section { text-align: left; padding-top: 0.2em; }
+      .reveal {
+        font-family: "Source Sans 3", "Source Sans Pro", sans-serif;
+        color: #1a1a1a;
+      }
+      .reveal .slides section {
+        text-align: left;
+        padding-top: 0.5em;
+      }
       .reveal h1, .reveal h2, .reveal h3 {
         text-transform: none;
         color: var(--contoso-blue);
         font-weight: 700;
       }
-      .reveal h2 { font-size: 1.5em; border-bottom: 4px solid var(--contoso-cyan); padding-bottom: 0.2em; margin-bottom: 0.6em; }
-      .reveal h1 { font-size: 1.6em; }
-      .reveal ul, .reveal ol { display: block; }
-      .reveal p, .reveal li { color: #1a1a1a; }
+      .reveal h1 {
+        font-size: 1.8em;
+        margin-bottom: 0.4em;
+      }
+      .reveal h2 {
+        font-size: 1.4em;
+        position: relative;
+        padding-bottom: 0.4em;
+        margin-bottom: 0.8em;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+      .reveal h2::after {
+        content: "";
+        position: absolute;
+        bottom: -2.5px;
+        left: 0;
+        width: 80px;
+        height: 4px;
+        background: var(--contoso-cyan);
+        border-radius: 2px;
+      }
+      .reveal h3 {
+        font-size: 0.9em;
+        margin-bottom: 0.4em;
+        font-weight: 600;
+      }
+      .reveal ul, .reveal ol {
+        display: block;
+        list-style: none;
+        padding-left: 1.2em;
+        margin: 0.8em 0;
+      }
+      .reveal ul li {
+        position: relative;
+        margin-bottom: 0.5em;
+        font-size: 0.75em;
+        line-height: 1.4;
+      }
+      .reveal ul li::before {
+        content: var(--bullet-char, "•");
+        color: var(--bullet-color, var(--contoso-cyan));
+        font-weight: bold;
+        position: absolute;
+        left: -1em;
+        width: 1em;
+      }
+      .reveal p {
+        color: #333;
+        line-height: 1.5;
+      }
 
       /* Kopf-/Fusszeile im Stil der Vorlage: Datum oben rechts, Breadcrumb + Seitenzahl unten */
       .slide-meta-top {
-        position: fixed; top: 0.7em; right: 3.2em;
-        font-size: 0.35em; color: var(--contoso-gray-dark); z-index: 10;
+        position: fixed;
+        top: 0.6em;
+        right: 0.8em;
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+        z-index: 10;
+      }
+      .slide-meta-date {
+        font-size: 0.35em;
+        color: var(--contoso-gray-dark);
+        font-weight: 500;
+        line-height: 1;
+      }
+      .contoso-logo-inline {
+        height: 24px;
+        width: auto;
+        opacity: 0.95;
       }
       .contoso-logo-fixed {
-        position: fixed; top: 0.5em; right: 0.6em;
-        height: 28px; width: auto; z-index: 20; opacity: 0.9;
-      }
-      .contoso-logo {
-        height: 1.4em; width: auto; display: block;
+        position: fixed;
+        top: 0.6em;
+        right: 0.8em;
+        height: 24px;
+        width: auto;
+        z-index: 20;
+        opacity: 0.95;
       }
       .slide-meta-bottom {
-        position: fixed; bottom: 0.5em; left: 1em; right: 1em;
-        display: flex; justify-content: space-between;
-        font-size: 0.32em; color: var(--contoso-gray-dark); z-index: 10;
+        position: fixed;
+        bottom: 0.8em;
+        left: 2.5em;
+        right: 2.5em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.35em;
+        color: #8c95a0;
+        z-index: 10;
+        border-top: 1px solid rgba(0,0,0,0.06);
+        padding-top: 0.6em;
+      }
+      .page-number {
+        background: rgba(0, 40, 165, 0.06);
+        color: var(--contoso-blue);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 700;
       }
 
-      .cover-title { text-align: center; color: var(--contoso-blue); }
-      .subtitle { color: var(--contoso-gray-dark); font-weight: 400; }
+      .cover-title {
+        text-align: center;
+        color: var(--contoso-blue);
+        font-size: 2em !important;
+        margin-top: 0.2em !important;
+      }
+      .subtitle {
+        color: var(--contoso-gray-dark);
+        font-weight: 400;
+        margin-bottom: 1em !important;
+      }
+      .cover-meta {
+        display: flex;
+        justify-content: center;
+        gap: 1.5em;
+        font-size: 0.52em;
+        color: var(--contoso-gray-dark);
+        margin-top: 1.5em;
+        border-top: 1px solid rgba(0,0,0,0.06);
+        padding-top: 1.2em;
+      }
 
-      .two-col { display: flex; gap: 2rem; align-items: flex-start; }
-      .two-col > div { flex: 1; }
+      .two-col {
+        display: flex;
+        gap: 1.5rem;
+        align-items: stretch;
+        margin-top: 0.8rem;
+      }
+      .two-col > div {
+        flex: 1;
+      }
 
-      .icon-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem 2rem; }
+      .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
       .icon-card {
-        border-left: 6px solid var(--contoso-cyan);
-        background: #f7f9fc; border-radius: 6px;
-        padding: 0.6em 1em; font-size: 0.75em;
+        border-left: 5px solid var(--contoso-cyan);
+        background: rgba(74, 201, 227, 0.06);
+        border-radius: 8px;
+        padding: 0.8em 1.2em;
+        font-size: 0.72em;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+        line-height: 1.4;
       }
-      .icon-card.c-green { border-color: var(--contoso-green); }
-      .icon-card.c-yellow { border-color: var(--contoso-yellow); }
-      .icon-card.c-orange { border-color: var(--contoso-orange); }
-      .icon-card.c-crimson { border-color: var(--contoso-crimson); }
-
-      .stat-badge {
-        display: inline-block; background: var(--contoso-blue); color: #fff;
-        border-radius: 10px; padding: 0.3em 0.9em; font-size: 0.9em; font-weight: 700;
+      .icon-card strong {
+        color: var(--contoso-blue);
+      }
+      .icon-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      }
+      .icon-card.c-green {
+        border-color: var(--contoso-green);
+        background: rgba(164, 210, 51, 0.08);
+      }
+      .icon-card.c-yellow {
+        border-color: var(--contoso-yellow);
+        background: rgba(255, 200, 69, 0.08);
+      }
+      .icon-card.c-orange {
+        border-color: var(--contoso-orange);
+        background: rgba(252, 76, 2, 0.06);
+      }
+      .icon-card.c-crimson {
+        border-color: var(--contoso-crimson);
+        background: rgba(191, 13, 62, 0.06);
       }
 
       blockquote.pull-quote {
-        border-left: 6px solid var(--contoso-blue);
-        background: #f2f5fb; padding: 0.6em 1.2em; font-size: 0.85em;
-        font-style: italic; color: var(--contoso-blue);
+        border-left: 5px solid var(--contoso-blue);
+        background: linear-gradient(90deg, rgba(0, 40, 165, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+        padding: 0.8em 1.5em;
+        font-size: 0.8em;
+        font-style: italic;
+        color: #333;
+        position: relative;
+        border-radius: 0 8px 8px 0;
+        margin: 1.2em 0;
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+        box-shadow: none;
+        width: auto;
+      }
+
+      /* Problem Focus Card */
+      .problem-focus-card {
+        background: linear-gradient(135deg, rgba(0, 40, 165, 0.05) 0%, rgba(74, 201, 227, 0.05) 100%);
+        border-left: 5px solid var(--contoso-blue);
+        border-radius: 0 12px 12px 0;
+        padding: 1.2em;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .focus-title {
+        font-size: 0.75em;
+        font-weight: 700;
+        color: var(--contoso-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5em;
+      }
+      .focus-text {
+        font-size: 0.58em !important;
+        color: #333;
+        line-height: 1.4;
+        margin: 0 !important;
+      }
+      .focus-highlight {
+        font-size: 0.6em;
+        font-weight: 700;
+        color: var(--contoso-blue);
+        margin-top: 0.8em;
+        background: white;
+        padding: 0.3em 0.8em;
+        border-radius: 15px;
+        display: inline-block;
+        align-self: flex-start;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+      }
+
+      /* Goals Matrix */
+      .goals-matrix {
+        display: flex;
+        gap: 1.2rem;
+        margin-top: 0.8rem;
+      }
+      .goals-category {
+        flex: 1;
+        background: #fcfdfe;
+        border: 1px solid rgba(0,0,0,0.04);
+        border-top: 4px solid var(--cat-color);
+        border-radius: 8px;
+        padding: 1.2em 0.8em;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        display: flex;
+        flex-direction: column;
+        gap: 0.8em;
+        box-sizing: border-box;
+      }
+      .category-header {
+        font-size: 0.65em;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--cat-color);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding-bottom: 0.4em;
+        margin-bottom: 0.2em;
+        text-align: center;
+      }
+      .goal-item {
+        font-size: 0.58em;
+        background: rgba(255,255,255,0.8);
+        border: 1px solid rgba(0,0,0,0.03);
+        padding: 0.6em 0.8em;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        line-height: 1.3;
+      }
+
+      /* Architecture Highlights (Slide 5) */
+      .arch-highlights {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        height: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .arch-card {
+        border-left: 4px solid var(--accent);
+        background: #fdfdfd;
+        padding: 0.6em 1em;
+        border-radius: 0 8px 8px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+        border-top: 1px solid rgba(0,0,0,0.02);
+        border-right: 1px solid rgba(0,0,0,0.02);
+        border-bottom: 1px solid rgba(0,0,0,0.02);
+        box-sizing: border-box;
+      }
+      .arch-card-title {
+        font-size: 0.55em;
+        font-weight: 700;
+        color: var(--contoso-blue);
+        margin-bottom: 0.2em;
+      }
+      .arch-card-text {
+        font-size: 0.45em !important;
+        color: var(--contoso-gray-dark);
+        margin: 0 !important;
+        line-height: 1.3;
+      }
+
+      /* Pipeline Flow (Slide 6) */
+      .pipeline-flow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.4rem;
+        background: #0f141c;
+        padding: 1.5em;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        margin: 1.2em 0;
+        box-sizing: border-box;
+      }
+      .pipeline-stage {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6em;
+        flex: 1;
+      }
+      .stage-title {
+        color: #8c95a0;
+        font-size: 0.42em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .job-node {
+        background: rgba(39, 201, 63, 0.08);
+        border: 1px solid rgba(39, 201, 63, 0.3);
+        border-radius: 6px;
+        padding: 0.5em;
+        color: #e6edf3;
+        font-family: monospace;
+        font-size: 0.48em;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4em;
+        transition: all 0.3s ease;
+      }
+      .job-node:hover {
+        background: rgba(39, 201, 63, 0.15);
+        transform: scale(1.03);
+      }
+      .job-status {
+        color: #27c93f;
+        font-weight: bold;
+      }
+      .pipeline-arrow {
+        color: #586069;
+        font-size: 0.8em;
+        font-weight: bold;
+        align-self: center;
+      }
+
+      /* Metric Card */
+      .metric-card {
+        background: linear-gradient(135deg, var(--contoso-blue) 0%, #001c75 100%);
+        color: white;
+        padding: 1.5em;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 40, 165, 0.15);
+        margin-top: 0.5em;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .metric-value {
+        font-size: 2.2em;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--contoso-green);
+        text-shadow: 0 2px 10px rgba(164, 210, 51, 0.3);
+      }
+      .metric-label {
+        font-size: 0.6em;
+        margin-top: 0.8em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      /* Panel Cards (Slide 8) */
+      .panel-card {
+        background: #fdfdfd;
+        border-radius: 8px;
+        padding: 1.2em;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        border: 1px solid rgba(0,0,0,0.04);
+        border-top: 4px solid var(--panel-accent, var(--contoso-blue));
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .panel-card h3 {
+        margin-top: 0 !important;
+        margin-bottom: 0.6em !important;
+        font-size: 0.85em !important;
       }
 
       table { font-size: 0.72em; border-collapse: collapse; width: 100%; }
       table th { background: var(--contoso-blue); color: #fff; padding: 0.4em 0.6em; text-align: left; }
       table td { padding: 0.4em 0.6em; border-bottom: 1px solid var(--contoso-gray-light); }
 
-      .video-fallback {
-        padding: 1rem; border: 2px dashed var(--contoso-cyan); border-radius: 8px; font-size: 0.7em;
-        background: #f7f9fc;
+      .video-caption {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        margin-top: 1em;
+        padding: 0.4em 1em;
+        background: rgba(74, 201, 227, 0.08);
+        border: 1px solid rgba(74, 201, 227, 0.3);
+        border-radius: 20px;
+        font-size: 0.5em;
+        color: var(--contoso-gray-dark);
       }
+      .caption-icon {
+        font-size: 1.1em;
+      }
+
+      .thank-you {
+        text-align: center;
+        margin-top: 1.8rem !important;
+        color: var(--contoso-blue);
+        font-weight: 700;
+        font-size: 0.85em;
+        background: rgba(0, 40, 165, 0.05);
+        display: inline-block;
+        padding: 0.5em 1.8em;
+        border-radius: 20px;
+        width: auto;
+      }
+
+      /* Slide-entrance Animations (Fidelity-Enhancer) */
+      @keyframes slideUpFade {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .reveal .slides section.present .goals-category,
+      .reveal .slides section.present .problem-focus-card,
+      .reveal .slides section.present .icon-card,
+      .reveal .slides section.present .panel-card,
+      .reveal .slides section.present .pipeline-flow,
+      .reveal .slides section.present .metric-card,
+      .reveal .slides section.present blockquote,
+      .reveal .slides section.present .arch-card {
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      /* Stagger delays for beautiful premium flow */
+      .reveal .slides section.present .goals-category:nth-child(1) { animation-delay: 0.05s; }
+      .reveal .slides section.present .goals-category:nth-child(2) { animation-delay: 0.15s; }
+      .reveal .slides section.present .goals-category:nth-child(3) { animation-delay: 0.25s; }
+
+      .reveal .slides section.present .icon-card:nth-child(1) { animation-delay: 0.05s; }
+      .reveal .slides section.present .icon-card:nth-child(2) { animation-delay: 0.15s; }
+      .reveal .slides section.present .icon-card:nth-child(3) { animation-delay: 0.25s; }
+      .reveal .slides section.present .icon-card:nth-child(4) { animation-delay: 0.35s; }
+
+      .reveal .slides section.present .arch-card:nth-child(1) { animation-delay: 0.1s; }
+      .reveal .slides section.present .arch-card:nth-child(2) { animation-delay: 0.2s; }
+      .reveal .slides section.present .arch-card:nth-child(3) { animation-delay: 0.3s; }
+
+      .reveal .slides section.present .panel-card:nth-child(1) { animation-delay: 0.1s; }
+      .reveal .slides section.present .panel-card:nth-child(2) { animation-delay: 0.2s; }
+
       pre code { font-size: 0.55em; }
       .center { text-align: center; }
     </style>
@@ -99,11 +528,15 @@
       <div class="slides">
 
         <!-- 1. Titel -->
-        <section class="center">
-          <img src="assets/cover_image.png" alt="Titelbild" style="max-height: 32vh; border-radius: 8px; display:block; margin: 0 auto 0.8em;" />
-          <h1 class="cover-title">Cloud-based escape room platform</h1>
-          <p class="subtitle" style="font-size:0.7em;">Abschlusspräsentation &middot; 3. Semesterarbeit</p>
-          <p style="font-size: 0.55em; color: var(--contoso-gray-dark);">Marlon Burri &nbsp;·&nbsp; Dipl. Informatiker HF, Vertiefung Cloud Native &nbsp;·&nbsp; 06.07.2026</p>
+        <section class="center" style="padding-top: 0.5em;">
+          <img src="assets/brand_logo.png" alt="Contoso Logo" style="height: 42px; width: auto; margin: 0 auto 1.2em; display: block; opacity: 0.95;" />
+          <img src="assets/cover_image.png" alt="Titelbild" style="max-height: 420px; border-radius: 8px; display:block; margin: 0 auto 1.2em; box-shadow: 0 10px 30px rgba(0,0,0,0.15);" />
+          <p style="font-size: 0.9em; font-weight: 700; color: var(--contoso-blue); margin-bottom: 0.1em; letter-spacing: -0.5px;">3. Semesterarbeit</p>
+          <div style="margin-top: 1em; font-size: 0.6em; color: #1a1a1a; line-height: 1.5;">
+            <div style="font-weight: 700; color: var(--contoso-blue); font-size: 1.2em;">Marlon Burri</div>
+            <div style="font-weight: 500; color: var(--contoso-gray-dark); margin-top: 0.2em;">3. Semester &middot; Dipl. Informatiker HF (Cloud Native)</div>
+            <div style="color: #8c95a0; font-size: 0.85em; margin-top: 0.4em;">06.07.2026</div>
+          </div>
           <aside class="notes">
             Begrüssung, Vorstellung, Überblick über die nächsten Minuten. Zeitbudget im Kopf behalten (Timer!).
           </aside>
@@ -112,26 +545,42 @@
         <!-- 2. Problem -->
         <section>
           <h2>Problem</h2>
-          <div class="icon-grid">
-            <div class="icon-card">📚 IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
-            <div class="icon-card c-yellow">🧩 Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
-            <div class="icon-card c-orange">🎯 Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
-            <div class="icon-card c-crimson">⏳ Fehlender Praxisbezug <strong>kostet Motivation und Zeit</strong></div>
+          <div class="two-col" style="align-items: center; margin-top: 0.5rem;">
+            <div style="flex: 0.85; text-align: center;">
+              <img src="assets/404.png" alt="404 Error" style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.12);" />
+            </div>
+            <div style="flex: 1.15;">
+              <div class="icon-grid" style="grid-template-columns: 1fr; gap: 0.6rem;">
+                <div class="icon-card">📚 IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
+                <div class="icon-card c-yellow">🧩 Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
+                <div class="icon-card c-orange">🎯 Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
+                <div class="icon-card c-crimson">⏳ Fehlender Praxisbezug <strong>kostet Motivation &amp; Zeit</strong></div>
+              </div>
+            </div>
           </div>
-          <blockquote class="pull-quote" style="margin-top:1.2em;">Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?</blockquote>
+          <blockquote class="pull-quote" style="margin-top:0.8em;">Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?</blockquote>
           <aside class="notes">Kurz halten — Ausgangslage in max. 30-45 Sekunden erklären.</aside>
         </section>
 
         <!-- 3. Ziel der Arbeit -->
         <section>
           <h2>Ziel der Arbeit</h2>
-          <div class="icon-grid">
-            <div class="icon-card">🎮 Spielbares Escape-Room-Szenario</div>
-            <div class="icon-card c-green">🧩 Microservice-Architektur (Frontend / Backend)</div>
-            <div class="icon-card c-yellow">🔁 Automatisierte CI/CD Pipeline (GitLab)</div>
-            <div class="icon-card c-orange">🔐 Auth via Microsoft Entra ID</div>
-            <div class="icon-card">🏗️ Infrastructure as Code (OpenTofu)</div>
-            <div class="icon-card c-crimson">⚡ Azure Function für Spielinteraktionen</div>
+          <div class="goals-matrix">
+            <div class="goals-category" style="--cat-color: var(--contoso-blue);">
+              <div class="category-header">Core Gameplay</div>
+              <div class="goal-item">🎮 Spielbares, fesselndes Escape-Room-Szenario</div>
+              <div class="goal-item">⚡ Event-gesteuerte Azure Function für Spielinteraktionen</div>
+            </div>
+            <div class="goals-category" style="--cat-color: var(--contoso-cyan);">
+              <div class="category-header">Modern Architecture</div>
+              <div class="goal-item">🧩 Microservice-Architektur (Frontend &amp; Backend decoupled)</div>
+              <div class="goal-item">🔐 Secure Identity Management via Microsoft Entra ID</div>
+            </div>
+            <div class="goals-category" style="--cat-color: var(--contoso-green);">
+              <div class="category-header">Cloud Platform</div>
+              <div class="goal-item">🏗️ Infrastructure as Code komplett via OpenTofu</div>
+              <div class="goal-item">🔁 Vollautomatisierte CI/CD Delivery-Pipelines (GitLab)</div>
+            </div>
           </div>
           <aside class="notes">Ziele als Checkliste präsentieren, nicht alle im Detail vorlesen.</aside>
         </section>
@@ -139,13 +588,13 @@
         <!-- 4. Ablauf / Live-Demo -->
         <section class="center">
           <h2 style="text-align:left;">Ablauf &amp; Live-Demo</h2>
-          <video controls style="max-height: 48vh; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.15);" poster="assets/cover_image.png">
+          <video controls style="max-height: 330px; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.15);" poster="assets/cover_image.png">
             <source src="assets/demo.mp4" type="video/mp4" />
             Ihr Browser unterstützt das Video-Tag nicht.
           </video>
-          <!-- Fallback falls assets/demo.mp4 noch nicht abgelegt wurde -->
-          <div class="video-fallback">
-            Video nicht sichtbar? Bitte Aufzeichnung unter <code>presentation/assets/demo.mp4</code> ablegen.
+          <div class="video-caption">
+            <span class="caption-icon">ℹ️</span>
+            <span class="caption-text">Projekt-Demo Video (assets/demo.mp4). Klicken Sie zum Abspielen.</span>
           </div>
           <aside class="notes">
             Falls Live-Demo statt Video: hier zum Browser wechseln (Tutorial Room spielen).
@@ -154,10 +603,30 @@
         </section>
 
         <!-- 5. Lösungsübersicht -->
-        <section class="center">
-          <h2 style="text-align:left;">Lösungsübersicht</h2>
-          <img src="assets/big_picture.png" alt="Azure Big Picture" style="max-height: 52vh; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.12);" />
-          <p style="font-size: 0.55em; color: var(--contoso-gray-dark);">Hub-and-Spoke: Connectivity Subscription (Contoso Landing Zone) + Escape-Room-Subscription mit Azure Container Apps</p>
+        <section>
+          <h2>Lösungsübersicht</h2>
+          <div class="two-col" style="align-items: center; margin-top: 0.5rem;">
+            <div style="flex: 1.1; text-align: center;">
+              <img src="assets/big_picture.png" alt="Azure Big Picture" style="max-height: 320px; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); margin-bottom: 0.2em;" />
+            </div>
+            <div style="flex: 0.9;">
+              <div class="arch-highlights">
+                <div class="arch-card" style="--accent: var(--contoso-blue);">
+                  <div class="arch-card-title">Hub-Spoke Topologie</div>
+                  <p class="arch-card-text">Zentrale Security- &amp; Netzverdrahtung in der Hub-Subscription (Contoso Landing Zone).</p>
+                </div>
+                <div class="arch-card" style="--accent: var(--contoso-cyan);">
+                  <div class="arch-card-title">Zentraler Application Gateway &amp; WAF</div>
+                  <p class="arch-card-text">Sicherer SSL-Ingress, Routing der Spokes und Schutz vor OWASP-Top-10 Bedrohungen.</p>
+                </div>
+                <div class="arch-card" style="--accent: var(--contoso-green);">
+                  <div class="arch-card-title">Azure Container Apps (ACA)</div>
+                  <p class="arch-card-text">Isolierter, hochskalierbarer Serverless Container-Betrieb des Escape Room Front- und Backends.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p style="font-size: 0.48em; color: var(--contoso-gray-dark); margin-top: 0.8em; text-align: center;">Hub-and-Spoke Netzwerktopologie &middot; Trennung von Connectivity (Plattform-Stack) und Game-Workloads (Spoke-Stack)</p>
           <aside class="notes">
             Trennung Plattform-Stack / Theme-Stack erwähnen. Ingress/Egress via zentrales Application Gateway / Azure Firewall.
           </aside>
@@ -166,14 +635,45 @@
         <!-- 6. GitLab Pipeline -->
         <section>
           <h2>GitLab Pipeline</h2>
-          <pre style="background:#0028a5; color:#fff; padding:1rem; border-radius:6px;"><code>main
- ├── feature-&lt;beschreibung&gt;
- ├── fix-&lt;beschreibung&gt;
- └── hotfix-&lt;beschreibung&gt;
-
-Entwickler → Merge Request (Lint &amp; Security) → main
-        → Pipeline: Plan → Apply → Build → Scan → Deploy</code></pre>
-          <p style="font-size:0.75em;">Secretless Deployment via <strong>OIDC Federated Credentials</strong>. Releases über Tags (MVP, MLP, MMP).</p>
+          <div class="pipeline-flow">
+            <div class="pipeline-stage">
+              <div class="stage-title">Code Quality</div>
+              <div class="job-node">
+                <span class="job-status">✓</span> lint-code
+              </div>
+              <div class="job-node">
+                <span class="job-status">✓</span> security-scan
+              </div>
+            </div>
+            <div class="pipeline-arrow">➔</div>
+            <div class="pipeline-stage">
+              <div class="stage-title">Infrastructure</div>
+              <div class="job-node">
+                <span class="job-status">✓</span> tofu-plan
+              </div>
+              <div class="job-node">
+                <span class="job-status">✓</span> tofu-apply
+              </div>
+            </div>
+            <div class="pipeline-arrow">➔</div>
+            <div class="pipeline-stage">
+              <div class="stage-title">Build &amp; Scan</div>
+              <div class="job-node">
+                <span class="job-status">✓</span> docker-build
+              </div>
+              <div class="job-node">
+                <span class="job-status">✓</span> container-scan
+              </div>
+            </div>
+            <div class="pipeline-arrow">➔</div>
+            <div class="pipeline-stage">
+              <div class="stage-title">Deploy</div>
+              <div class="job-node" style="background: rgba(0, 40, 165, 0.1); border-color: rgba(0, 40, 165, 0.4);">
+                <span class="job-status" style="color: var(--contoso-cyan);">🚀</span> deploy-azure
+              </div>
+            </div>
+          </div>
+          <p style="font-size:0.75em;">Sicheres und schlüsselloses (secretless) Deployment über <strong>OIDC Federated Credentials</strong>. Releases gesteuert über Git Tags (MVP, MLP, MMP).</p>
           <aside class="notes">Betonen: Pipeline als technisches Merge-Gate, keine manuellen Portal-Änderungen.</aside>
         </section>
 
@@ -181,13 +681,15 @@ Entwickler → Merge Request (Lint &amp; Security) → main
         <section>
           <h2>Mehrwert</h2>
           <blockquote class="pull-quote">„Infrastructure as Code ist die Grundlage für reproduzierbare, sichere Cloud-Plattformen.“</blockquote>
-          <div class="two-col" style="margin-top:1em;">
+          <div class="two-col" style="margin-top:0.5em;">
             <div>
-              <span class="stat-badge">10 / 10</span>
-              <p style="font-size:0.7em; margin-top:0.4em;">Testfälle erfolgreich (100%)</p>
+              <div class="metric-card">
+                <div class="metric-value">100%</div>
+                <div class="metric-label">10 / 10 Testfälle erfolgreich</div>
+              </div>
             </div>
             <div>
-              <ul style="font-size:0.7em;">
+              <ul style="font-size:0.75em; --bullet-char: '✓'; --bullet-color: var(--contoso-green); margin-top: 0.5em;">
                 <li>Automatisiert und effizient</li>
                 <li>Transparent und nachvollziehbar</li>
                 <li>Fehlerreduktion durch IaC &amp; Pipelines</li>
@@ -203,23 +705,29 @@ Entwickler → Merge Request (Lint &amp; Security) → main
           <h2>Reflexion &amp; Ausblick</h2>
           <div class="two-col">
             <div>
-              <h3 style="font-size:0.65em; color: var(--contoso-crimson);">Herausfordernd</h3>
-              <ul style="font-size:0.7em;">
-                <li>Neue Themen (Entra ID, EasyAuth, OpenTofu)</li>
-                <li>Fullstack-Entwicklung unter Zeitdruck</li>
-                <li>Viele Learnings über Cloud-native Architektur</li>
-              </ul>
+              <div class="panel-card" style="--panel-accent: var(--contoso-crimson);">
+                <h3 style="color: var(--contoso-crimson);">Herausforderungen &amp; Lösungen</h3>
+                <ul style="font-size:0.7em; --bullet-color: var(--contoso-crimson); margin: 0; padding-left: 0.5em;">
+                  <li><strong>Lernkurve gemeistert:</strong> Tiefe Einarbeitung in Entra ID, EasyAuth und OpenTofu.</li>
+                  <li><strong>Entwicklung unter Zeitdruck:</strong> Effiziente Fullstack-Umsetzung dank solider Architektur.</li>
+                  <li><strong>Brücke geschlagen:</strong> Theorie und Praxis ideal im spielerischen Ansatz vereint.</li>
+                </ul>
+              </div>
             </div>
             <div>
-              <h3 style="font-size:0.65em; color: var(--contoso-green);">Ausblick</h3>
-              <ul style="font-size:0.7em;">
-                <li>Weitere Escape Rooms, themenbasierte Trennung</li>
-                <li>Zugriffsbeschränkung / rollenbasierte Rechte</li>
-                <li>POC → produktiver Betrieb überführen</li>
-              </ul>
+              <div class="panel-card" style="--panel-accent: var(--contoso-green);">
+                <h3 style="color: var(--contoso-green);">Produkt-Roadmap</h3>
+                <ul style="font-size:0.7em; --bullet-color: var(--contoso-green); margin: 0; padding-left: 0.5em;">
+                  <li><strong>Themen-Trennung:</strong> Rollout weiterer, themenbasierter Escape Rooms in eigenen Containern.</li>
+                  <li><strong>Rechte-Management:</strong> Feingranulare, rollenbasierte Autorisierung (RBAC).</li>
+                  <li><strong>Go-Live:</strong> Überführung des erfolgreichen POCs in den produktiven Hochschulbetrieb.</li>
+                </ul>
+              </div>
             </div>
           </div>
-          <p class="center" style="margin-top:2rem; color: var(--contoso-blue); font-weight:700;">Vielen Dank für die Aufmerksamkeit — Fragen?</p>
+          <div class="center">
+            <p class="thank-you">Vielen Dank für die Aufmerksamkeit &mdash; Fragen?</p>
+          </div>
           <aside class="notes">Abschluss bewusst kurz und klar halten, Übergang zur Fragerunde ankündigen.</aside>
         </section>
 
@@ -234,6 +742,11 @@ Entwickler → Merge Request (Lint &amp; Security) → main
       const BREADCRUMB = 'Marlon Burri / 3. Semesterarbeit / Cloud-based escape room platform';
 
       Reveal.initialize({
+        width: 1050,
+        height: 700,
+        margin: 0.1,
+        minScale: 0.2,
+        maxScale: 2.0,
         hash: true,
         controls: true,
         progress: true,
@@ -246,14 +759,22 @@ Entwickler → Merge Request (Lint &amp; Security) → main
       function renderChrome() {
         document.querySelectorAll('.slide-meta-top, .slide-meta-bottom').forEach(el => el.remove());
         const idx = Reveal.getIndices();
+        
+        // Hide fixed logo on title slide because we render a larger, beautiful one inside the slide
+        const fixedLogo = document.querySelector('.contoso-logo-fixed');
+        if (fixedLogo) {
+          fixedLogo.style.display = 'none';
+        }
+
         if (idx.h === 0) return; // Titelfolie ohne Kopf-/Fusszeile
+
         const total = Reveal.getTotalSlides();
         const top = document.createElement('div');
         top.className = 'slide-meta-top';
-        top.innerHTML = `<span>${DATE}</span>`;
+        top.innerHTML = `<span class="slide-meta-date">${DATE}</span><img class="contoso-logo-inline" src="assets/brand_logo.png" alt="Contoso Logo" />`;
         const bottom = document.createElement('div');
         bottom.className = 'slide-meta-bottom';
-        bottom.innerHTML = `<span>${BREADCRUMB}</span><span>${idx.h}</span>`;
+        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h} / ${total - 1}</span>`;
         document.querySelector('.reveal').appendChild(top);
         document.querySelector('.reveal').appendChild(bottom);
       }
