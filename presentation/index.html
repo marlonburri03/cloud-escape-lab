@@ -183,6 +183,35 @@
         to { transform: scaleX(1); opacity: 1; }
       }
 
+      /* Abschlussfolie mit GIF */
+      .reveal .slides section.closing-slide {
+        top: 0 !important;
+        height: 100%;
+        padding: 0;
+      }
+      .reveal .slides section.closing-slide .closing-center {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .reveal .slides section.closing-slide .closing-gif {
+        max-height: 440px;
+        max-width: 82%;
+        border-radius: 10px;
+        box-shadow: 0 12px 34px rgba(0,0,0,0.5);
+      }
+      .reveal .slides section.closing-slide .closing-title {
+        color: #ffffff !important;
+        font-size: 1.5em;
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin: 0.6em 0 0;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.45);
+      }
+
       .cover-title {
         text-align: center;
         color: var(--contoso-blue);
@@ -288,6 +317,10 @@
         border-color: var(--contoso-crimson);
         background: rgba(191, 13, 62, 0.06);
       }
+      .icon-card.c-gray {
+        border-color: var(--contoso-gray-light);
+        background: rgba(215, 215, 215, 0.14);
+      }
 
       blockquote.pull-quote {
         border-left: 5px solid var(--contoso-blue);
@@ -375,6 +408,12 @@
         margin-bottom: 0.2em;
         text-align: center;
       }
+      .goals-category.c-gray {
+        border-top-color: var(--contoso-gray-light);
+      }
+      .goals-category.c-gray .category-header {
+        color: var(--contoso-gray-dark);
+      }
       .goal-item {
         font-size: 0.58em;
         background: rgba(255,255,255,0.8);
@@ -383,6 +422,31 @@
         border-radius: 6px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.01);
         line-height: 1.3;
+      }
+      .reveal ul.goals-list {
+        list-style: none;
+        margin: 1.6rem 0 0 0;
+        padding-left: 1.2em;
+        max-width: 80%;
+      }
+      .reveal ul.goals-list li {
+        position: relative;
+        font-size: 0.72em;
+        line-height: 1.4;
+        margin: 0 0 0.9em 0;
+        color: #222;
+      }
+      .reveal ul.goals-list li::before {
+        content: "\2022";
+        color: var(--contoso-gray-dark);
+        font-weight: bold;
+        position: absolute;
+        left: -1em;
+        top: 0;
+        width: 1em;
+        background: none;
+        border-radius: 0;
+        height: auto;
       }
 
       /* Architecture Highlights (Slide 5) */
@@ -474,6 +538,60 @@
         font-size: 0.8em;
         font-weight: bold;
         align-self: center;
+        margin-top: 1.6em;
+      }
+
+      /* Kontinuierlich durchlaufende Deployment-Flow Animation */
+      .reveal .slides section.present .pipeline-stage .job-node {
+        animation: flowPulse 4s ease-in-out infinite;
+      }
+      .reveal .slides section.present .pipeline-stage:nth-child(1) .job-node { animation-delay: 0s; }
+      .reveal .slides section.present .pipeline-stage:nth-child(3) .job-node { animation-delay: 0.6s; }
+      .reveal .slides section.present .pipeline-stage:nth-child(5) .job-node { animation-delay: 1.2s; }
+      .reveal .slides section.present .pipeline-stage:nth-child(7) .job-node { animation-delay: 1.8s; }
+      .reveal .slides section.present .pipeline-arrow {
+        animation: arrowFlow 4s ease-in-out infinite;
+      }
+      .reveal .slides section.present .pipeline-arrow:nth-child(2) { animation-delay: 0.3s; }
+      .reveal .slides section.present .pipeline-arrow:nth-child(4) { animation-delay: 0.9s; }
+      .reveal .slides section.present .pipeline-arrow:nth-child(6) { animation-delay: 1.5s; }
+      @keyframes flowPulse {
+        0%, 100% { box-shadow: 0 0 0 rgba(74,201,227,0); transform: translateY(0); }
+        12% { box-shadow: 0 0 14px rgba(74,201,227,0.6); transform: translateY(-3px); }
+        30% { box-shadow: 0 0 0 rgba(74,201,227,0); transform: translateY(0); }
+      }
+      @keyframes arrowFlow {
+        0%, 100% { color: #586069; transform: translateX(0); }
+        12% { color: var(--contoso-cyan); transform: translateX(4px); }
+        30% { color: #586069; transform: translateX(0); }
+      }
+
+      /* Studien-Referenz auf Mehrwert-Folie */
+      .study-ref {
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+        margin-top: 1.6em;
+        background: rgba(0, 40, 165, 0.05);
+        border-left: 4px solid var(--contoso-blue);
+        border-radius: 6px;
+        padding: 0.7em 1em;
+      }
+      .study-badge {
+        flex-shrink: 0;
+        background: var(--contoso-blue);
+        color: #fff;
+        font-size: 0.42em;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.5em 0.8em;
+        border-radius: 4px;
+      }
+      .study-text {
+        font-size: 0.5em;
+        color: #333;
+        line-height: 1.4;
       }
 
       /* Metric Card */
@@ -643,7 +761,7 @@
           <div style="margin-top: 1em; font-size: 0.6em; color: #1a1a1a; line-height: 1.5;">
             <div style="font-weight: 700; color: var(--contoso-blue); font-size: 1.2em;">Marlon Burri</div>
             <div style="font-weight: 500; color: var(--contoso-gray-dark); margin-top: 0.2em;">3. Semester &middot; Dipl. Informatiker HF (Cloud Native)</div>
-            <div style="color: #8c95a0; font-size: 0.85em; margin-top: 0.4em;">06.07.2026</div>
+            <div style="color: #8c95a0; font-size: 0.85em; margin-top: 0.4em;">08.07.2026</div>
           </div>
           <aside class="notes">
             Begrüssung, Vorstellung, Überblick über die nächsten Minuten. Zeitbudget im Kopf behalten (Timer!).
@@ -655,57 +773,41 @@
           <h2>Problem</h2>
           <div class="two-col" style="align-items: center; margin-top: 0.5rem;">
             <div style="flex: 0.85; text-align: center;">
-              <div class="not-found">
-                <div class="nf-code">4<span class="nf-lock">🔒</span>4</div>
-                <div class="nf-caption">Wissen nicht gefunden</div>
-              </div>
+              <img src="assets/404.png" alt="404 – Wissen nicht gefunden" style="max-height: 300px; max-width: 100%; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);" />
             </div>
             <div style="flex: 1.15;">
-              <div class="icon-grid" style="grid-template-columns: 1fr; gap: 0.6rem;">
-                <div class="icon-card fragment fade-up">📚 IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
-                <div class="icon-card c-yellow fragment fade-up">🧩 Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
-                <div class="icon-card c-orange fragment fade-up">🎯 Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
-                <div class="icon-card c-crimson fragment fade-up">⏳ Fehlender Praxisbezug <strong>kostet Motivation &amp; Zeit</strong></div>
+              <div class="icon-grid" style="grid-template-columns: 1fr; gap: 0.5rem;">
+                <div class="icon-card c-gray" style="padding: 0.6em 1.1em; font-size: 0.66em;">IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
+                <div class="icon-card c-gray" style="padding: 0.6em 1.1em; font-size: 0.66em;">Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
+                <div class="icon-card c-gray" style="padding: 0.6em 1.1em; font-size: 0.66em;">Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
+                <div class="icon-card c-gray" style="padding: 0.6em 1.1em; font-size: 0.66em;">Fehlender Praxisbezug <strong>kostet Motivation &amp; Zeit</strong></div>
               </div>
             </div>
           </div>
-          <blockquote class="pull-quote fragment fade-up" style="margin-top:0.8em;">Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?</blockquote>
           <aside class="notes">Kurz halten — Ausgangslage in max. 30-45 Sekunden erklären.</aside>
         </section>
 
         <!-- 3. Ziel der Arbeit -->
         <section>
           <h2>Ziel der Arbeit</h2>
-          <div class="goals-matrix">
-            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-blue);">
-              <div class="category-header">Core Gameplay</div>
-              <div class="goal-item">🎮 Spielbares, fesselndes Escape-Room-Szenario</div>
-              <div class="goal-item">⚡ Event-gesteuerte Azure Function für Spielinteraktionen</div>
-            </div>
-            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-cyan);">
-              <div class="category-header">Modern Architecture</div>
-              <div class="goal-item">🧩 Microservice-Architektur (Frontend &amp; Backend decoupled)</div>
-              <div class="goal-item">🔐 Secure Identity Management via Microsoft Entra ID</div>
-            </div>
-            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-green);">
-              <div class="category-header">Cloud Platform</div>
-              <div class="goal-item">🏗️ Infrastructure as Code komplett via OpenTofu</div>
-              <div class="goal-item">🔁 Vollautomatisierte CI/CD Delivery-Pipelines (GitLab)</div>
-            </div>
-          </div>
+          <ul class="goals-list">
+            <li>Spielbare Escape-Room-Szenarien laufen auf der Plattform</li>
+            <li>Microservice-Architektur (Frontend &amp; Backend)</li>
+            <li>Deployed in Azure</li>
+            <li>Komplett Infrastructure as Code (IaC)</li>
+            <li>Deploybar per CI/CD-Pipeline</li>
+          </ul>
           <aside class="notes">Ziele als Checkliste präsentieren, nicht alle im Detail vorlesen.</aside>
         </section>
 
-        <!-- 4. Ablauf / Live-Demo -->
+        <!-- 4. Demo -->
         <section class="center">
-          <h2 style="text-align:left;">Ablauf &amp; Live-Demo</h2>
-          <video controls style="max-height: 330px; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.15);" poster="assets/cover_image.png">
+          <h2 style="text-align:left;">Demo</h2>
+          <video controls style="max-height: 480px; width: auto; max-width: 90%; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.15);" poster="assets/cover_image.png">
             <source src="assets/demo.mp4" type="video/mp4" />
             Ihr Browser unterstützt das Video-Tag nicht.
           </video>
           <div class="video-caption">
-            <span class="caption-icon">ℹ️</span>
-            <span class="caption-text">Projekt-Demo Video (assets/demo.mp4). Klicken Sie zum Abspielen.</span>
           </div>
           <aside class="notes">
             Falls Live-Demo statt Video: hier zum Browser wechseln (Tutorial Room spielen).
@@ -717,27 +819,17 @@
         <section>
           <h2>Lösungsübersicht</h2>
           <div class="two-col" style="align-items: center; margin-top: 0.5rem;">
-            <div style="flex: 1.1; text-align: center;">
-              <img src="assets/big_picture.png" alt="Azure Big Picture" style="max-height: 320px; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); margin-bottom: 0.2em;" />
+            <div style="flex: 1.4; text-align: center;">
+              <img src="assets/big_picture.png" alt="Azure Big Picture" style="max-height: 440px; max-width: 100%; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); margin-bottom: 0.2em;" />
             </div>
             <div style="flex: 0.9;">
-              <div class="arch-highlights">
-                <div class="arch-card" style="--accent: var(--contoso-blue);">
-                  <div class="arch-card-title">Hub-Spoke Topologie</div>
-                  <p class="arch-card-text">Zentrale Security- &amp; Netzverdrahtung in der Hub-Subscription (Contoso Landing Zone).</p>
-                </div>
-                <div class="arch-card" style="--accent: var(--contoso-cyan);">
-                  <div class="arch-card-title">Zentraler Application Gateway &amp; WAF</div>
-                  <p class="arch-card-text">Sicherer SSL-Ingress, Routing der Spokes und Schutz vor OWASP-Top-10 Bedrohungen.</p>
-                </div>
-                <div class="arch-card" style="--accent: var(--contoso-green);">
-                  <div class="arch-card-title">Azure Container Apps (ACA)</div>
-                  <p class="arch-card-text">Isolierter, hochskalierbarer Serverless Container-Betrieb des Escape Room Front- und Backends.</p>
-                </div>
-              </div>
+              <ul class="goals-list">
+                <li>Integriert in Azure Landing Zone der Contoso</li>
+                <li>Zentrale Connectivity (keine Public Endpoints)</li>
+                <li>Skalierbare Serverless Container Lösung</li>
+              </ul>
             </div>
           </div>
-          <p style="font-size: 0.48em; color: var(--contoso-gray-dark); margin-top: 0.8em; text-align: center;">Hub-and-Spoke Netzwerktopologie &middot; Trennung von Connectivity (Plattform-Stack) und Game-Workloads (Spoke-Stack)</p>
           <aside class="notes">
             Trennung Plattform-Stack / Theme-Stack erwähnen. Ingress/Egress via zentrales Application Gateway / Azure Firewall.
           </aside>
@@ -750,30 +842,21 @@
             <div class="pipeline-stage">
               <div class="stage-title">Code Quality</div>
               <div class="job-node">
-                <span class="job-status">✓</span> lint-code
-              </div>
-              <div class="job-node">
-                <span class="job-status">✓</span> security-scan
+                <span class="job-status">✓</span> lint &amp; security-scan
               </div>
             </div>
             <div class="pipeline-arrow">➔</div>
             <div class="pipeline-stage">
               <div class="stage-title">Infrastructure</div>
               <div class="job-node">
-                <span class="job-status">✓</span> tofu-plan
-              </div>
-              <div class="job-node">
-                <span class="job-status">✓</span> tofu-apply
+                <span class="job-status">✓</span> tofu plan &amp; apply
               </div>
             </div>
             <div class="pipeline-arrow">➔</div>
             <div class="pipeline-stage">
               <div class="stage-title">Build &amp; Scan</div>
               <div class="job-node">
-                <span class="job-status">✓</span> docker-build
-              </div>
-              <div class="job-node">
-                <span class="job-status">✓</span> container-scan
+                <span class="job-status">✓</span> docker-build &amp; scan
               </div>
             </div>
             <div class="pipeline-arrow">➔</div>
@@ -784,31 +867,22 @@
               </div>
             </div>
           </div>
-          <p style="font-size:0.75em;">Sicheres und schlüsselloses (secretless) Deployment über <strong>OIDC Federated Credentials</strong>. Releases gesteuert über Git Tags (MVP, MLP, MMP).</p>
           <aside class="notes">Betonen: Pipeline als technisches Merge-Gate, keine manuellen Portal-Änderungen.</aside>
         </section>
 
         <!-- 7. Mehrwert -->
         <section>
           <h2>Mehrwert</h2>
-          <blockquote class="pull-quote">„Infrastructure as Code ist die Grundlage für reproduzierbare, sichere Cloud-Plattformen.“</blockquote>
-          <div class="two-col" style="margin-top:0.5em;">
-            <div>
-              <div class="metric-card">
-                <div class="metric-value">100%</div>
-                <div class="metric-label">10 / 10 Testfälle erfolgreich</div>
-              </div>
-            </div>
-            <div>
-              <ul style="font-size:0.75em; --bullet-char: '✓'; --bullet-color: var(--contoso-green); margin-top: 0.5em;">
-                <li>Automatisiert und effizient</li>
-                <li>Transparent und nachvollziehbar</li>
-                <li>Fehlerreduktion durch IaC &amp; Pipelines</li>
-                <li>Skalierbar für weitere Escape Rooms</li>
-              </ul>
-            </div>
+          <div style="margin-top:1.2em;">
+            <h3 style="color: var(--contoso-gray-dark); font-size:1em; margin-bottom:0.5em;">Interaktive Lernplattform</h3>
+            <ul style="font-size:0.95em; --bullet-char: '✓'; --bullet-color: var(--contoso-green); margin-top: 0.4em; line-height:1.7;">
+              <li>Spielerische Motivation (Gamification)</li>
+              <li>Learning by Doing statt passivem Zuhören</li>
+              <li>Sofortiges Feedback &amp; Erfolgserlebnisse</li>
+              <li>Selbstbestimmtes Tempo, jederzeit wiederholbar</li>
+              <li>Praxisnahes, nachhaltiges Verständnis</li>
+            </ul>
           </div>
-          <aside class="notes">Kurz auf ein bis zwei Highlights fokussieren, nicht alle Testfälle aufzählen.</aside>
         </section>
 
         <!-- 8. Reflexion & Ausblick -->
@@ -817,29 +891,33 @@
           <div class="two-col">
             <div>
               <div class="panel-card" style="--panel-accent: var(--contoso-crimson);">
-                <h3 style="color: var(--contoso-crimson);">Herausforderungen &amp; Lösungen</h3>
+                <h3 style="color: var(--contoso-crimson);">Herausforderungen</h3>
                 <ul style="font-size:0.7em; --bullet-color: var(--contoso-crimson); margin: 0; padding-left: 0.5em;">
-                  <li><strong>Lernkurve gemeistert:</strong> Tiefe Einarbeitung in Entra ID, EasyAuth und OpenTofu.</li>
-                  <li><strong>Entwicklung unter Zeitdruck:</strong> Effiziente Fullstack-Umsetzung dank solider Architektur.</li>
-                  <li><strong>Brücke geschlagen:</strong> Theorie und Praxis ideal im spielerischen Ansatz vereint.</li>
+                  <li><strong>Passwordless Auth:</strong> Einarbeitung in Entra ID &amp; EasyAuth.</li>
+                  <li><strong>Netzwerk-Integration:</strong> Anbindung an die zentrale Contoso Landing Zone (Hub-Spoke, keine Public Endpoints).</li>
+                  <li><strong>Secretless CI/CD:</strong> Deployment ohne Zugangsdaten dank OIDC Federated Credentials in der GitLab-Pipeline.</li>
                 </ul>
               </div>
             </div>
             <div>
               <div class="panel-card" style="--panel-accent: var(--contoso-green);">
-                <h3 style="color: var(--contoso-green);">Produkt-Roadmap</h3>
+                <h3 style="color: var(--contoso-green);">Ausblick</h3>
                 <ul style="font-size:0.7em; --bullet-color: var(--contoso-green); margin: 0; padding-left: 0.5em;">
-                  <li><strong>Themen-Trennung:</strong> Rollout weiterer, themenbasierter Escape Rooms in eigenen Containern.</li>
-                  <li><strong>Rechte-Management:</strong> Feingranulare, rollenbasierte Autorisierung (RBAC).</li>
-                  <li><strong>Go-Live:</strong> Überführung des erfolgreichen POCs in den produktiven Hochschulbetrieb.</li>
+                  <li><strong>Weitere Räume:</strong> Zusätzliche, themenbasierte Escape Rooms als eigene Container.</li>
+                  <li><strong>Zeitgesteuertes Deployment:</strong> Automatisches Deploy &amp; Destroy der Escape-Room-Container nach Zeitplan.</li>
+                  <li><strong>Go-Live:</strong> Überführung des erfolgreichen POCs in den produktiven Betrieb.</li>
                 </ul>
               </div>
             </div>
           </div>
-          <div class="center">
-            <p class="thank-you">Vielen Dank für die Aufmerksamkeit &mdash; Fragen?</p>
+        </section>
+
+        <!-- 9. Abschluss / Danke -->
+        <section class="closing-slide" data-background-color="#0a0a0f" data-transition="fade">
+          <div class="closing-center">
+            <img src="assets/giphy.gif" alt="" class="closing-gif" />
+            <h2 class="closing-title">Vielen Dank!</h2>
           </div>
-          <aside class="notes">Abschluss bewusst kurz und klar halten, Übergang zur Fragerunde ankündigen.</aside>
         </section>
 
       </div>
@@ -849,7 +927,7 @@
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
     <script>
-      const DATE = '06.07.2026';
+      const DATE = '08.07.2026';
       const BREADCRUMB = 'Marlon Burri / 3. Semesterarbeit / Cloud-based escape room platform';
 
       Reveal.initialize({
@@ -881,15 +959,15 @@
           fixedLogo.style.display = 'none';
         }
 
-        if (idx.h === 0 || idx.h === 1) return; // Titelfolien ohne Kopf-/Fusszeile
-
         const totalH = Reveal.getHorizontalSlides().length;
+        if (idx.h === 0 || idx.h === 1 || idx.h === totalH - 1) return; // Titel- und Abschlussfolie ohne Kopf-/Fusszeile
+
         const top = document.createElement('div');
         top.className = 'slide-meta-top';
         top.innerHTML = `<span class="slide-meta-date">${DATE}</span><img class="contoso-logo-inline" src="assets/brand_logo.png" alt="Contoso Logo" />`;
         const bottom = document.createElement('div');
         bottom.className = 'slide-meta-bottom';
-        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h - 1} / ${totalH - 2}</span>`;
+        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h - 1} / ${totalH - 3}</span>`;
         document.querySelector('.reveal').appendChild(top);
         document.querySelector('.reveal').appendChild(bottom);
       }
