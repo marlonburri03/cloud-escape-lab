@@ -154,12 +154,13 @@
         text-align: center;
       }
       .reveal .slides section.intro-slide .intro-title {
-        font-size: 2.1em;
+        font-size: 1.7em;
         font-weight: 700;
         color: #ffffff !important;
         margin: 0;
         letter-spacing: -1px;
         line-height: 1.15;
+        white-space: nowrap;
         text-shadow: 0 2px 24px rgba(0,0,0,0.45);
       }
       .reveal .slides section.intro-slide .intro-title .accent {
@@ -167,19 +168,19 @@
       }
       /* dünner Akzentstrich unter der Frage als visueller Anker */
       .intro-underline {
-        width: 0;
+        width: 220px;
         height: 4px;
         background: var(--contoso-cyan);
         border-radius: 2px;
-        margin: 0.6em auto 0;
+        margin: 0.7em auto 0;
         box-shadow: 0 0 18px rgba(74, 201, 227, 0.6);
       }
       .reveal .slides section.intro-slide.present .intro-underline {
-        animation: growLine 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+        animation: growLine 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
       }
       @keyframes growLine {
-        from { width: 0; opacity: 0; }
-        to { width: 220px; opacity: 1; }
+        from { transform: scaleX(0); opacity: 0; }
+        to { transform: scaleX(1); opacity: 1; }
       }
 
       .cover-title {
@@ -604,14 +605,34 @@
       <img class="contoso-logo-fixed" src="assets/brand_logo.png" alt="Contoso Logo" />
       <div class="slides">
 
-        <!-- 1. Einstieg -->
-        <section class="intro-slide" data-background-color="#0a0a0f" data-transition="fade" data-background-transition="fade">
-          <div class="intro-center">
-            <h1 class="intro-title">„Muss man noch&nbsp;…&nbsp;<span class="accent">lernen</span>?“</h1>
-            <div class="intro-underline"></div>
-          </div>
+        <!-- 1. Einstieg (vertikaler Stack: Pfeil nach unten blättert durch Beispiele) -->
+        <section data-background-color="#0a0a0f" data-background-transition="fade">
+          <section class="intro-slide" data-auto-animate data-auto-animate-unmatched="fade" data-transition="fade">
+            <div class="intro-center">
+              <h1 class="intro-title">„Muss man noch <span class="accent" data-id="ex-word">…</span> lernen?“</h1>
+              <div class="intro-underline" data-id="ex-line"></div>
+            </div>
+          </section>
+          <section class="intro-slide" data-auto-animate data-transition="fade">
+            <div class="intro-center">
+              <h1 class="intro-title">„Muss man noch <span class="accent" data-id="ex-word">Python</span> lernen?“</h1>
+              <div class="intro-underline" data-id="ex-line"></div>
+            </div>
+          </section>
+          <section class="intro-slide" data-auto-animate data-transition="fade">
+            <div class="intro-center">
+              <h1 class="intro-title">„Muss man noch <span class="accent" data-id="ex-word">Kochen</span> lernen?“</h1>
+              <div class="intro-underline" data-id="ex-line"></div>
+            </div>
+          </section>
+          <section class="intro-slide" data-auto-animate data-transition="fade">
+            <div class="intro-center">
+              <h1 class="intro-title">„Muss man noch <span class="accent" data-id="ex-word">Malen</span> lernen?“</h1>
+              <div class="intro-underline" data-id="ex-line"></div>
+            </div>
+          </section>
           <aside class="notes">
-            Einstieg: Eine provokative Frage in den Raum stellen, um die Aufmerksamkeit zu wecken. Bewusst kurz wirken lassen, bevor zur Titelfolie übergegangen wird.
+            Einstieg: Provokative Frage in den Raum stellen. Mit Pfeiltaste nach unten Beispiele einblenden (Python, Kochen, Malen). Danach mit Pfeil nach rechts zur Titelfolie.
           </aside>
         </section>
 
@@ -862,13 +883,13 @@
 
         if (idx.h === 0 || idx.h === 1) return; // Titelfolien ohne Kopf-/Fusszeile
 
-        const total = Reveal.getTotalSlides();
+        const totalH = Reveal.getHorizontalSlides().length;
         const top = document.createElement('div');
         top.className = 'slide-meta-top';
         top.innerHTML = `<span class="slide-meta-date">${DATE}</span><img class="contoso-logo-inline" src="assets/brand_logo.png" alt="Contoso Logo" />`;
         const bottom = document.createElement('div');
         bottom.className = 'slide-meta-bottom';
-        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h - 1} / ${total - 2}</span>`;
+        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h - 1} / ${totalH - 2}</span>`;
         document.querySelector('.reveal').appendChild(top);
         document.querySelector('.reveal').appendChild(bottom);
       }
