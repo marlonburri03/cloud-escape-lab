@@ -36,7 +36,6 @@ Die Arbeit stützt sich auf das im dritten Semester des Lehrgangs zum dipl. Info
 - Netzwerk
 - Projektmanagement
 - Infrastructure as Code (IaC)
-- Function as a Service (FaaS)
 - Microsoft Azure Cloud
 
 ---
@@ -102,8 +101,8 @@ Zur Umsetzung wird eine Microservice-Architektur eingesetzt, bei welcher Fronten
 - Aufbau einer automatisierten CI/CD Pipeline mit GitLab für Build, Testing und Deployment
 - Integration einer Authentifizierungslösung mittels Microsoft Entra ID inklusive rollenbasierter Zugriffskontrolle
 - Automatisierte Bereitstellung der Infrastruktur mithilfe von OpenTofu (Terraform)
-- Implementierung mindestens einer Azure Function zur Verarbeitung von Spielinteraktionen
-- Einsatz einer relationalen Datenbank zur Speicherung von Spielständen, Sessions oder Benutzerinformationen
+- Ereignisgesteuerte Verarbeitung von Spielinteraktionen im containerisierten Backend, mit einer dedizierten Azure Function als geplante serverless Weiterentwicklung
+- Einsatz einer relationalen Datenbank (SQLite) zur Speicherung von Spielständen, Sessions und Leaderboard-Zeiten, mit Anbindung an eine externe PostgreSQL-Datenbank als produktiver Ausblick
 - Erstellung einer vollständigen Projektdokumentation inklusive Architekturübersicht, Deployment-Prozess und Lessons Learned
 
 ## 2.4 Sachmittel
@@ -259,8 +258,8 @@ __Übersicht der Releases:__
 
 | Release                          | Zeitraum (Sprint) | Ziel / Inhalt                | Hauptfokus                                                                                                                  |
 |----------------------------------|-------------------|------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| MVP (Minimum Viable Product)     | Sprint 1          | Grundlegende Architektur und Funktionsfähigkeit des automatisierten Bestellprozesses mit Camunda. Einrichtung der Entwicklungsumgebung, Definition der Systemarchitektur und Umsetzung eines lauffähigen Prototyps zur automatisierten Erstellung von Azure Subscriptions. | Funktionsfähigkeit, Architektur, Basisprozess |
-| MLP (Minimum Lovable Product)    | Sprint 2          | Erweiterung des MVP um zusätzliche Funktionalitäten, wie erweiterte Governance-Tags, Prozessoptimierungen und Benutzerfreundlichkeit. Der Prozess soll robust und nachvollziehbar sein und sich leicht erweitern lassen. | Nutzerfreundlichkeit, Stabilität, Governance |
+| MVP (Minimum Viable Product)     | Sprint 1          | Grundlegende Architektur und Funktionsfähigkeit der Escape-Room-Plattform. Einrichtung der Entwicklungsumgebung, Definition der Microservice-Systemarchitektur und Umsetzung eines lauffähigen Prototyps mit einem spielbaren Tutorial Room. | Funktionsfähigkeit, Architektur, Basis-Room |
+| MLP (Minimum Lovable Product)    | Sprint 2          | Erweiterung des MVP um automatisierte Bereitstellung und Absicherung: CI/CD-Pipeline, Infrastructure as Code, Netzwerk-/Routing-Integration in die Landing Zone sowie Authentifizierung. Der Betrieb soll robust, reproduzierbar und nachvollziehbar sein. | Automatisierung, Stabilität, Sicherheit |
 | MMP (Minimum Marketable Product) | Sprint 3          | Fertigstellung des Projekts mit Fokus auf Einsatzfähigkeit im Betrieb. Finalisierung der Dokumentation, Tests, Optimierung der Endlösung. | Produktionsreife, Abschluss           |
 
 ## 3.2 Definition of Ready (DoR)
@@ -536,7 +535,7 @@ Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut wird. 
 
 Die Connectivity Subscription ist Teil der Azure Landing Zone der Contoso University und wurde ebenfalls von mir entwickelt, jedoch nicht im Rahmen dieser Arbeit. Die Landing Zone stellt sicher, dass die Escape-Room-Subscriptions ihren gesamten Traffic entweder über die Web Application Firewall (für Port 80 und 443) oder über die Azure Firewall routen, sowohl für Ingoing- als auch für Outgoing-Traffic. Ausserdem sind in der Landing Zone gewisse Policies aktiv, welche die Guardrails für einen sicheren Betrieb in der Cloud sicherstellen und das Deployen von öffentlichen Ressourcen verbieten.
 
-![Architecture](data/Big_Picture.png)-
+![Architecture](data/Big_Picture.png)
 *Big Picture der Azure-Zielarchitektur inklusive Ingress- und Egress-Flow*
 
 ## 4.4 Git- und Delivery-Flow
@@ -572,7 +571,7 @@ Die Gesamten Steps in der Pipeline werden mit OIDC Federatet Credentials der Man
 
 Dieses Kapitel beschreibt die technische Umsetzung der deployten Architektur der Escape Room Plattform. Im Fokus stehen die konkreten Implementierungen, Begründung wesshalb es so Umgesetzt wurde und das Zusammenspiel der beteiligten Komponenten. Die Darstellung beschreibt mehrheitlich den natürlichen Ablauf des Projekts, vom einmaligen Bootstrap über die Infrastrukturbereitstellung mit der CI/CD-Pipeline bis hin zum Routing und der Netzwerkanbindung.
 
-## 5.1 Azure Boostrap
+## 5.1 Azure Bootstrap
 
 Der Bootstrap-Prozess löst das strukturelles Henne-Ei-Problem, das bei vollständig codebased CI/CD-Setups mit Remote-State unvermeidbar auftritt. Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure. Beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
 
@@ -596,7 +595,7 @@ Der Bootstrap-Stack ist intern in drei Module gegliedert:
 
 Nach erfolgreichem Bootstrap stehen zwei Outputs zur Verfügung: `entra_client_id` und `entra_client_secret`. Diese werden in der GitLab-Pipeline als Protected Variables (`TF_VAR_entra_client_id`, `TF_VAR_entra_client_secret`) hinterlegt. Ab diesem Zeitpunkt übernimmt der automatisierte CI/CD-Prozess alle weiteren Infrastrukturveränderungen.
 
-## 5.2 Container Images Boostrap
+## 5.2 Container Images Bootstrap
 
 Ein zweites strukturelles Problem ergibt sich beim allerersten `terraform apply` des Platform-Stacks. Die Azure Container Apps referenzieren bei ihrer Erstellung ein Container-Image aus der ACR, das zu diesem Zeitpunkt noch nicht existiert. Terraform bricht den Vorgang in diesem Fall ab, da die referenzierte Ressource nicht auflösbar ist.
 
@@ -616,7 +615,7 @@ Der Bootstrap gliedert sich in drei klar abgegrenzte Phasen:
 | Phase | Ausführung | Inhalt |
 |---|---|---|
 | 1. Azure Bootstrap | Lokal, einmalig (Admin-Account) | `bootstrap/` terraform apply — erstellt State-Backend, OIDC-Identität und Entra App Registration. Outputs (`entra_client_id`, `entra_client_secret`) in `infra/secrets.auto.tfvars` und als GitLab Protected Variables hinterlegen. |
-| 2. Container Images Boostrap | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
+| 2. Container Images Bootstrap | Lokal, einmalig | Initiale Container-Images in ACR pushen, danach `infra/` terraform apply |
 | 3. Automatisiertes Deployment | GitLab CI/CD, dauerhaft | Lint / Plan → manueller Terraform-Apply → Image Build & Scan → manueller Image-Deploy |
 
 Mit Abschluss von Phase 2 läuft der Delivery-Prozess reproduzierbar über GitLab, produktive Infrastruktur- und Image-Rollouts bleiben derzeit jedoch bewusst manuell freizugeben.
@@ -663,7 +662,7 @@ Als Laufzeitumgebung für Frontend und Backend wurde ein **Azure Container Apps 
 
 **Alternative AKS:** Ein AKS-Cluster hätte deutlich mehr Kontrolle geboten (z. B. eigene Netzwerk-Policies, Sidecars, Autoscaler-Feintuning) und wäre sinnvoll, sobald deutlich mehr Workloads oder komplexere Orchestrierungs-Anforderungen (z. B. Service Mesh, StatefulSets) hinzukommen. Für den aktuellen Umfang von zwei einfachen Web-Containern stehen dem jedoch klare Nachteile gegenüber. Ein eigener Node-Pool muss betrieben, gepatcht und dimensioniert werden, Kubernetes-Know-how ist für Betrieb und Troubleshooting nötig, und die Grundkosten sind auch im Leerlauf höher, da mindestens ein Node dauerhaft läuft. Container Apps wurde daher als der für diesen Projektumfang passendere Kompromiss zwischen Betriebsaufwand und Flexibilität gewählt.
 
-## 5.3 CI/CD-Pipeline
+## 5.5 CI/CD-Pipeline
 
 Die GitLab CI/CD-Pipeline automatisiert den gesamten Delivery-Prozess vom Code-Commit bis zum produktiven Deployment in Azure.
 
@@ -701,7 +700,7 @@ Die Build- und Scan-Jobs nutzen den GitLab-Service `docker:24-dind` (Docker-in-D
 Trivy scannt die frisch gepushten Images direkt aus der Registry (`--image-src remote`), ohne dass ein lokaler Docker-Daemon-Zugriff (Docker-Socket) nötig ist. Für die Registry-Authentifizierung wird kein statisches Passwort verwendet. Der Pipeline-Job meldet sich per OIDC-Federated-Token bei Azure an, holt darüber ein kurzlebiges ACR-Access-Token und übergibt dieses. Damit bleibt auch der Scan-Schritt vollständig ohne statische Zugangsdaten.
 
 
-## 5.4 Öffentlicher Zugriff, DNS und Routing
+## 5.6 Öffentlicher Zugriff, DNS und Routing
 
 ### Architektonische Einordnung
 
@@ -742,7 +741,7 @@ Die produktive Health-Probe des Application Gateways trifft auf `/tutorial-room/
 
 Das Frontend ist mit Azure Container Apps Built-in Authentication (EasyAuth) über Microsoft Entra ID abgesichert: unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet. Nur Benutzer des Contoso-Tenants können sich anmelden, die Audience-Validierung (`api://<client_id>`) stellt sicher, dass ausschliesslich Tokens für diese Applikation akzeptiert werden.
 
-## 5.5 Managed Identity und ACR-Zugriff
+## 5.7 Managed Identity und ACR-Zugriff
 
 Beide Container Apps verwenden eine **System-Assigned Managed Identity**, über die sie Container-Images direkt aus der ACR beziehen. Die Managed Identity erhält auf der ACR die Rolle `AcrPull`, die ausschliesslich das Lesen und Pullen von Images erlaubt, keine Write-Rechte. Statische Zugangsdaten für die Registry sind damit vollständig eliminiert.
 
@@ -756,7 +755,7 @@ Container App (System MI)
 
 Dieses Muster gilt identisch für die Backend Container App. Die Rollenzuweisungen werden durch OpenTofu als `azurerm_role_assignment`-Ressourcen verwaltet und sind damit reproduzierbar und auditierbar.
 
-## 5.6 Entra ID EasyAuth auf ACA
+## 5.8 Entra ID EasyAuth auf ACA
 
 ### Überblick
 
@@ -859,7 +858,7 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 | Testfall 1 | Öffentliche Erreichbarkeit & TLS-Zertifikat |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Browser mit Netzwerkzugriff auf das Internet<br>- Keine VPN-/Contoso-Netz-Pflicht, da Zugriff über das öffentliche Application Gateway erfolgt |
-| Erwartetes Ergebnis    | `https://escape.contoso.example/` ist öffentlich erreichbar. Der Browser zeigt ein gültiges TLS-Zertifikat für `*.contoso.example` (Contoso-verwaltetes Wildcard-Zertifikat am Application Gateway, vgl. Abschnitt 5.4), keine Zertifikatswarnung. |
+| Erwartetes Ergebnis    | `https://escape.contoso.example/` ist öffentlich erreichbar. Der Browser zeigt ein gültiges TLS-Zertifikat für `*.contoso.example` (Contoso-verwaltetes Wildcard-Zertifikat am Application Gateway, vgl. Abschnitt 5.6), keine Zertifikatswarnung. |
 | Testablauf             | 1. `https://escape.contoso.example/` im Browser aufrufen<br>2. Zertifikatsdetails prüfen (Aussteller, Gültigkeit, Domain)<br>3. Sicherstellen, dass kein „Nicht sicher“-Hinweis erscheint |
 | Effektives Ergebnis    | `https://escape.contoso.example/` war öffentlich erreichbar. Der Browser zeigt ein gültiges TLS-Zertifikat für `*.contoso.example` an, keine Zertifikatswarnung wurde angezeigt. Ergebnis entspricht dem erwarteten Verhalten. |
 | Screenshot / Logfiles | ![Testcase1](img/testcase1.gif)<br>*TLS-Zertifikatsdetails im Browser* |
@@ -871,7 +870,7 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 | Testfall 2 | Erzwungene Authentifizierung ohne aktive Session (EasyAuth-Redirect) |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Browser ohne bestehende Session auf `escape.contoso.example` (z. B. privates/Inkognito-Fenster) |
-| Erwartetes Ergebnis    | Aufruf von `/` ohne aktive Session führt zu einem automatischen Redirect auf die Microsoft-Login-Seite (`login.microsoftonline.com`). Kein Seiteninhalt wird ohne Login ausgeliefert (vgl. Abschnitt 5.6, EasyAuth v2). |
+| Erwartetes Ergebnis    | Aufruf von `/` ohne aktive Session führt zu einem automatischen Redirect auf die Microsoft-Login-Seite (`login.microsoftonline.com`). Kein Seiteninhalt wird ohne Login ausgeliefert (vgl. Abschnitt 5.8, EasyAuth v2). |
 | Testablauf             | 1. Inkognito-Fenster öffnen<br>2. `https://escape.contoso.example/` aufrufen<br>3. Weiterleitung auf Microsoft-Login beobachten<br>4. Sicherstellen, dass keine Inhalte der Startseite sichtbar werden |
 | Effektives Ergebnis    | Der Aufruf von `/` ohne aktive Session führte zu einem automatischen Redirect auf die Microsoft-Login-Seite (`login.microsoftonline.com`). Es wurde kein Seiteninhalt ohne Login ausgeliefert. Ergebnis entspricht dem erwarteten Verhalten. |
 | Screenshot / Logfiles | ![Testcase2](img/testcase2.gif)<br>*automatischer Redirect zu Microsoft-Login* |
@@ -895,7 +894,7 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 | Testfall 4 | Health-Probe-Pfade bleiben ohne Login erreichbar |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Browser/REST-Client ohne aktive Session |
-| Erwartetes Ergebnis    | `https://escape.contoso.example/healthz` (Frontend) liefert ohne Login HTTP 200 `{"status":"ok"}`, da als `excludedPath` in der EasyAuth-Konfiguration hinterlegt (vgl. Abschnitt 5.4/5.6). Dies ist Voraussetzung dafür, dass das Application Gateway den Backend-Pool als „healthy“ einstuft. |
+| Erwartetes Ergebnis    | `https://escape.contoso.example/healthz` (Frontend) liefert ohne Login HTTP 200 `{"status":"ok"}`, da als `excludedPath` in der EasyAuth-Konfiguration hinterlegt (vgl. Abschnitt 5.6/5.8). Dies ist Voraussetzung dafür, dass das Application Gateway den Backend-Pool als „healthy“ einstuft. |
 | Testablauf             | 1. Inkognito-Fenster/REST-Client ohne Session verwenden<br>2. `GET https://escape.contoso.example/healthz` aufrufen<br>3. Statuscode und Payload prüfen (kein Redirect zu Microsoft-Login) |
 | Effektives Ergebnis    | `GET https://escape.contoso.example/healthz` lieferte ohne aktive Session HTTP 200 mit `{"status":"ok"}`, ohne Redirect zum Microsoft-Login. Der `excludedPath` in der EasyAuth-Konfiguration funktioniert wie vorgesehen. Ergebnis entspricht dem erwarteten Verhalten. |
 | Screenshot / Logfiles | ![Testcase4](img/testcase4.gif)<br>*`/healthz` ohne Login, HTTP 200* |
@@ -907,7 +906,7 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 | Testfall 5 | Path-basiertes Routing über das Application Gateway |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Aktive, eingeloggte Session auf `escape.contoso.example` |
-| Erwartetes Ergebnis    | Anfragen an `/` (und übrige Pfade) werden an die Frontend Container App weitergeleitet, Anfragen an `/tutorial-room` bzw. `/tutorial-room/*` an die Backend Container App (vgl. Routing-Tabelle in Abschnitt 5.4). Beide sind über denselben Hostnamen erreichbar, liefern aber erkennbar unterschiedliche Inhalte/Antworten (Frontend-HTML vs. Backend-JSON-API). |
+| Erwartetes Ergebnis    | Anfragen an `/` (und übrige Pfade) werden an die Frontend Container App weitergeleitet, Anfragen an `/tutorial-room` bzw. `/tutorial-room/*` an die Backend Container App (vgl. Routing-Tabelle in Abschnitt 5.6). Beide sind über denselben Hostnamen erreichbar, liefern aber erkennbar unterschiedliche Inhalte/Antworten (Frontend-HTML vs. Backend-JSON-API). |
 | Testablauf             | 1. `https://escape.contoso.example/` aufrufen → Frontend-Seite prüfen<br>2. `https://escape.contoso.example/tutorial-room/ping` aufrufen → Backend-JSON-Antwort prüfen<br>3. Entwicklertools/Netzwerk-Tab auf Antwort-Header (z. B. Server/Content-Type) vergleichen |
 | Effektives Ergebnis    | Anfragen an `/` wurden an die Frontend Container App weitergeleitet, Anfragen an `/tutorial-room/*` an die Backend Container App. Beide waren über denselben Hostnamen erreichbar und lieferten erkennbar unterschiedliche Inhalte (Frontend-HTML vs. Backend-JSON-API). Ergebnis entspricht dem erwarteten Verhalten. |
 | Screenshot / Logfiles | ![Testcase5](img/testcase5.gif)<br>*Frontend- vs. Backend-Antwort über denselben Host* |
@@ -919,7 +918,7 @@ Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen a
 | Testfall 6 | WAF-Schutz des zentralen Contoso Application Gateways |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Voraussetzungen        | - Aktive Session<br>- Zugriff auf ein Formularfeld oder einen Query-Parameter der Plattform |
-| Erwartetes Ergebnis    | Ein einfacher, offensichtlich schädlicher Payload (z. B. `<script>alert(1)</script>` oder `' OR 1=1 --` als Query-Parameter) wird von der OWASP-CRS-WAF am Application Gateway blockiert (HTTP 403), bevor er die Plattform erreicht (vgl. Abschnitt 5.4, zentrale WAFv2). |
+| Erwartetes Ergebnis    | Ein einfacher, offensichtlich schädlicher Payload (z. B. `<script>alert(1)</script>` oder `' OR 1=1 --` als Query-Parameter) wird von der OWASP-CRS-WAF am Application Gateway blockiert (HTTP 403), bevor er die Plattform erreicht (vgl. Abschnitt 5.6, zentrale WAFv2). |
 | Testablauf             | 1. URL mit angehängtem Test-Payload aufrufen, z. B. `https://escape.contoso.example/?q=<script>alert(1)</script>`<br>2. Statuscode der Antwort prüfen<br>3. Sicherstellen, dass kein Payload-Reflect in der Antwort enthalten ist |
 | Effektives Ergebnis    | Der Test-Payload (`<script>alert(1)</script>` als Query-Parameter) wurde von der OWASP-CRS-WAF am zentralen Application Gateway mit HTTP 403 blockiert, bevor er die Plattform erreichte. Kein Payload-Reflect in der Antwort feststellbar. Ergebnis entspricht dem erwarteten Verhalten. |
 | Screenshot / Logfiles | ![Testcase6](img/testcase6.gif)<br>*WAF-Blockierung (403) im Netzwerk-Tab* |
