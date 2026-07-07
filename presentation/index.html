@@ -139,6 +139,49 @@
         font-weight: 700;
       }
 
+      /* Einstiegsfolie (dramatischer, dunkler Auftakt) */
+      .reveal .slides section.intro-slide {
+        top: 0 !important;
+        height: 100%;
+        padding: 0;
+      }
+      .reveal .slides section.intro-slide .intro-center {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .reveal .slides section.intro-slide .intro-title {
+        font-size: 2.1em;
+        font-weight: 700;
+        color: #ffffff !important;
+        margin: 0;
+        letter-spacing: -1px;
+        line-height: 1.15;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.45);
+      }
+      .reveal .slides section.intro-slide .intro-title .accent {
+        color: var(--contoso-cyan);
+      }
+      /* dünner Akzentstrich unter der Frage als visueller Anker */
+      .intro-underline {
+        width: 0;
+        height: 4px;
+        background: var(--contoso-cyan);
+        border-radius: 2px;
+        margin: 0.6em auto 0;
+        box-shadow: 0 0 18px rgba(74, 201, 227, 0.6);
+      }
+      .reveal .slides section.intro-slide.present .intro-underline {
+        animation: growLine 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+      }
+      @keyframes growLine {
+        from { width: 0; opacity: 0; }
+        to { width: 220px; opacity: 1; }
+      }
+
       .cover-title {
         text-align: center;
         color: var(--contoso-blue);
@@ -159,6 +202,40 @@
         margin-top: 1.5em;
         border-top: 1px solid rgba(0,0,0,0.06);
         padding-top: 1.2em;
+      }
+
+      /* "404 - Wissen nicht gefunden" Illustration (ersetzt fehlendes 404.png, rendert überall) */
+      .not-found {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4em;
+        padding: 1em 1.6em;
+        background: linear-gradient(135deg, rgba(191,13,62,0.06) 0%, rgba(0,40,165,0.05) 100%);
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      }
+      .nf-code {
+        font-size: 3.4em;
+        font-weight: 800;
+        letter-spacing: -2px;
+        color: var(--contoso-blue);
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.05em;
+      }
+      .nf-lock {
+        font-size: 0.68em;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+      }
+      .nf-caption {
+        font-size: 0.55em;
+        font-weight: 700;
+        color: var(--contoso-crimson);
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
 
       .two-col {
@@ -527,9 +604,19 @@
       <img class="contoso-logo-fixed" src="assets/brand_logo.png" alt="Contoso Logo" />
       <div class="slides">
 
-        <!-- 1. Titel -->
+        <!-- 1. Einstieg -->
+        <section class="intro-slide" data-background-color="#0a0a0f" data-transition="fade" data-background-transition="fade">
+          <div class="intro-center">
+            <h1 class="intro-title">„Muss man noch&nbsp;…&nbsp;<span class="accent">lernen</span>?“</h1>
+            <div class="intro-underline"></div>
+          </div>
+          <aside class="notes">
+            Einstieg: Eine provokative Frage in den Raum stellen, um die Aufmerksamkeit zu wecken. Bewusst kurz wirken lassen, bevor zur Titelfolie übergegangen wird.
+          </aside>
+        </section>
+
+        <!-- 2. Titel -->
         <section class="center" style="padding-top: 0.5em;">
-          <img src="assets/brand_logo.png" alt="Contoso Logo" style="height: 42px; width: auto; margin: 0 auto 1.2em; display: block; opacity: 0.95;" />
           <img src="assets/cover_image.png" alt="Titelbild" style="max-height: 420px; border-radius: 8px; display:block; margin: 0 auto 1.2em; box-shadow: 0 10px 30px rgba(0,0,0,0.15);" />
           <p style="font-size: 0.9em; font-weight: 700; color: var(--contoso-blue); margin-bottom: 0.1em; letter-spacing: -0.5px;">3. Semesterarbeit</p>
           <div style="margin-top: 1em; font-size: 0.6em; color: #1a1a1a; line-height: 1.5;">
@@ -547,18 +634,21 @@
           <h2>Problem</h2>
           <div class="two-col" style="align-items: center; margin-top: 0.5rem;">
             <div style="flex: 0.85; text-align: center;">
-              <img src="assets/404.png" alt="404 Error" style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.12);" />
+              <div class="not-found">
+                <div class="nf-code">4<span class="nf-lock">🔒</span>4</div>
+                <div class="nf-caption">Wissen nicht gefunden</div>
+              </div>
             </div>
             <div style="flex: 1.15;">
               <div class="icon-grid" style="grid-template-columns: 1fr; gap: 0.6rem;">
-                <div class="icon-card">📚 IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
-                <div class="icon-card c-yellow">🧩 Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
-                <div class="icon-card c-orange">🎯 Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
-                <div class="icon-card c-crimson">⏳ Fehlender Praxisbezug <strong>kostet Motivation &amp; Zeit</strong></div>
+                <div class="icon-card fragment fade-up">📚 IT-Wissen wird oft <strong>theoretisch</strong> und isoliert vermittelt</div>
+                <div class="icon-card c-yellow fragment fade-up">🧩 Komplexe Zusammenhänge sind <strong>schwer greifbar</strong></div>
+                <div class="icon-card c-orange fragment fade-up">🎯 Klassische Übungen fördern <strong>wenig Eigeninitiative</strong></div>
+                <div class="icon-card c-crimson fragment fade-up">⏳ Fehlender Praxisbezug <strong>kostet Motivation &amp; Zeit</strong></div>
               </div>
             </div>
           </div>
-          <blockquote class="pull-quote" style="margin-top:0.8em;">Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?</blockquote>
+          <blockquote class="pull-quote fragment fade-up" style="margin-top:0.8em;">Wie vermitteln wir IT-Wissen spielerisch, praxisnah und Cloud-nativ?</blockquote>
           <aside class="notes">Kurz halten — Ausgangslage in max. 30-45 Sekunden erklären.</aside>
         </section>
 
@@ -566,17 +656,17 @@
         <section>
           <h2>Ziel der Arbeit</h2>
           <div class="goals-matrix">
-            <div class="goals-category" style="--cat-color: var(--contoso-blue);">
+            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-blue);">
               <div class="category-header">Core Gameplay</div>
               <div class="goal-item">🎮 Spielbares, fesselndes Escape-Room-Szenario</div>
               <div class="goal-item">⚡ Event-gesteuerte Azure Function für Spielinteraktionen</div>
             </div>
-            <div class="goals-category" style="--cat-color: var(--contoso-cyan);">
+            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-cyan);">
               <div class="category-header">Modern Architecture</div>
               <div class="goal-item">🧩 Microservice-Architektur (Frontend &amp; Backend decoupled)</div>
               <div class="goal-item">🔐 Secure Identity Management via Microsoft Entra ID</div>
             </div>
-            <div class="goals-category" style="--cat-color: var(--contoso-green);">
+            <div class="goals-category fragment fade-up" style="--cat-color: var(--contoso-green);">
               <div class="category-header">Cloud Platform</div>
               <div class="goal-item">🏗️ Infrastructure as Code komplett via OpenTofu</div>
               <div class="goal-item">🔁 Vollautomatisierte CI/CD Delivery-Pipelines (GitLab)</div>
@@ -749,9 +839,13 @@
         maxScale: 2.0,
         hash: true,
         controls: true,
+        controlsTutorial: false,
         progress: true,
         center: false,
         transition: 'slide',
+        backgroundTransition: 'fade',
+        // Fragmente im PDF-Export auf einer Seite zusammenfassen (sauberer Handout-Export)
+        pdfSeparateFragments: false,
         plugins: [ RevealNotes, RevealHighlight ],
       });
 
@@ -759,14 +853,14 @@
       function renderChrome() {
         document.querySelectorAll('.slide-meta-top, .slide-meta-bottom').forEach(el => el.remove());
         const idx = Reveal.getIndices();
-        
+
         // Hide fixed logo on title slide because we render a larger, beautiful one inside the slide
         const fixedLogo = document.querySelector('.contoso-logo-fixed');
         if (fixedLogo) {
           fixedLogo.style.display = 'none';
         }
 
-        if (idx.h === 0) return; // Titelfolie ohne Kopf-/Fusszeile
+        if (idx.h === 0 || idx.h === 1) return; // Titelfolien ohne Kopf-/Fusszeile
 
         const total = Reveal.getTotalSlides();
         const top = document.createElement('div');
@@ -774,7 +868,7 @@
         top.innerHTML = `<span class="slide-meta-date">${DATE}</span><img class="contoso-logo-inline" src="assets/brand_logo.png" alt="Contoso Logo" />`;
         const bottom = document.createElement('div');
         bottom.className = 'slide-meta-bottom';
-        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h} / ${total - 1}</span>`;
+        bottom.innerHTML = `<span>${BREADCRUMB}</span><span class="page-number">${idx.h - 1} / ${total - 2}</span>`;
         document.querySelector('.reveal').appendChild(top);
         document.querySelector('.reveal').appendChild(bottom);
       }
