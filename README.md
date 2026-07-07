@@ -452,34 +452,44 @@ Der dritte produktive Sprint dient der Fertigstellung des Projekts in Richtung M
 __Sprint Review:__
 
 **Status:**
-Sprint 3 läuft noch bis 06.07.2026. Die folgenden User Stories wurden bisher abgeschlossen.
+Sprint 3 wurde per 06.07.2026 planmässig abgeschlossen. Alle geplanten User Stories sowie sämtliche Epics (S3M-1 bis S3M-4) sind vollständig umgesetzt und im Jira-Board auf *Done* gesetzt.
+
+**Abgeschlossene Epics:**
+
+| Epic | Titel | Status |
+|------|-------|:------:|
+| S3M-1 | Project Initialization & Platform Setup | ✅ Done |
+| S3M-2 | Core Game Engine & Frontend Platform | ✅ Done |
+| S3M-3 | Interactivity, Microservices & Cloud Integration | ✅ Done |
+| S3M-4 | DevOps, Security, Testing & Delivery | ✅ Done |
 
 **Abgeschlossene User Stories:**
 
 * Entra ID App Registration (Bootstrap-Modul `entra_auth`): App Registration, Service Principal, Client Secret, Redirect URI und Implicit Grant für EasyAuth konfiguriert.
 * EasyAuth auf der Frontend Container App (`infra/modules/aca_auth`): ACA Built-in Authentication via `authConfigs/current` Sub-Ressource aktiviert; unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet.
 * AGW Health Probe[^22]: Eigene Health Probe (`/healthz`) konfiguriert, damit der Application Gateway das Frontend nach Aktivierung von EasyAuth weiterhin als gesund einzustufen vermag.
-* Projektdokumentation: ADR-009[^23] (EasyAuth auf ACA), `identity-and-access.md`, `deploy.md` und README aktualisiert.
+* Deployment des AGW Header-Rewrite (X-Forwarded-Host) im Contoso Connectivity-Repository für korrekten OAuth2-Callback umgesetzt.
+* App Roles (`Escape.Player`, `Escape.Admin`) für gruppenbasierte Autorisierung konfiguriert.
+* Entra-Variablen in die GitLab-Pipeline integriert (Protected Variables `TF_VAR_entra_client_id` und `TF_VAR_entra_client_secret`).
+* Testing, Bugfixing und technische Härtung der Gesamtlösung abgeschlossen (alle zehn Testfälle bestanden, siehe Kapitel 6).
+* Projektdokumentation finalisiert: ADR-009[^23] (EasyAuth auf ACA), `identity-and-access.md`, `deploy.md` sowie README aktualisiert und Präsentationsgrundlage erstellt.
 
-**Offene User Stories (geplant bis 06.07.2026):**
-
-* Deployment des AGW Header-Rewrite (X-Forwarded-Host) im Contoso Connectivity-Repository für korrekten OAuth2-Callback.
-* App Roles (`Escape.Player`, `Escape.Admin`) für gruppenbasierte Autorisierung.
-* Entra-Variablen in die GitLab-Pipeline integrieren (Protected Variables `TF_VAR_entra_client_id` und `TF_VAR_entra_client_secret`).
-
-**Risikoverlauf Sprint 3 (Zwischenstand):**
+**Risikoverlauf Sprint 3:**
 
 | Risiko-ID | Beschreibung | Score vorher | Score nachher | Status | Bemerkung |
 |-----------|--------------|:------------:|:-------------:|:------:|-----------|
 | R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🟡 8 | 🟡 6 | ↓ | EasyAuth-Integration erforderte tiefes Verständnis der ACA-API-Struktur und des AGW-Proxy-Verhaltens. Beide Probleme sind analysiert und gelöst. |
-| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🟠 12 | 🟠 10 | ↓ | Die AGW-Header-Rewrite-Abhängigkeit verlangsamt den Abschluss der Authentifizierung. Risiko sinkt, da eine klare technische Lösung vorliegt. |
+| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🟠 12 | 🟠 10 | ↓ | Die AGW-Header-Rewrite-Abhängigkeit war zeitintensiv, wurde jedoch fristgerecht gelöst. Alle Sprint-Ziele wurden bis zum Abgabetermin erreicht. |
 | R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟢 4 | 🟢 4 | → | Keine Änderungen in diesem Bereich. |
-| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟡 8 | 🟡 6 | ↓ | EasyAuth ist aktiv und der Login funktioniert. Ausstehend: AGW Rewrite Rule für korrekten OAuth2-Callback-Host. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟡 8 | 🟢 4 | ↓ | EasyAuth, AGW Rewrite Rule und gruppenbasierte App Roles sind produktiv umgesetzt. Login und Autorisierung funktionieren End-to-End. |
 | R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟢 4 | 🟢 4 | → | Keine neuen Infrastrukturprobleme in Sprint 3. |
 
 __Sprint Retrospective:__
 
-Der Sprint ist noch in Gange (Abschluss 06.07.2026). Die Retrospektive wird nach Sprintende auf einem Miro-Board nachgeführt und hier ergänzt.
+Für die abschliessende Retrospektive habe ich erneut die Mad, Sad, Glad Methode auf einem Miro-Board angewendet. Der Sprint verlief trotz der anspruchsvollen AGW- und EasyAuth-Thematik erfolgreich: Alle geplanten Stories wurden fristgerecht abgeschlossen und das MMP-Ziel vollständig erreicht.
+
+![Sprint3Retro](./img/sprint3retro.png)
+*Screenshot vom Miro-Board für die Retrospektive des Sprint 3.*
 
 __Lessons Learned:__
 
@@ -522,7 +532,7 @@ Entscheidend für das Konzept ist, dass Theme-Stacks nur definierte Outputs des 
 
 ## 4.3 Azure Big Picture
 
-Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut wird. Im Fokus steht dabei die Escape-Room-Subscription, welche innerhalb dieser Arbeit entwickelt wird. Dort soll ein Container Apps Environment entstehen, in welchem die Escape Rooms laufen sollen. Ziel ist es, eine möglichst robuste und skalierbare Lösung zu bauen, die möglichst wartungsfreundlich ist und im besten Fall nicht allzu viel kostet. 
+Das Big Picture zeigt in erster Linie, wie die Lösung in Azure aufgebaut wird. Im Fokus steht dabei die Escape-Room-Subscription, welche innerhalb dieser Arbeit entwickelt wird. Dort soll ein Container Apps Environment entstehen, in welchem die Escape Rooms laufen sollen. Ziel ist es, eine möglichst robuste und skalierbare Lösung zu bauen, die möglichst wartungsfreundlich ist und im besten Fall nicht allzu viel kostet.
 
 Die Connectivity Subscription ist Teil der Azure Landing Zone der Contoso University und wurde ebenfalls von mir entwickelt, jedoch nicht im Rahmen dieser Arbeit. Die Landing Zone stellt sicher, dass die Escape-Room-Subscriptions ihren gesamten Traffic entweder über die Web Application Firewall (für Port 80 und 443) oder über die Azure Firewall routen, sowohl für Ingoing- als auch für Outgoing-Traffic. Ausserdem sind in der Landing Zone gewisse Policies aktiv, welche die Guardrails für einen sicheren Betrieb in der Cloud sicherstellen und das Deployen von öffentlichen Ressourcen verbieten.
 
@@ -1005,15 +1015,59 @@ Die Plattform ist funktionsfähig und stabil. Zentrale Architekturentscheidungen
 
 ## 7.1 Abschliessende Risikobilanz
 
+Zum Projektende habe ich die fünf initial identifizierten Risiken ein letztes Mal bewertet und ihrem Ausgangswert aus der Risikoanalyse (Kapitel 2.5) gegenübergestellt. Sämtliche Risiken konnten im Projektverlauf deutlich reduziert werden. Kein Risiko ist eingetreten, das den Projekterfolg gefährdet hätte.
+
+| Risiko-ID | Beschreibung | Score initial | Score final | Verlauf | Abschliessende Bewertung |
+|-----------|--------------|:-------------:|:-----------:|:-------:|--------------------------|
+| R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🔴 16 | 🟡 6 | ↓ | Die Hub-and-Spoke-Zielarchitektur mit zentralem Application Gateway wurde vollständig integriert und produktiv betrieben. Die Komplexität bleibt bestehen, ist durch die validierte Umgebung und die gewonnenen Betriebskenntnisse jedoch beherrschbar. |
+| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🔴 16 | 🟡 8 | ↓ | Landing-Zone-Integration, OIDC-Debugging und die AGW-Header-Rewrite-Abhängigkeit waren zeitintensiv. Alle release-relevanten Ziele wurden erreicht. Das Risiko bleibt als höchstes bestehen, da Reserven knapp waren. |
+| R3 | Fehler in GitLab CI/CD-Pipelines verhindern automatisierte Deployments | 🟠 12 | 🟢 4 | ↓ | Die Pipeline deckt Linting, Build, Infrastruktur, Container-Scan und Deployment vollständig ab und läuft über OIDC secretless. Reproduzierbare End-to-End-Deployments senken das Restrisiko auf ein Minimum. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟡 6 | ↓ | Die OIDC-Anbindung der Pipeline und EasyAuth vor dem Frontend funktionieren produktiv. Als Restpunkt verbleibt die feingranulare, gruppenbasierte Autorisierung über App Roles (siehe 7.4). |
+| R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 9 | 🟢 4 | ↓ | Die Infrastruktur wird vollständig deklarativ mit OpenTofu verwaltet. Frühe Pipeline-Checks (`terraform validate`, `tflint`) und reale Deployments haben verbleibende Konfigurationsfehler zuverlässig aufgedeckt und bereinigt. |
+
+Insgesamt zeigt die Bilanz einen durchgehend positiven Verlauf. Die grössten Anfangsrisiken (R1 und R2, je Score 16) liessen sich durch die konsequente MVP-orientierte und iterative Vorgehensweise am stärksten entschärfen. Das zeitliche Risiko (R2) bleibt erwartungsgemäss das relevanteste Restrisiko einer Arbeit mit fixem Abgabetermin.
+
 ## 7.2 Technisches Fazit
+
+Aus technischer Sicht wurden die zentralen Projektziele erreicht. Die Escape-Room-Plattform ist mit einem vollständig spielbaren Tutorial Room öffentlich erreichbar, hinter einem gültigen Wildcard-Zertifikat abgesichert und über Microsoft Entra ID authentifiziert. Alle zehn definierten Testfälle (Kapitel 6.2) wurden erfolgreich bestanden.
+
+Bewährt haben sich insbesondere folgende Architekturentscheidungen:
+
+- **Hub-and-Spoke mit zentralem Application Gateway und WAF:** Der Ingress über das zentrale AGW mit OWASP-CRS-WAF und path-basiertem Routing zwischen Frontend und Backend hat sich als tragfähig und sicher erwiesen. Es gibt keine öffentlichen Endpunkte auf den Workloads selbst.
+- **Vollständige Infrastruktur als Code mit OpenTofu:** Die gesamte Zielumgebung ist reproduzierbar und deklarativ beschrieben. Reale Deployments haben Konfigurationsfehler früh sichtbar gemacht und so die Qualität der Definitionen erhöht.
+- **Secretless CI/CD über OIDC Federated Credentials:** Die GitLab-Pipeline deployt ohne hinterlegte Zugangsdaten in Azure. Das eigene CI/CD-Image sorgt für reproduzierbare Build-Umgebungen, Releases sind über Git-Tags (MVP, MLP, MMP) eindeutig referenzierbar.
+- **EasyAuth vor der Container App:** Die vorgelagerte Authentifizierung erspart applikationsseitigen Auth-Code, verlangte jedoch ein tiefes Verständnis der ACA-`authConfigs`-Ressource sowie des AGW-Proxy-Verhaltens (Host-Header-Rewrite, dedizierte Health Probe).
+
+Bewusst wurden gegenüber der ursprünglichen Zielsetzung zwei pragmatische Abweichungen getroffen. Die ereignisgesteuerten Spielinteraktionen laufen aktuell im containerisierten Backend statt in einer separaten Azure Function, und die Persistenz erfolgt vorerst über eine dateibasierte SQLite-Datenbank statt über PostgreSQL. Beide Punkte sind für den aktuellen Funktionsumfang ausreichend, für einen dauerhaften produktiven Betrieb aber gezielt weiterzuentwickeln (siehe 7.4).
 
 ## 7.3 Persönliches Fazit
 
+Rückblickend bin ich mit dem Ergebnis dieser Arbeit sehr zufrieden. Ich habe von der ersten Architekturskizze bis zum lauffähigen, öffentlich erreichbaren und abgesicherten Produkt eine vollständige Cloud-Native-Lösung eigenständig aufgebaut. Besonders wertvoll war für mich, Themen nicht nur theoretisch zu behandeln, sondern sie im realen Zusammenspiel von Azure Landing Zone, Networking, Identity und CI/CD zum Laufen zu bringen.
+
+Die grösste Herausforderung war weniger die einzelne Technologie als das Zusammenspiel vieler Komponenten unter Zeitdruck. Die Fehlersuche rund um den Application Gateway und die EasyAuth-Redirect-URI hat mich gelehrt, wie wichtig es ist, Netzwerk- und Authentifizierungsflüsse früh vollständig zu durchdenken und nicht erst beim ersten Deployment zu validieren. Ebenso habe ich gelernt, konsequent nach dem MVP-Prinzip zu priorisieren, um mit begrenzter Zeit ein belastbares Ergebnis zu erzielen.
+
+Mitgenommen habe ich vor allem ein deutlich tieferes Verständnis für passwordless Authentifizierung, Infrastructure as Code und den Betrieb von Container-Workloads in einer regulierten Unternehmensumgebung. Diese praxisnahe Erfahrung ist für mich der grösste persönliche Mehrwert dieser Semesterarbeit.
+
 ## 7.4 Mögliche Weiterentwicklung
+
+Die Plattform ist als tragfähige Grundlage konzipiert und lässt sich in mehreren Richtungen weiterentwickeln:
+
+- **Gruppenbasierte Autorisierung:** Umsetzung der App Roles (`Escape.Player`, `Escape.Admin`) für eine feingranulare, rollen- und gruppenbasierte Zugriffskontrolle über Entra-ID-Gruppen.
+- **Persistente Datenhaltung:** Anbindung des Backends an eine externe PostgreSQL-Datenbank, damit Spielstände und Leaderboard-Zeiten über Deployments hinweg erhalten bleiben.
+- **Weitere, themenbasierte Escape Rooms:** Ausbau der Plattform um zusätzliche Räume, die jeweils als eigene, voneinander isolierte Container betrieben werden.
+- **Zeitgesteuertes Deployment:** Automatisches Deploy und Destroy der Escape-Room-Container nach Zeitplan, um Betriebskosten für zeitlich begrenzte Einsätze (z. B. Lehrveranstaltungen) zu senken.
+- **Ereignisgesteuerte Azure Function:** Auslagerung ausgewählter Spielinteraktionen in eine dedizierte Azure Function, um die ursprünglich angedachte serverless, event-getriebene Verarbeitung umzusetzen.
+- **Produktiver Go-Live:** Überführung des erfolgreichen Proof of Concept in den regulären Hochschulbetrieb inklusive Monitoring und Betriebskonzept.
 
 ---
 
 # 8 Schlusswort
+
+Mit dieser Semesterarbeit habe ich eine vollständige Cloud-Native-Plattform von der ersten Architekturidee bis zum produktiv erreichbaren und abgesicherten Produkt umgesetzt. Die Escape-Room-Plattform vereint einen spielbaren Escape Room, eine entkoppelte Microservice-Architektur, eine vollständig als Code beschriebene Azure-Infrastruktur sowie eine automatisierte, secretless CI/CD-Pipeline zu einer stimmigen Gesamtlösung.
+
+Der Weg dorthin war anspruchsvoll und lehrreich zugleich. Gerade das Zusammenspiel von Landing-Zone-Integration, zentralem Application Gateway, Identity und Delivery hat mir gezeigt, wie viel Sorgfalt reale Cloud-Umgebungen verlangen und wie befriedigend es ist, wenn am Ende alle Komponenten sauber ineinandergreifen. Das Ergebnis erfüllt die gesetzten Ziele und bildet eine tragfähige Grundlage für die in Kapitel 7.4 skizzierten Weiterentwicklungen.
+
+Abschliessend danke ich allen, die mich während dieser Arbeit unterstützt und begleitet haben. Die gewonnenen Erkenntnisse aus Praxis und Theorie nehme ich als wertvolle Grundlage für meine weitere Laufbahn mit.
 
 ## 8.1 Quellenverzeichnis
 
