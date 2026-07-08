@@ -468,7 +468,7 @@ Sprint 3 wurde per 06.07.2026 planmässig abgeschlossen. Alle geplanten User Sto
 * EasyAuth auf der Frontend Container App (`infra/modules/aca_auth`): ACA Built-in Authentication via `authConfigs/current` Sub-Ressource aktiviert; unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet.
 * AGW Health Probe[^22]: Eigene Health Probe (`/healthz`) konfiguriert, damit der Application Gateway das Frontend nach Aktivierung von EasyAuth weiterhin als gesund einzustufen vermag.
 * Deployment des AGW Header-Rewrite (X-Forwarded-Host) im Contoso Connectivity-Repository für korrekten OAuth2-Callback umgesetzt.
-* App Roles (`Escape.Player`, `Escape.Admin`) für gruppenbasierte Autorisierung konfiguriert.
+* App Roles (`Escape.Player`, `Escape.Admin`) für eine spätere gruppenbasierte Autorisierung konzipiert; die produktive Umsetzung ist als Restpunkt offen (siehe 7.4).
 * Entra-Variablen in die GitLab-Pipeline integriert (Protected Variables `TF_VAR_entra_client_id` und `TF_VAR_entra_client_secret`).
 * Testing, Bugfixing und technische Härtung der Gesamtlösung abgeschlossen (alle zehn Testfälle bestanden, siehe Kapitel 6).
 * Projektdokumentation finalisiert: ADR-009[^23] (EasyAuth auf ACA), `identity-and-access.md`, `deploy.md` sowie README aktualisiert und Präsentationsgrundlage erstellt.
@@ -478,9 +478,9 @@ Sprint 3 wurde per 06.07.2026 planmässig abgeschlossen. Alle geplanten User Sto
 | Risiko-ID | Beschreibung | Score vorher | Score nachher | Status | Bemerkung |
 |-----------|--------------|:------------:|:-------------:|:------:|-----------|
 | R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🟡 8 | 🟡 6 | ↓ | EasyAuth-Integration erforderte tiefes Verständnis der ACA-API-Struktur und des AGW-Proxy-Verhaltens. Beide Probleme sind analysiert und gelöst. |
-| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🟠 12 | 🟠 10 | ↓ | Die AGW-Header-Rewrite-Abhängigkeit war zeitintensiv, wurde jedoch fristgerecht gelöst. Alle Sprint-Ziele wurden bis zum Abgabetermin erreicht. |
+| R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🟠 12 | 🟡 8 | ↓ | Die AGW-Header-Rewrite-Abhängigkeit war zeitintensiv, wurde jedoch fristgerecht gelöst. Alle Sprint-Ziele wurden bis zum Abgabetermin erreicht. |
 | R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟢 4 | 🟢 4 | → | Keine Änderungen in diesem Bereich. |
-| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟡 8 | 🟢 4 | ↓ | EasyAuth, AGW Rewrite Rule und gruppenbasierte App Roles sind produktiv umgesetzt. Login und Autorisierung funktionieren End-to-End. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟡 8 | 🟡 6 | ↓ | EasyAuth und die AGW Rewrite Rule sind produktiv umgesetzt, der Login funktioniert End-to-End. Die feingranulare, gruppenbasierte Autorisierung über App Roles verbleibt als Restpunkt (siehe 7.4). |
 | R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟢 4 | 🟢 4 | → | Keine neuen Infrastrukturprobleme in Sprint 3. |
 
 __Sprint Retrospective:__
