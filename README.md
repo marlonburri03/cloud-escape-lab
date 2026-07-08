@@ -818,6 +818,16 @@ Die `inject_request_headers`-Funktion existierte im AGW-Modul zuvor nicht und wu
 > **Hinweis:** Azure AGW v2 injiziert `X-Original-Host` **nicht** automatisch (entgegen einigen Dokumentationsquellen). Automatisch hinzugefügte Headers sind ausschliesslich `X-Forwarded-For`, `X-Forwarded-Proto` und `X-Forwarded-Port` — der `X-Forwarded-Host` musste daher gezielt via Rewrite Rule ergänzt werden.
 
 
+## 5.9 Abschlusspräsentation
+
+Die Abschlusspräsentation dieser Arbeit wurde nicht als klassische PowerPoint-Datei, sondern als **HTML-basiertes Foliendeck mit [reveal.js](https://revealjs.com/)** umgesetzt (`presentation/index.html`).
+
+Das Foliendeck wird über **GitLab Pages** veröffentlicht und ist unter folgender URL erreichbar:
+
+**https://example.gitlab.io/presentation/**
+
+Das Deployment erfolgt vollständig automatisiert über einen dedizierten `pages`-Job in der `.gitlab-ci.yml`.
+
 ---
 
 # 6 Testverfahren
