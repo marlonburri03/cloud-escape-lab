@@ -35,7 +35,7 @@ def create_app(config_class: type = Config) -> APIFlask:
     @app.get("/healthz")
     @app.output(HealthOut, status_code=200)
     def healthz():
-        """Health probe target for App Service."""
+        """Health probe target for the Azure Container App."""
         return {"status": "ok"}
 
     @app.get("/")

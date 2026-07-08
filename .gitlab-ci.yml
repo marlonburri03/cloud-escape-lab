@@ -318,3 +318,20 @@ deploy:images:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
+
+# publish the reveal.js presentation to gitlab pages
+# scoped to presentation changes so it stays independent of the infra pipeline
+pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - mkdir -p public
+    - cp -r presentation/. public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - presentation/**/*
+        - .gitlab-ci.yml

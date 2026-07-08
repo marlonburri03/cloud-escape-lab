@@ -31,30 +31,6 @@ python -m http.server 8080
 - `S`: Speaker-Notes-Fenster öffnen (enthält Zeit- und Ablaufhinweise pro Folie)
 - `ESC`: Übersichtsmodus
 
-## Demo-Video
-
-Die Folie "Live-Demo / Aufzeichnung" bindet `assets/demo.mp4` per HTML5 `<video>`-Tag ein.
-Die Videodatei ist **nicht** im Repository enthalten und muss manuell ergänzt werden:
-
-```
-presentation/assets/demo.mp4
-```
-
-Solange die Datei fehlt, zeigt die Folie einen Fallback-Hinweis an, statt kaputt auszusehen.
-Alternativ kann die Folie für eine echte Live-Demo genutzt werden (Browser-Wechsel während der Präsentation).
-
-## Struktur
-
-```
-presentation/
-├── index.html          # Präsentation (reveal.js über CDN)
-├── assets/
-│   ├── cover_image.png # Titelbild (aus img/)
-│   ├── big_picture.png # Azure-Architekturdiagramm (aus data/)
-│   └── demo.mp4         # Demo-Aufzeichnung (manuell ergänzen)
-└── README.md
-```
-
 ## Export als PDF
 
 Reveal.js unterstützt PDF-Export über den Print-Stylesheet-Modus:
