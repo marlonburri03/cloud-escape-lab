@@ -30,8 +30,6 @@ Die Arbeit stützt sich auf das im dritten Semester des Lehrgangs zum dipl. Info
 ## 1.1 Behandelte Module
 
 - Microservices mit Python
-- Relationale Datenbanken
-- Datensicherheit
 - Containersicherheit
 - Netzwerk
 - Projektmanagement
@@ -97,12 +95,11 @@ Zur Umsetzung wird eine Microservice-Architektur eingesetzt, bei welcher Fronten
 ## 2.3 Ziele
 
 - Entwicklung einer funktionalen Cloud-basierten Escape-Room-Plattform mit mindestens einem vollständig spielbaren Szenario
-- Umsetzung einer Microservice-Architektur mit getrennten Komponenten für Frontend, Backend und Spiellogik
+- Umsetzung einer Microservice-Architektur mit getrennten Komponenten für Frontend und Backend
 - Aufbau einer automatisierten CI/CD Pipeline mit GitLab für Build, Testing und Deployment
-- Integration einer Authentifizierungslösung mittels Microsoft Entra ID inklusive rollenbasierter Zugriffskontrolle
+- Integration einer Authentifizierungslösung mittels Microsoft Entra ID
 - Automatisierte Bereitstellung der Infrastruktur mithilfe von OpenTofu (Terraform)
-- Ereignisgesteuerte Verarbeitung von Spielinteraktionen im containerisierten Backend, mit einer dedizierten Azure Function als geplante serverless Weiterentwicklung
-- Einsatz einer relationalen Datenbank (SQLite) zur Speicherung von Spielständen, Sessions und Leaderboard-Zeiten, mit Anbindung an eine externe PostgreSQL-Datenbank als produktiver Ausblick
+- Einsatz einer relationalen Datenbank (SQLite) zur Speicherung von Spielständen, Sessions und Leaderboard-Zeiten
 - Erstellung einer vollständigen Projektdokumentation inklusive Architekturübersicht, Deployment-Prozess und Lessons Learned
 
 ## 2.4 Sachmittel
@@ -111,14 +108,13 @@ Zur Umsetzung wird eine Microservice-Architektur eingesetzt, bei welcher Fronten
 - GitLab
 - Jira[^11] (SCRUM-Board[^12])
 - Visual Studio Code
-- Docker / Docker Compose
+- Docker
+- Azure Container Apps
 - OpenTofu (Terraform)
 - Microsoft Entra ID
 - AI-Tools (ChatGPT, Claude, Copilot etc.)
-- JavaScript / TypeScript
 - Python
-- PostgreSQL
-- Azure Functions
+- SQLite
 
 ## 2.5 Vorgaben, Methoden und Werkzeuge
 
@@ -138,11 +134,11 @@ Die Projektdokumentation erfolgt fortlaufend in Markdown-Dateien innerhalb des R
 
 __Systemarchitektur und technische Umsetzung:__
 
-Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Einzelne Komponenten wie Frontend, Backend, Spiellogik sowie serverlose Funktionen werden voneinander getrennt entwickelt und betrieben, um eine flexible, skalierbare und wartbare Architektur zu gewährleisten.
+Die Plattform basiert auf einer Cloud-nativen Microservice-Architektur und wird im Azure Tenant der Contoso University umgesetzt. Frontend und Backend werden als voneinander getrennte Komponenten entwickelt und betrieben, um eine flexible, skalierbare und wartbare Architektur zu gewährleisten. Die Spiellogik ist dabei Bestandteil des Backends.
 
-Das Frontend wird mit JavaScript beziehungsweise TypeScript umgesetzt. Für die Backend- und API-Komponenten wird Python verwendet. Die Kommunikation zwischen den einzelnen Diensten erfolgt über definierte Schnittstellen und APIs.
+Sowohl das Frontend als auch die Backend- und API-Komponenten werden mit Python (Flask) umgesetzt. Das Frontend nutzt server-seitig gerenderte Templates. Die Kommunikation zwischen den einzelnen Diensten erfolgt über definierte Schnittstellen und APIs.
 
-Die Plattform wird containerisiert betrieben. Dafür werden Docker und Docker Compose eingesetzt, um die einzelnen Services lokal sowie in der Cloud reproduzierbar bereitzustellen.
+Die Plattform wird containerisiert betrieben. Dafür wird Docker eingesetzt, um die einzelnen Services reproduzierbar bereitzustellen. In der Cloud werden die Container über Azure Container Apps betrieben und mittels OpenTofu (Terraform) sowie GitLab CI/CD automatisiert bereitgestellt.
 
 __Cloud und Infrastruktur:__
 
@@ -178,7 +174,7 @@ Eine spätere Erweiterung der Plattform mit zusätzlichen Escape-Room-Szenarien,
 
 __Risikoanalyse:__
 
-m Rahmen des Projekts wird eine Risikoanalyse durchgeführt, um potenzielle technische sowie organisatorische Risiken frühzeitig zu identifizieren und geeignete Massnahmen zu definieren.
+Im Rahmen des Projekts wird eine Risikoanalyse durchgeführt, um potenzielle technische sowie organisatorische Risiken frühzeitig zu identifizieren und geeignete Massnahmen zu definieren.
 
 Das Risiko-Level wird anhand der Eintrittswahrscheinlichkeit sowie der möglichen Auswirkungen eines Risikos bewertet. Beide Faktoren werden auf einer Skala von 1 bis 5 eingestuft und anschliessend kombiniert.
 
@@ -252,7 +248,7 @@ Die Product Roadmap zeigt die übergeordnete Planung und Entwicklungsrichtung de
 Sie dient als Leitfaden für die Umsetzung der definierten Releases (MVP, MLP, MMP) und ist eng an die Sprint-Struktur des SCRUM-Frameworks angelehnt.
 Da das Projekt iterativ aufgebaut ist, können Anpassungen während der Umsetzung jederzeit vorgenommen werden, um flexibel auf neue Erkenntnisse und Herausforderungen zu reagieren.
 
-Sprint 0 und Sprint 4 sind in der Roadmap nicht aufgeführt, da in diesen Sprints kein Produkt bzw. Release entstehen wird.
+Sprint 0 ist in der Roadmap nicht aufgeführt, da im diesem Sprint kein Produkt bzw. Release entstehen wird.
 
 __Übersicht der Releases:__
 
@@ -285,7 +281,6 @@ __Planbarkeit:__
 - Grössere Aufgaben wurden in Subtasks aufgeteilt.
 - Story Points wurden anhand der Fibonacci-Folge geschätzt.
 - Die Priorisierung der Story wurde festgelegt.
-- Die Story wurde im Sprint Planning besprochen und freigegeben.
 
 Die Definition of Ready gilt einheitlich für sämtliche User Stories des Projekts und wird nicht individuell pro Story angepasst.
 
@@ -313,7 +308,7 @@ __Dokumentation und Nachvollziehbarkeit:__
 __Integration und Abschluss:__
 - Die User Story wurde erfolgreich in das Gesamtprojekt integriert.
 - Falls relevant, wurde die CI/CD-Pipeline erfolgreich durchlaufen.
-- Die Story wurde im Sprint Review präsentiert und akzeptiert.
+- Die Story wurde im Sprint Review präsentiert.
 - Der Status der Story wurde in Jira auf Done gesetzt.
 
 Im Jira-Projekt ist eine Automation Rule hinterlegt, welche beim Erstellen neuer User Stories automatisch die wichtigsten DoD-Kriterien ergänzt. Dadurch wird sichergestellt, dass sämtliche Stories nach denselben Qualitätsstandards umgesetzt und überprüft werden.
@@ -355,10 +350,10 @@ Die nachfolgende Tabelle zeigt den Stand aller Risiken aus der initialen Risikoa
 
 | Risiko-ID | Beschreibung | Score vorher | Score nachher | Status | Bemerkung |
 |-----------|--------------|:------------:|:-------------:|:------:|-----------|
-| R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🔴 16 | 🟠 12 | ↓ | MVP erfolgreich umgesetzt; schrittweise Umsetzungsstrategie bewährt sich. Eintrittswahrscheinlichkeit sinkt von 4 auf 3. |
+| R1 | Hohe Komplexität der Architektur erschwert die Umsetzung und Fehlersuche | 🔴 16 | 🟠 12 | ↓ | MVP erfolgreich umgesetzt. Schrittweise Umsetzungsstrategie bewährt sich. Eintrittswahrscheinlichkeit sinkt von 4 auf 3. |
 | R2 | Zeitlicher Aufwand überschreitet den verfügbaren Rahmen der Semesterarbeit | 🔴 16 | 🔴 16 | → | Sprint-Ziele erreicht, jedoch hat das Erkunden von GitLab-Plattform-Features mehr Zeit gekostet als geplant. Risiko bleibt unverändert hoch. |
 | R3 | Fehler oder Probleme in GitLab CI/CD Pipelines verhindern automatisierte Deployments | 🟠 12 | 🟡 8 | ↓ | Frühe Pipeline-Checks für `terraform validate`, `terraform fmt -check` und `tflint`[^17] wurden eingeführt. Merge-Request-Pipelines laufen automatisiert und reduzieren Integrationsfehler frühzeitig. |
-| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟠 12 | → | Entra-ID-Absicherung der Anwendung war in Sprint 1 noch nicht umgesetzt. Die produktive Azure-OIDC-Anbindung für Deployments wurde später über ein environment-basiertes Federated Credential realisiert. |
+| R4 | Probleme bei der Integration von Microsoft Entra ID und Authentifizierung | 🟠 12 | 🟠 12 | → | Entra-ID-Absicherung der Anwendung wurde in Sprint 1 noch nicht umgesetzt. Die produktive Azure-OIDC-Anbindung für Deployments wird zu einem späteren Zeitpunkt realisiert. |
 | R5 | Fehlerhafte Infrastrukturdefinitionen in OpenTofu führen zu fehlerhaften Deployments | 🟡 9 | 🟡 6 | ↓ | `tflint` und `terraform validate` sind früh in der Pipeline verankert. Die eigentliche produktive Infrastruktur wurde zu diesem Zeitpunkt noch nicht ausgerollt. |
 
 __Sprint Retrospective:__
@@ -464,14 +459,14 @@ Sprint 3 wurde per 06.07.2026 planmässig abgeschlossen. Alle geplanten User Sto
 
 **Abgeschlossene User Stories:**
 
-* Entra ID App Registration (Bootstrap-Modul `entra_auth`): App Registration, Service Principal, Client Secret, Redirect URI und Implicit Grant für EasyAuth konfiguriert.
-* EasyAuth auf der Frontend Container App (`infra/modules/aca_auth`): ACA Built-in Authentication via `authConfigs/current` Sub-Ressource aktiviert; unauthentifizierte Requests werden automatisch auf die Microsoft-Loginseite weitergeleitet.
-* AGW Health Probe[^22]: Eigene Health Probe (`/healthz`) konfiguriert, damit der Application Gateway das Frontend nach Aktivierung von EasyAuth weiterhin als gesund einzustufen vermag.
-* Deployment des AGW Header-Rewrite (X-Forwarded-Host) im Contoso Connectivity-Repository für korrekten OAuth2-Callback umgesetzt.
-* App Roles (`Escape.Player`, `Escape.Admin`) für eine spätere gruppenbasierte Autorisierung konzipiert; die produktive Umsetzung ist als Restpunkt offen (siehe 7.4).
-* Entra-Variablen in die GitLab-Pipeline integriert (Protected Variables `TF_VAR_entra_client_id` und `TF_VAR_entra_client_secret`).
-* Testing, Bugfixing und technische Härtung der Gesamtlösung abgeschlossen (alle zehn Testfälle bestanden, siehe Kapitel 6).
-* Projektdokumentation finalisiert: ADR-009[^23] (EasyAuth auf ACA), `identity-and-access.md`, `deploy.md` sowie README aktualisiert und Präsentationsgrundlage erstellt.
+* [S3M-28, Implement Microsoft Entra ID Authentication](https://marlon-burri.atlassian.net/browse/S3M-28)✅-DONE
+* [S3M-29, Automate Escape Room Deployment Pipeline](https://marlon-burri.atlassian.net/browse/S3M-29)✅-DONE
+* [S3M-30, Create Unit and Integration Tests](https://marlon-burri.atlassian.net/browse/S3M-30)✅-DONE
+* [S3M-31, Perform End-to-End Testing](https://marlon-burri.atlassian.net/browse/S3M-31)✅-DONE
+* [S3M-32, Fix Bugs and Stabilize Application](https://marlon-burri.atlassian.net/browse/S3M-32)✅-DONE
+* [S3M-33, Review and Complete Technical Documentation](https://marlon-burri.atlassian.net/browse/S3M-33)✅-DONE
+* [S3M-34, Prepare Final Presentation](https://marlon-burri.atlassian.net/browse/S3M-34)✅-DONE
+* [S3M-35, Final Project Delivery](https://marlon-burri.atlassian.net/browse/S3M-35)✅-DONE
 
 **Risikoverlauf Sprint 3:**
 
@@ -495,7 +490,7 @@ __Lessons Learned:__
 - **ACA EasyAuth benötigt eine eigene API-Ressource:** EasyAuth auf ACA wird über den ARM-Sub-Ressourcentyp `Microsoft.App/containerApps/authConfigs/current` konfiguriert. Der `azurerm_container_app`-Provider stellt diese Ressource nicht bereit und setzt bei jedem Deployment (`PUT`) alle Auth-Einstellungen zurück. Die Lösung besteht darin, EasyAuth mit dem `azure/azapi`-Provider zu verwalten und in der `azurerm_container_app`-Ressource ein `lifecycle { ignore_changes = [secret] }` zu setzen.
 - **AGW überschreibt den `Host`-Header — EasyAuth baut daraus die OAuth2-Redirect-URI:** Das Contoso Application Gateway setzt den `Host`-Header im Backend-Request auf den internen ACA-FQDN. EasyAuth konstruiert daraus die `redirect_uri` für Entra ID — und dieser interne FQDN ist im Browser nicht erreichbar. Die korrekte Lösung ist eine AGW Rewrite Rule, die den Header `X-Forwarded-Host: escape.contoso.example` injiziert, kombiniert mit `forwardProxy.convention = "Standard"` in der EasyAuth-Konfiguration. Das ist ein bekanntes Muster für Reverse-Proxy-Szenarien, das in der Dokumentation jedoch kaum beschrieben wird.
 - **AGW sendet `X-Original-Host` nicht automatisch:** Entgegen einiger Dokumentationsquellen fügt Azure AGW v2 den Header `X-Original-Host` **nicht** automatisch hinzu. Automatisch injiziert werden ausschliesslich `X-Forwarded-For`, `X-Forwarded-Proto` und `X-Forwarded-Port`.
-- **Health Probe und EasyAuth müssen koordiniert werden:** Sobald EasyAuth aktiv ist, gibt der Endpunkt `/` für nicht-authentifizierte AGW-Health-Probes HTTP 302 zurück. Der AGW bewertet den Backend-Pool als unhealthy und liefert für alle User 502. Lösung: `/healthz` von der EasyAuth-Prüfung ausschliessen (`excludedPaths`) und die AGW Health Probe auf diesen Pfad umleiten.
+- **Health Probe und EasyAuth müssen koordiniert werden:** Sobald EasyAuth aktiv ist, gibt der Endpunkt `/` für nicht-authentifizierte AGW-Health-Probes HTTP 302 zurück. Der AGW bewertet den Backend-Pool als unhealthy und liefert für alle User 502. Lösung: `/healthz` von der EasyAuth-Prüfung ausschliessen (`excludedPaths`) und die AGW Health Probe[^22] auf diesen Pfad umleiten.
 
 ---
 
@@ -511,7 +506,7 @@ Daraus ergeben sich folgende Grundprinzipien:
 
 - **Infrastructure as Code (IaC):** Sämtliche Azure-Ressourcen werden deklarativ beschrieben, versioniert und automatisiert bereitgestellt.
 - **Automation First:** Nach der initialen Einrichtung erfolgen Änderungen ausschliesslich über definierte CI/CD-Prozesse anstelle manueller Anpassungen im Azure-Portal.
-- **Security by Design:** Die Authentifizierung gegenüber Azure-Diensten erfolgt über Managed Identities[^24] und Microsoft Entra ID. Dadurch können statische Zugangsdaten vermieden und Sicherheitsrisiken reduziert werden.
+- **Security by Design:** Die Authentifizierung gegenüber Azure-Diensten erfolgt über Managed Identities[^23] und Microsoft Entra ID. Dadurch können statische Zugangsdaten vermieden und Sicherheitsrisiken reduziert werden.
 
 Diese Prinzipien stellen sicher, dass Änderungen nachvollziehbar bleiben, Deployments konsistent durchgeführt werden und der Betriebsaufwand auch bei wachsendem Projektumfang beherrschbar bleibt.
 
@@ -524,7 +519,7 @@ Bevor mit der Entwicklung der Plattform begonnen werden kann, ist ein einmaliger
 | Ebene | Rolle im Lösungsdesign |
 |---|---|
 | **Bootstrap** | Schafft die technischen Voraussetzungen für automatisierte Deployments |
-| **Plattform-Stack**[^25] | Enthält die gemeinsame Azure-Basis wie Netzwerk, Security und zentrale Plattformdienste |
+| **Plattform-Stack**[^24] | Enthält die gemeinsame Azure-Basis wie Netzwerk, Security und zentrale Plattformdienste |
 | **Theme-Stack** | Kapselt einen einzelnen Escape Room mit seinen themenspezifischen Ressourcen |
 
 Entscheidend für das Konzept ist, dass Theme-Stacks nur definierte Outputs des Plattform-Stacks verwenden, diese aber nicht verändern. Dadurch lassen sich neue Inhalte ergänzen, ohne die Gesamtarchitektur oder bestehende Deployments zu destabilisieren.
@@ -575,7 +570,7 @@ Dieses Kapitel beschreibt die technische Umsetzung der deployten Architektur der
 
 Der Bootstrap-Prozess löst das strukturelles Henne-Ei-Problem, das bei vollständig codebased CI/CD-Setups mit Remote-State unvermeidbar auftritt. Die GitLab-Pipeline benötigt für das Deployment via OIDC eine Managed Identity sowie ein Remote-State-Backend in Azure. Beides existiert jedoch erst nach einem erstmaligen, manuell ausgelösten Deployment.
 
-Die Lösung besteht in einem lokal ausgeführten `terraform apply` des Bootstrap-Stacks[^26] (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und wird ausschliesslich von einem Admin-Account (mit Entra-ID-Berechtigungen) ausgeführt. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
+Die Lösung besteht in einem lokal ausgeführten `terraform apply` des Bootstrap-Stacks[^25] (`bootstrap/`). Dieser Stack ist bewusst vom automatisierten Pipeline-Prozess entkoppelt und wird ausschliesslich von einem Admin-Account (mit Entra-ID-Berechtigungen) ausgeführt. Er erstellt ausschliesslich die folgenden Infrastrukturgrundlagen:
 
 | Ressource | Zweck |
 |---|---|
@@ -641,7 +636,7 @@ Der Platform-Stack (`infra/`) ist in verschiedene Terraform-Module gegliedert:
 |---|---|
 | `network` | Die beiden Subnets `snet-aca` und `snet-pe` |
 | `acr` | Azure Container Registry (`acrlabprodescape`, Basic SKU) |
-| `aca_env` | Container App Environment[^27] `cae-lab-prod-escape` (internal LB, VNet-integriert) |
+| `aca_env` | Container App Environment[^26] `cae-lab-prod-escape` (internal LB, VNet-integriert) |
 | `aca_app` | Container App Instanzen für Frontend und Backend |
 | `aca_auth` | EasyAuth-Konfiguration auf der Frontend Container App (Entra ID, Redirect zu Login, Audience-Validierung) |
 
@@ -649,7 +644,7 @@ Jedes Modul exponiert ausschliesslich die Outputs, die von anderen Modulen oder 
 
 ### Ignored Tags
 
-Praktisch jede Ressource im Platform-Stack (Resource Group, ACR, Container App Environment, Private DNS Zone etc.) setzt `lifecycle { ignore_changes = [tags] }`. Grund dafür ist, dass Tags auf Subscription ebene gesetzt und vererbt werden. Ohne dieses `ignore_changes` würde jeder `terraform plan` eine Änderung an diesen Portal-/Policy-seitig gepflegten Tags anzeigen und potenziell zurücksetzen, was zu einem State-Drift-Konflikt zwischen IaC und zentraler Governance führen könnte. Die Alternative wäre, Tags ausschliesslich über Terraform zu verwalten und jede manuelle/Policy-Änderung als Drift zu behandeln. Dies wurde bewusst nicht gewählt, um die zentrale Tag-Governance der Contoso nicht zu blockieren.
+Praktisch jede Ressource im Platform-Stack (Resource Group, ACR, Container App Environment, Private DNS Zone[^27] etc.) setzt `lifecycle { ignore_changes = [tags] }`. Grund dafür ist, dass Tags auf Subscription ebene gesetzt und vererbt werden. Ohne dieses `ignore_changes` würde jeder `terraform plan` eine Änderung an diesen Portal-/Policy-seitig gepflegten Tags anzeigen und potenziell zurücksetzen, was zu einem State-Drift-Konflikt zwischen IaC und zentraler Governance führen könnte. Die Alternative wäre, Tags ausschliesslich über Terraform zu verwalten und jede manuelle/Policy-Änderung als Drift zu behandeln. Dies wurde bewusst nicht gewählt, um die zentrale Tag-Governance der Contoso nicht zu blockieren.
 
 ### Deployte Azure-Ressourcen
 
@@ -706,7 +701,7 @@ Trivy scannt die frisch gepushten Images direkt aus der Registry (`--image-src r
 
 Der öffentliche Zugriff auf die Plattform erfolgt ausschliesslich über den zentralen Application Gateway WAFv2 in der Hub-Subscription der Contoso. Dieses Hub-and-Spoke-Modell hat drei direkte Auswirkungen auf das Projekt:
 
-- **Governance:** TLS-Zertifikate, WAF[^29]-Policies und Firewall-Regeln werden von Contoso zentral verwaltet. Das Projekt muss diese Aspekte nicht selbst betreiben.
+- **Governance:** TLS-Zertifikate, WAF[^28]-Policies und Firewall-Regeln werden von Contoso zentral verwaltet. Das Projekt muss diese Aspekte nicht selbst betreiben.
 - **Security:** Die WAF mit OWASP CRS schützt vor häufigen Angriffsvektoren, ohne eine eigene WAF-Konfiguration im Spoke zu erfordern.
 - **Einschränkung:** Das Projekt hat keinen direkten schreibenden Zugriff auf die Application-Gateway-Konfiguration. Neue Routing-Einträge werden einmalig pro Theme via Change Request an Contoso beantragt.
 
@@ -728,7 +723,7 @@ escape.contoso.example  →  CNAME  →  contoso-appgw-prod.northeurope.cloudapp
       TLS host override                                   → ca-lab-prod-escape-backend.examplepebble-00000000.northeurope.azurecontainerapps.io
 ```
 
-### Path-basiertes Routing[^30]
+### Path-basiertes Routing[^29]
 
 Auf dem Listener `escape.contoso.example:443` leitet das Application Gateway Anfragen anhand des URL-Pfads an die zuständige Container App weiter:
 
@@ -796,28 +791,6 @@ Die Lösung besteht darin, dem Application Gateway per Rewrite Rule den zusätzl
 https://escape.contoso.example/.auth/login/aad/callback
 ```
 
-Das erfordert eine Konfiguration an beiden Enden der Verbindung — im `aca_auth`-Modul und im AGW-Routing:
-
-**EasyAuth (`infra/modules/aca_auth/main.tf`):**
-```hcl
-httpSettings = {
-  forwardProxy = {
-    convention = "Standard"   # liest X-Forwarded-Host
-  }
-}
-```
-
-**AGW Routing YAML (`contoso-connectivity/envs/prod/routing/cloud-escape-lab.yaml`):**
-```yaml
-inject_request_headers:
-  X-Forwarded-Host: escape.contoso.example
-```
-
-Die `inject_request_headers`-Funktion existierte im AGW-Modul zuvor nicht und wurde im Rahmen dieses Projekts als Pull Request in `contoso-connectivity/modules/app_gateway` ergänzt.
-
-> **Hinweis:** Azure AGW v2 injiziert `X-Original-Host` **nicht** automatisch (entgegen einigen Dokumentationsquellen). Automatisch hinzugefügte Headers sind ausschliesslich `X-Forwarded-For`, `X-Forwarded-Proto` und `X-Forwarded-Port` — der `X-Forwarded-Host` musste daher gezielt via Rewrite Rule ergänzt werden.
-
-
 ## 5.9 Abschlusspräsentation
 
 Die Abschlusspräsentation dieser Arbeit wurde nicht als klassische PowerPoint-Datei, sondern als **HTML-basiertes Foliendeck mit [reveal.js](https://revealjs.com/)** umgesetzt (`presentation/index.html`).
@@ -836,7 +809,7 @@ Dieses Kapitel beschreibt das Testkonzept für das Cloud Escape Lab. Im Fokus st
 
 **Abgrenzung:** Der Tutorial Room (`frontend/app/templates/tutorial.html`, `backend/app/rooms/tutorial/` inkl. Rätsel-Logik) wurde **inhaltlich nicht gross erweitert oder verändert**. Er basiert auf dem Template [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) meines Dozenten Fachdozent (siehe [`NOTICE`](./NOTICE)). Die eigentliche Rätsel-Logik ist daher nicht Gegenstand dieses Testverfahrens, sie dient lediglich als Inhalt, um die selbst entwickelte Plattform (Routing, Auth, IaC, CI/CD etc.) ende-zu-ende zu testen.
 
-**ℹ️ Hinweis:** In GitLab kann es vorkommen, dass GIFs nicht korrekt angezeigt werden oder pausiert wirken. Bitte die Seite neu laden oder alternativ einen anderen Browser verwenden.
+> **Hinweis:** In GitLab kann es vorkommen, dass GIFs nicht korrekt angezeigt werden oder pausiert wirken. Bitte die Seite neu laden oder alternativ einen anderen Browser verwenden.
 
 &nbsp;
 
@@ -848,18 +821,6 @@ flowchart TD
     D -->|Ja| E[Screenshot/GIF + Dokumentation ergänzen]
     D -->|Nein| F[Fehleranalyse + Dokumentation]
 ```
-
-&nbsp;
-
-### Umgesetzte Änderungen im Rahmen von S3M-31
-
-Im Zuge der End-to-End-Testvorbereitung wurden zusätzlich mehrere Anpassungen an der Plattform umgesetzt, damit die Benutzerführung sauber getestet und später auf mehrere Escape Rooms erweitert werden kann:
-
-- **Startseite als Room-Katalog:** Die bisherige Startseite mit einem einzelnen Button wurde auf ein kartenbasiertes Room-Auswahl-Layout umgestellt. Der Tutorial Room wird als erste spielbare Karte mit Vorschaubild angezeigt; zusätzliche Platzhalter für einen **Terraform Room** und einen **CI/CD Room** bereiten die Plattform auf weitere Szenarien vor.
-- **Grössere Tutorial-Room-Ansicht:** Das Frontend des Tutorial Rooms wurde so angepasst, dass das Hintergrundbild deutlich grösser dargestellt wird und die Spieloberfläche mehr Platz erhält. Dadurch wirkt der Room stärker wie eine eigentliche Spielfläche und ist ohne die bisherigen kleinen Scroll-Bereiche nutzbarer.
-- **Bugfix beim Exit Terminal:** Das Eingabefeld für den vierstelligen Code wird nun sprachunabhängig über die stabile Objekt-ID statt über einen lokalisierten Anzeigenamen eingeblendet. Damit funktioniert die Code-Eingabe sowohl lokal als auch in der Azure-Deployment-Variante zuverlässig.
-- **Leaderboard für Abschlusszeiten:** Für den Tutorial Room wurde ein Leaderboard eingeführt, das die gemessene Abschlusszeit pro Benutzer speichert und im Startbereich des Rooms als Top-10-Liste anzeigt. Die Anzeige der eigenen Zeit erfolgt zusätzlich direkt nach dem erfolgreichen Abschluss des Rooms.
-- **Persistenz-Hinweis zum Leaderboard:** Das Leaderboard ist fachlich für einen produktiven Betrieb gedacht und soll Zeiten über mehrere Deployments hinweg behalten. Damit dies in Azure dauerhaft funktioniert, muss das Backend über `DATABASE_URI` auf eine **externe Datenbank** (z. B. PostgreSQL) zeigen; eine reine lokale SQLite-Datei im Container wäre für diese Anforderung nicht ausreichend.
 
 &nbsp;
 
@@ -1047,7 +1008,7 @@ Bewährt haben sich insbesondere folgende Architekturentscheidungen:
 - **Secretless CI/CD über OIDC Federated Credentials:** Die GitLab-Pipeline deployt ohne hinterlegte Zugangsdaten in Azure. Das eigene CI/CD-Image sorgt für reproduzierbare Build-Umgebungen, Releases sind über Git-Tags (MVP, MLP, MMP) eindeutig referenzierbar.
 - **EasyAuth vor der Container App:** Die vorgelagerte Authentifizierung erspart applikationsseitigen Auth-Code, verlangte jedoch ein tiefes Verständnis der ACA-`authConfigs`-Ressource sowie des AGW-Proxy-Verhaltens (Host-Header-Rewrite, dedizierte Health Probe).
 
-Bewusst wurden gegenüber der ursprünglichen Zielsetzung zwei pragmatische Abweichungen getroffen. Die ereignisgesteuerten Spielinteraktionen laufen aktuell im containerisierten Backend statt in einer separaten Azure Function, und die Persistenz erfolgt vorerst über eine dateibasierte SQLite-Datenbank statt über PostgreSQL. Beide Punkte sind für den aktuellen Funktionsumfang ausreichend, für einen dauerhaften produktiven Betrieb aber gezielt weiterzuentwickeln (siehe 7.4).
+Bewusst wurden für den Proof of Concept zwei pragmatische Scope-Entscheidungen getroffen, die mit der Zielsetzung im Einklang stehen. Die Persistenz erfolgt zielkonform über eine dateibasierte SQLite-Datenbank[^30], und die Spiellogik ist Bestandteil des containerisierten Backends. Beide Entscheidungen sind für den aktuellen Funktionsumfang ausreichend. Für einen dauerhaften produktiven Betrieb sind die Anbindung an eine externe Datenbank sowie eine optionale Auslagerung ausgewählter Spielinteraktionen in eine serverlose Azure Function als Weiterentwicklung vorgesehen (siehe 7.4).
 
 ## 7.3 Persönliches Fazit
 
@@ -1074,7 +1035,7 @@ Die Plattform ist als tragfähige Grundlage konzipiert und lässt sich in mehrer
 
 Mit dieser Semesterarbeit habe ich eine vollständige Cloud-Native-Plattform von der ersten Architekturidee bis zum produktiv erreichbaren und abgesicherten Produkt umgesetzt. Die Escape-Room-Plattform vereint einen spielbaren Escape Room, eine entkoppelte Microservice-Architektur, eine vollständig als Code beschriebene Azure-Infrastruktur sowie eine automatisierte, secretless CI/CD-Pipeline zu einer stimmigen Gesamtlösung.
 
-Der Weg dorthin war anspruchsvoll und lehrreich zugleich. Gerade das Zusammenspiel von Landing-Zone-Integration, zentralem Application Gateway, Identity und Delivery hat mir gezeigt, wie viel Sorgfalt reale Cloud-Umgebungen verlangen und wie befriedigend es ist, wenn am Ende alle Komponenten sauber ineinandergreifen. Das Ergebnis erfüllt die gesetzten Ziele und bildet eine tragfähige Grundlage für die in Kapitel 7.4 skizzierten Weiterentwicklungen.
+Der Weg dorthin war anspruchsvoll und lehrreich zugleich. Gerade das Zusammenspiel von Landing-Zone-Integration, zentralem Application Gateway, Identity und Delivery hat mir gezeigt, wie viel Sorgfalt reale Cloud-Umgebungen verlangen und wie befriedigend es ist, wenn am Ende alle Komponenten sauber ineinandergreifen. Das Ergebnis erfüllt die gesetzten Ziele und bildet eine tragfähige Grundlage für mögliche Weiterentwicklungen.
 
 Abschliessend danke ich allen, die mich während dieser Arbeit unterstützt und begleitet haben. Die gewonnenen Erkenntnisse aus Praxis und Theorie nehme ich als wertvolle Grundlage für meine weitere Laufbahn mit.
 
@@ -1135,12 +1096,11 @@ Abschliessend danke ich allen, die mich während dieser Arbeit unterstützt und 
 [^20]: **Azure Container Registry (ACR):** Privates Registry für Container-Images, aus dem die Container Apps ihre Images über Managed Identity beziehen.
 [^21]: **Federated Identity Credential:** Vertrauensbeziehung zwischen einer Managed Identity in Azure und einem definierten Subject (z. B. einem GitLab-Environment), die passwortlose Authentifizierung via OIDC ermöglicht.
 [^22]: **Health Probe:** Regelmässiger Prüf-Request (z. B. auf `/healthz`), mit dem das Application Gateway die Verfügbarkeit eines Backend-Pools überwacht.
-[^23]: **ADR (Architecture Decision Record):** Kurzdokument, das eine einzelne Architekturentscheidung inklusive Kontext, Alternativen und Konsequenzen festhält.
-[^24]: **Managed Identity:** Von Azure verwaltete Identität (System- oder User-Assigned), über die eine Ressource ohne gespeicherte Zugangsdaten auf andere Azure-Dienste zugreifen kann.
-[^25]: **Plattform-Stack / Theme-Stack:** Architektonische Trennung zwischen der gemeinsamen, stabilen Azure-Basis (Plattform-Stack, `infra/`) und den fachlich wechselnden Escape-Room-Inhalten (Theme-Stack).
-[^26]: **Bootstrap-Stack:** Einmalig lokal ausgeführter Terraform-Stack (`bootstrap/`), der die Grundvoraussetzungen (State-Backend, OIDC-Identität, Entra App Registration) für den automatisierten Betrieb schafft.
-[^27]: **Container App Environment:** Isolierte Laufzeitumgebung für mehrere Container Apps, inklusive internem Load Balancer und VNet-Integration.
-[^28]: **Private DNS Zone:** Im Spoke-VNet verankerte DNS-Zone, über die interne Hostnamen der Container Apps aufgelöst werden.
-[^29]: **WAF (Web Application Firewall):** Sicherheitskomponente am Application Gateway (WAFv2, OWASP CRS), die eingehenden Traffic auf bekannte Angriffsmuster prüft und blockiert.
-[^30]: **Path-based Routing:** Routing-Mechanismus am Application Gateway, der Requests anhand des URL-Pfads (z. B. `/` vs. `/tutorial-room/*`) an unterschiedliche Backend-Dienste weiterleitet.
-[^31]: **SQLite:** Dateibasierte, im Container-Filesystem gespeicherte Datenbank, in der aktuell die Spielzustände abgelegt werden (vgl. R-DATA-001 in `docs/risks-and-limitations.md`).
+[^23]: **Managed Identity:** Von Azure verwaltete Identität (System- oder User-Assigned), über die eine Ressource ohne gespeicherte Zugangsdaten auf andere Azure-Dienste zugreifen kann.
+[^24]: **Plattform-Stack / Theme-Stack:** Architektonische Trennung zwischen der gemeinsamen, stabilen Azure-Basis (Plattform-Stack, `infra/`) und den fachlich wechselnden Escape-Room-Inhalten (Theme-Stack).
+[^25]: **Bootstrap-Stack:** Einmalig lokal ausgeführter Terraform-Stack (`bootstrap/`), der die Grundvoraussetzungen (State-Backend, OIDC-Identität, Entra App Registration) für den automatisierten Betrieb schafft.
+[^26]: **Container App Environment:** Isolierte Laufzeitumgebung für mehrere Container Apps, inklusive internem Load Balancer und VNet-Integration.
+[^27]: **Private DNS Zone:** Im Spoke-VNet verankerte DNS-Zone, über die interne Hostnamen der Container Apps aufgelöst werden.
+[^28]: **WAF (Web Application Firewall):** Sicherheitskomponente am Application Gateway (WAFv2, OWASP CRS), die eingehenden Traffic auf bekannte Angriffsmuster prüft und blockiert.
+[^29]: **Path-based Routing:** Routing-Mechanismus am Application Gateway, der Requests anhand des URL-Pfads (z. B. `/` vs. `/tutorial-room/*`) an unterschiedliche Backend-Dienste weiterleitet.
+[^30]: **SQLite:** Dateibasierte, im Container-Filesystem gespeicherte Datenbank, in der aktuell die Spielzustände abgelegt werden.
