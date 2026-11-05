@@ -1,143 +1,67 @@
-# Templates – Jinja2 HTML-Vorlagen
+# Templates
 
-Dieser Ordner enthält alle **HTML-Seiten** der Anwendung. Sie verwenden **Jinja2**, die Template-Engine von Flask.
+This folder contains all HTML pages of the frontend, written as [Jinja2](https://jinja.palletsprojects.com/) templates.
 
----
+## Template inheritance
 
-## Was ist Jinja2?
+Every page extends `base.html`, which avoids duplicated markup:
 
-Jinja2 erlaubt es, **HTML mit Python-Variablen und Logik** zu kombinieren. Zum Beispiel:
-
-```html
-<h1>Hallo, {{ user }}</h1>
-```
-
-Flask übergibt `user` aus der Route, Jinja2 setzt ihn in das HTML ein.
-→ Quelle: [jinja.palletsprojects.com/en/3.x/templates](https://jinja.palletsprojects.com/en/3.x/templates/)
-
----
-
-## Template-Vererbung (das Wichtigste)
-
-Alle Seiten **erben** von `base.html`. Das vermeidet Code-Wiederholung.
-
-```
-base.html          ← Basisgerüst: <html>, <head>, CSS, Header
-  ├── index.html   ← {% extends "base.html" %} + {% block content %}
+```text
+base.html          skeleton: <html>, <head>, CSS design system, header
+  ├── index.html   {% extends "base.html" %} + {% block content %}
   └── tutorial.html
 ```
 
-**Wie es funktioniert:**
+`base.html` defines the placeholder `{% block content %}{% endblock %}`, and each page fills it.
 
-`base.html` definiert einen Platzhalter:
-```html
-{% block content %}{% endblock %}
-```
+## Files
 
-Jede Kindseite füllt diesen Platzhalter aus:
-```html
-{% extends "base.html" %}
-{% block content %}
-  <!-- Seiteninhalt hier -->
-{% endblock %}
-```
+### `base.html`
 
-→ Quelle: [flask.palletsprojects.com – Templates](https://flask.palletsprojects.com/en/3.x/templating/)
+- Viewport meta tag for mobile devices
+- Inter font and Bootstrap Icons
+- CSS design system: colours, spacing and typography as custom properties
+- App shell with the shared header and the organisation logo
 
----
+### `index.html`: start page
 
-## Dateien im Überblick
+- Welcome card with the user name (`{{ user }}` from the authentication header, otherwise `anonymous`)
+- Three feature chips (Azure labs, DevOps, security)
+- Button to the tutorial room
 
-### `base.html` – Das Fundament
-
-**Was es enthält:**
-- `<meta viewport>` → Damit die Seite auf Mobilgeräten korrekt dargestellt wird
-- **Google Fonts (Inter)** → Moderne, professionelle Schriftart
-- **Bootstrap Icons (CDN)** → Icon-Bibliothek (`<i class="bi bi-cloud-fill">`)
-- **CSS Design-System** → Alle Farben, Abstände, Schriften als CSS-Variablen
-- **App-Shell-Layout** → Der gemeinsame Header mit Logo und Contoso-Bezeichnung
-
-**Warum ein Design-System?**
-Durch CSS Custom Properties (`--blue`, `--navy` etc.) muss eine Farbe nur einmal geändert werden und gilt überall. Das ist ein Best Practice aus der modernen Web-Entwicklung.
-
----
-
-### `index.html` – Startseite
-
-**Inhalt:**
-- Begrüssungskarte mit dem Nutzernamen (`{{ user }}` aus dem optionalen Upstream-Auth-Header oder `"anonymous"`)
-- Drei Feature-Chips (Azure Labs, DevOps, Security)
-- Button zum Tutorial Room
-
-**Variablen von Flask:**
-| Variable | Herkunft | Inhalt |
+| Variable | Source | Content |
 |---|---|---|
-| `{{ user }}` | `g.user` in `routes.py` | Eingeloggter Nutzername (oder "anonymous") |
-| `{{ title }}` | `config.py` → `SITE_TITLE` | "Contoso Escape Room Platform" |
+| `{{ user }}` | `g.user` in `routes.py` | Signed-in user name or `anonymous` |
+| `{{ title }}` | `SITE_TITLE` in `config.py` | Site title |
 
----
+### `tutorial.html`: the escape room
 
-### `tutorial.html` – Der Escape Room
+- **CSS:** styling of panels, cards, buttons and messages
+- **HTML:** start screen, success banner, game area with two panels
+- **JavaScript:** all client-side game handling, talking to the backend:
 
-**Was es enthält:**
-- **CSS** (oben im Block): Styling der Spieloberfläche (Panels, Karten, Buttons, Nachrichten)
-- **HTML** (Mitte): Startbildschirm, Win-Banner, Spielbereich mit zwei Panels
-- **JavaScript** (unten): Gesamte Spiellogik – kommuniziert mit dem Backend
-
-**Aufbau des JavaScripts:**
-
-```
-startGame()       → POST /tutorial-room/start  → erhält JWT-Token
-stopRuntime()     → POST /tutorial-room/runtime/stop
-deleteRuntime()   → DELETE /tutorial-room/runtime
-examineRoom()     → GET  /tutorial-room/examine
-examineSelected() → GET  /tutorial-room/objects/{id}/examine
-interactSelected()→ POST /tutorial-room/objects/{id}/interact
-resetGame()       → POST /tutorial-room/reset
+```text
+startGame()        POST   /tutorial-room/start          receives the JWT
+stopRuntime()      POST   /tutorial-room/runtime/stop
+deleteRuntime()    DELETE /tutorial-room/runtime
+examineRoom()      GET    /tutorial-room/examine
+examineSelected()  GET    /tutorial-room/objects/{id}/examine
+interactSelected() POST   /tutorial-room/objects/{id}/interact
+resetGame()        POST   /tutorial-room/reset
 ```
 
-**Wichtig:** Das JavaScript sendet bei jeder Anfrage einen **JWT-Token** im Header:
-```
-Authorization: Bearer <token>
-```
-Das Backend prüft diesen Token und weiss so, welches Spiel gemeint ist.
+Every request carries `Authorization: Bearer <token>`. On `startGame()` the browser generates a UUID (`crypto.randomUUID()`), the backend returns a JWT for it, and the page keeps it in `gameToken`.
 
-Stop/Delete beenden die aktive Room-Runtime im Backend. Das Frontend bleibt dabei erreichbar und kann direkt wieder eine neue Runtime starten.
+## Origin and changes
 
-**Woher der Token kommt:**
-Beim `startGame()` wird ein UUID generiert (`crypto.randomUUID()`), ans Backend gesendet, und das Backend gibt einen JWT-Token zurück. Dieser Token wird im Browser gespeichert (`gameToken`).
-
----
-
-## Was wurde vom Lehrer übernommen? Was habe ich geändert?
-
-| Datei | Ursprung (Lehrer) | Meine Änderungen |
+| File | Upstream template | Changes in this project |
 |---|---|---|
-| `base.html` | Minimal: 15 Zeilen, weisser Hintergrund, `system-ui`-Font | Komplett neu: Dark Theme, Inter-Font, CSS-Variablen, Logo-Header |
-| `index.html` | `<h1>Hello, {{ user }}</h1>` + grüner Button | Welcome-Card mit Feature-Chips, gleiche Variablen und Route |
-| `tutorial.html` | Basiert auf `ma-room-template/app/templates/room_tester.html` | Komplettes CSS-Redesign (Dark Theme), Layout-Integration, JS weitgehend aus dem Vorbild übernommen |
+| `base.html` | Minimal page, white background, system font | Rebuilt: dark theme, Inter, CSS variables, header with logo |
+| `index.html` | Greeting and a button | Welcome card with feature chips; same variables and route |
+| `tutorial.html` | `room_tester.html` from `ma-room-template` | Complete CSS redesign and layout integration; JavaScript largely taken from the template |
 
-> **Lizenz- und Herkunftshinweis zu `tutorial.html`**
-> `tutorial.html` basiert auf dem Room Tester aus
-> [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) und
-> steht als abgeleitetes Material unter **CC BY-SA 4.0**. Das inhaltliche
-> Grundgerüst und grosse Teile der Spielinteraktion stammen aus dem
-> Vorbild; in diesem Repository wurden vor allem das visuelle Design,
-> die Einbettung ins eigene UI sowie kleine Fehlerbehandlungs-Anpassungen
-> ergänzt.
+> **Licence:** `tutorial.html` is adapted from the room tester in [`ma-room-template`](https://gitlab.com/solvista/ma-room-template) and is licensed under **CC BY-SA 4.0**. The structure and most of the game interaction come from the template; this project added the visual design, the integration into the UI and small error-handling changes.
 
----
+## References
 
-## Quellen
-
-| Thema | Quelle |
-|---|---|
-| Jinja2 Template-Vererbung | [jinja.palletsprojects.com](https://jinja.palletsprojects.com/en/3.x/templates/#template-inheritance) |
-| Flask Templates | [flask.palletsprojects.com](https://flask.palletsprojects.com/en/3.x/templating/) |
-| CSS Custom Properties | [MDN – Using CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) |
-| Bootstrap Icons | [icons.getbootstrap.com](https://icons.getbootstrap.com/) |
-| Inter Schriftart | [rsms.me/inter](https://rsms.me/inter/) |
-| Farbpalette (Azure-Stil) | [Microsoft Fluent Design – Color](https://fluent2.microsoft.design/color) |
-| CSS Dark Mode Pattern | [web.dev – color-scheme](https://web.dev/articles/color-scheme) |
-| `crypto.randomUUID()` | [MDN – Crypto.randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) |
-| fetch() API | [MDN – Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) |
+[Jinja template inheritance](https://jinja.palletsprojects.com/en/3.x/templates/#template-inheritance) · [Flask templates](https://flask.palletsprojects.com/en/3.x/templating/) · [CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) · [Bootstrap Icons](https://icons.getbootstrap.com/) · [Inter](https://rsms.me/inter/) · [Fluent colour](https://fluent2.microsoft.design/color) · [color-scheme](https://web.dev/articles/color-scheme) · [crypto.randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) · [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)

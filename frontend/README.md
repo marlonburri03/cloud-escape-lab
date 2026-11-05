@@ -1,104 +1,74 @@
-# Frontend – Cloud Escape Lab
+# Frontend
 
-Das Frontend ist die **Weboberfläche**, die der Nutzer im Browser sieht. Es ist eine einfache Python-Webanwendung, die HTML-Seiten ausliefert. Es kommuniziert mit dem Backend, um den Spielstand abzurufen und Aktionen des Spielers weiterzuleiten.
+The frontend is the **web UI** in the browser: a small Flask application that renders HTML pages and talks to the backend to load the game state and forward the player's actions.
 
----
+## Tech stack
 
-## Technologie-Stack
+| Technology | Purpose |
+|---|---|
+| Python 3, [Flask](https://flask.palletsprojects.com/), [APIFlask](https://apiflask.com/) | HTTP server and routing |
+| [Jinja2](https://jinja.palletsprojects.com/) | HTML templates |
+| [Inter](https://fonts.google.com/specimen/Inter) | UI font |
+| [Bootstrap Icons](https://icons.getbootstrap.com/) | Icons (CDN) |
 
-| Technologie | Zweck | Quelle |
-|---|---|---|
-| **Python 3** | Programmiersprache | [python.org](https://www.python.org/) |
-| **Flask** | Web-Framework (HTTP-Server, Routing) | [flask.palletsprojects.com](https://flask.palletsprojects.com/) |
-| **APIFlask** | Erweiterung von Flask mit automatischer API-Dokumentation | [apiflask.com](https://apiflask.com/) |
-| **Jinja2** | Template-Engine (HTML-Vorlagen mit Variablen) | [jinja.palletsprojects.com](https://jinja.palletsprojects.com/) |
-| **Inter (Google Fonts)** | Schriftart im UI | [fonts.google.com/specimen/Inter](https://fonts.google.com/specimen/Inter) |
-| **Bootstrap Icons** | Icon-Bibliothek (CDN) | [icons.getbootstrap.com](https://icons.getbootstrap.com/) |
+## Structure
 
----
-
-## Ordnerstruktur
-
-```
+```text
 frontend/
 ├── app/
-│   ├── __init__.py          # App-Factory: erstellt die Flask-Anwendung
-│   ├── extensions.py        # Gemeinsam genutzte Flask-Erweiterungen
+│   ├── __init__.py     app factory
+│   ├── extensions.py   shared extensions
 │   ├── main/
-│   │   ├── __init__.py      # Blueprint-Definition
-│   │   └── routes.py        # URL-Routen: welche URL → welche Seite
-│   ├── static/              # Statische Dateien (CSS, JS, Bilder)
-│   └── templates/           # HTML-Vorlagen (Jinja2)
-│       ├── base.html        # Basis-Layout: Header, Design-System, shared CSS
-│       ├── index.html       # Startseite (Welcome-Card)
-│       └── tutorial.html    # Tutorial Escape Room (Spieloberfläche)
-├── config.py                # Konfiguration (Titel, Backend-URL, Secret Key)
-├── requirements.txt         # Python-Abhängigkeiten
-└── wsgi.py                  # Einstiegspunkt zum Starten des Servers
+│   │   └── routes.py   URL routes
+│   ├── static/         CSS, JavaScript, images
+│   └── templates/      Jinja2 templates (see templates/README.md)
+├── config.py           title, backend URL, secret key
+├── requirements.txt
+└── wsgi.py             entry point
 ```
 
----
-
-## Wie funktioniert das Routing?
-
-Das Routing wird in `app/main/routes.py` definiert. Jede Funktion ist einer URL zugeordnet:
+## Routes
 
 ```python
-@bp.get("/")          # → index.html  (Startseite)
-@bp.get("/tutorial")  # → tutorial.html (Escape Room)
-@bp.get("/healthz")   # → JSON {"status": "ok"} (Gesundheitsprüfung für Azure)
+@bp.get("/")          # index.html: start page
+@bp.get("/tutorial")  # tutorial.html: the escape room
+@bp.get("/healthz")   # {"status": "ok"}: health probe, excluded from sign-in
 ```
 
-Flask übergibt der Seite Variablen wie `user` (falls ein vorgeschalteter Auth-Layer den Header `X-MS-CLIENT-PRINCIPAL-NAME` setzt) oder `title` (aus `config.py`).
+Pages receive `user` (from the `X-MS-CLIENT-PRINCIPAL-NAME` header set by the authentication layer) and `title` (from `config.py`).
 
----
+## Talking to the backend
 
-## Wie kommuniziert das Frontend mit dem Backend?
+The tutorial page contains JavaScript that sends REST requests directly to the backend:
 
-Das Tutorial-Room-Template (`tutorial.html`) enthält JavaScript, das beim Spielen direkt **REST-API-Anfragen** an das Backend schickt:
-
-```
-Browser → JavaScript fetch() → Backend API
-                                      ↓
-                              Spielzustand berechnen
-                                      ↓
-Browser ← JSON-Antwort ←─────────────┘
+```text
+Browser → fetch() → backend API → computes new game state → JSON → browser renders it
 ```
 
-Die Backend-URL kommt aus der Konfiguration (`config.py` → `BACKEND_URL`).
-Lokal zeigt sie standardmaessig auf `http://localhost:5001`, im produktiven Azure-Deployment wird sie per Container-App-Umgebungsvariable auf `https://escape.contoso.example` gesetzt.
-Das Frontend selbst bleibt jederzeit erreichbar; über die Runtime-Endpunkte (`/tutorial-room/runtime/stop`, `/tutorial-room/runtime`) kann die aktive Room-Instanz im Backend gestoppt oder gelöscht und danach neu gestartet werden.
+The backend URL comes from `BACKEND_URL` in `config.py`: `http://localhost:5001` locally, the public host name in Azure. The runtime endpoints let the player stop or delete the active room and start a fresh one while the frontend stays available.
 
----
+## Design system
 
-## Design-System (base.html)
-
-Das Design basiert auf **CSS Custom Properties** (Variablen), die einmal in `base.html` definiert sind und in allen Seiten gelten:
+`base.html` defines CSS custom properties that apply to every page:
 
 ```css
---blue:    #0078D4;   /* Microsoft Azure Blau */
---cyan:    #22D3EE;   /* Akzentfarbe / Highlights */
---navy:    #0F172A;   /* Dunkler Hintergrund */
---surface: #1E293B;   /* Kartenoberfläche */
---text:    #F1F5F9;   /* Heller Text */
---muted:   #94A3B8;   /* Gedämpfter Text */
+--blue:    #0078D4;   /* primary */
+--cyan:    #22D3EE;   /* accent */
+--navy:    #0F172A;   /* background */
+--surface: #1E293B;   /* cards */
+--text:    #F1F5F9;
+--muted:   #94A3B8;
 ```
 
-**Quellen für das Design:**
-- Farbpalette: inspiriert vom [Microsoft Azure Portal](https://portal.azure.com) und dem [Tailwind CSS](https://tailwindcss.com/docs/customizing-colors) Farbsystem (Slate + Blau-Töne)
-- Layout-Konzept: [MDN Web Docs – CSS Custom Properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties)
-- Dark-Mode-Muster: [web.dev – prefers-color-scheme](https://web.dev/prefers-color-scheme/)
+The palette is inspired by Microsoft Fluent and the Tailwind slate and blue scales.
 
----
-
-## Lokal starten
+## Run locally
 
 ```bash
 cd frontend
+pip install -r requirements.txt
 python wsgi.py
-# → http://localhost:5000
+# http://localhost:5000
 ```
 
-> Lokal lauscht das Frontend auf Port 5000, im Container-Deployment auf Port 8000 (`gunicorn -b 0.0.0.0:8000`).
-> Das Frontend benötigt lokal das Backend auf Port 5001 damit das Spiel funktioniert.
-> Ohne Backend ist die Oberfläche weiterhin erreichbar, aber "Start Game" und Room-Aktionen zeigen eine Fehlermeldung.
+Locally the frontend listens on port 5000, in the container on port 8000 (`gunicorn -b 0.0.0.0:8000`). The game needs the backend on port 5001; without it the UI loads, but *Start Game* shows an error.

@@ -483,14 +483,14 @@ and minor JavaScript error handling adjustments.
 
 {% set room_img = url_for('static', filename='img/tutorial_room.png') %}
 
-<!-- ── Kompakter Header während des Spiels ───────────────────── -->
+<!-- ── compact header while playing ───────────────────── -->
 <div id="game-header" class="room-header" style="display:none">
   <a href="/" class="room-back"><i class="bi bi-arrow-left"></i> Back</a>
   <h1 class="room-title">Prof. Dr. Mike Roservice's Office</h1>
   <span class="room-badge">Beginner</span>
 </div>
 
-<!-- ── Bild als Hintergrund, Inhalte transparent darüber ────── -->
+<!-- ── image as background, content on top ────── -->
 <div class="room-stage">
   <img src="{{ room_img }}" alt="Prof. Dr. Mike Roservice's Office" class="room-stage-image">
   <div id="room-overlay">
@@ -506,7 +506,7 @@ and minor JavaScript error handling adjustments.
       <div class="start-grid">
         <div class="start-copy">
           <i class="bi bi-door-closed start-icon"></i>
-          <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso.</h2>
+          <h2>You're locked in Prof. Dr. Mike Roservice's office at Contoso University.</h2>
           <p>Dig through the chaos, decode his cryptic notes, and escape before he returns from his lecture!</p>
           <p id="runtime-status" class="runtime-status info" style="display:none;"></p>
           <button class="btn btn-primary" id="start-btn" onclick="startGame()">

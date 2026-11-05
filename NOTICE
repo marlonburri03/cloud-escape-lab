@@ -10,9 +10,6 @@ adapted tutorial-room materials and their accompanying documentation.
 Source repository:
 https://gitlab.com/solvista/ma-room-template
 
-Local reference copy used during this project:
-C:\Users\marlo\GIT\ma-room-template
-
 Original license:
 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 
@@ -28,7 +25,7 @@ Adapted materials in this repository include in particular:
 
 Changes made in this repository include:
 - UI/CSS redesign and layout integration into Cloud Escape Lab
-- Contoso-specific retheming and narrative changes
+- retheming and narrative changes for a fictitious university setting
 - project-specific frontend/backend integration
 - documentation of the adapted tutorial room for this semester project
 

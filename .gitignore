@@ -1,5 +1,4 @@
-# ignore internal docs
-/docs/
+# ignore local assistant config
 .github/
 
 # ignore backup files

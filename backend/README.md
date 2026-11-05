@@ -1,118 +1,92 @@
-# Backend – Cloud Escape Lab Room API
+# Backend: room API
 
-## Was macht das Backend?
+The backend is a **REST API** that contains the complete game logic of the escape rooms. It stores the game state in a database, validates player actions and always returns the current state of the room. The browser holds no game logic of its own; it only calls this API.
 
-Das Backend ist eine **REST-API**, die die gesamte Spiellogik der Escape Rooms enthält. Es speichert den Spielzustand in einer Datenbank, prüft Aktionen des Spielers und gibt immer den aktuellen Zustand des Raums zurück. Der Browser (Frontend) stellt keine Spiellogik selbst auf – er ruft nur das Backend auf.
+## Tech stack
 
----
+| Technology | Purpose |
+|---|---|
+| Python 3 | Language |
+| [Flask](https://flask.palletsprojects.com/) / [APIFlask](https://apiflask.com/) | Web framework and REST API with generated OpenAPI documentation |
+| [SQLAlchemy](https://docs.sqlalchemy.org/) | ORM: database access through Python objects |
+| [SQLite](https://www.sqlite.org/) | Database (local file `app.db`) |
+| [PyJWT](https://pyjwt.readthedocs.io/) | Issues and verifies JWTs for game sessions |
+| [Flask-CORS](https://flask-cors.readthedocs.io/) | Allows the frontend on another origin to call the API |
 
-## Technologie-Stack
+## Structure
 
-| Technologie | Zweck | Quelle |
-|---|---|---|
-| **Python 3** | Programmiersprache | [python.org](https://www.python.org/) |
-| **Flask / APIFlask** | Web-Framework, REST-API mit automatischer OpenAPI-Dokumentation | [apiflask.com](https://apiflask.com/) |
-| **SQLAlchemy** | ORM – Datenbankzugriff über Python-Objekte statt SQL | [docs.sqlalchemy.org](https://docs.sqlalchemy.org/) |
-| **SQLite** | Datenbank (lokale Datei `app.db`) | [sqlite.org](https://www.sqlite.org/) |
-| **PyJWT** | Generierung und Prüfung von JWT-Tokens zur Session-Verwaltung | [pyjwt.readthedocs.io](https://pyjwt.readthedocs.io/) |
-| **Flask-CORS** | Erlaubt dem Frontend (anderer Port) API-Anfragen zu stellen | [flask-cors.readthedocs.io](https://flask-cors.readthedocs.io/) |
-
----
-
-## Ordnerstruktur
-
-```
+```text
 backend/
 ├── app/
-│   ├── __init__.py          # App-Factory: erstellt Flask-App, registriert Blueprints
-│   ├── auth.py              # JWT-Token-Authentifizierung
-│   ├── extensions.py        # SQLAlchemy db-Objekt (gemeinsam genutzt)
-│   ├── models/              # Datenbank-Modelle (Tabellen)
-│   │   ├── gameRoom.py      # GameRoom + GameObject: Spiellogik-Klassen
-│   │   ├── objectState.py   # DB-Tabelle: Zustand eines einzelnen Objekts
-│   │   ├── player.py        # DB-Tabelle: Spieler (Name, E-Mail)
-│   │   └── roomState.py     # DB-Tabelle: Zustand eines Spiels + API-Schemas
+│   ├── __init__.py        app factory, registers blueprints
+│   ├── auth.py            JWT authentication
+│   ├── extensions.py      shared SQLAlchemy instance
+│   ├── models/            database models and game classes
+│   │   ├── gameRoom.py      GameRoom and GameObject: game logic on top of the tables
+│   │   ├── objectState.py   state of a single object
+│   │   ├── player.py        player (name, e-mail)
+│   │   └── roomState.py     state of a game and API schemas
 │   └── rooms/
-│       └── tutorial/        # Tutorial Escape Room (eigener Blueprint)
-│           ├── __init__.py
-│           ├── routes.py    # API-Endpunkte + Spiellogik + Raum-Objekte
-│           └── static/      # (zukünftige statische Dateien des Raums)
-├── config.py                # Konfiguration (DB-URI, Secret Key)
-├── requirements.txt         # Python-Abhängigkeiten
-└── wsgi.py                  # Einstiegspunkt: startet den Server auf Port 5001
+│       └── tutorial/      tutorial escape room (own blueprint)
+├── config.py              configuration (database URI, secret key)
+├── requirements.txt
+└── wsgi.py                entry point, serves on port 5001
 ```
 
----
+## API (tutorial room)
 
-## API-Endpunkte (Tutorial Room)
+All endpoints are prefixed with `/tutorial-room`.
 
-Alle Endpunkte sind unter dem Prefix `/tutorial-room` erreichbar.
-
-| Methode | Pfad | Auth | Beschreibung |
+| Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/tutorial-room/ping` | Nein | Erreichbarkeitstest |
-| `GET` | `/tutorial-room/description` | Nein | Raumbeschreibung (Text) |
-| `POST` | `/tutorial-room/start` | Nein | Spiel starten, JWT-Token erhalten |
-| `POST` | `/tutorial-room/runtime/stop` | JWT | Aktive Room-Runtime stoppen |
-| `DELETE` | `/tutorial-room/runtime` | JWT | Aktive Room-Runtime löschen |
-| `GET` | `/tutorial-room/examine` | JWT | Aktuellen Raumzustand laden |
-| `POST` | `/tutorial-room/reset` | JWT | Spiel auf Anfangszustand zurücksetzen |
-| `GET` | `/tutorial-room/objects/{id}/examine` | JWT | Objekt untersuchen |
-| `POST` | `/tutorial-room/objects/{id}/interact` | JWT | Mit Objekt interagieren |
+| `GET` | `/ping` | – | Reachability check |
+| `GET` | `/description` | – | Room description |
+| `POST` | `/start` | – | Start a game and receive a JWT |
+| `POST` | `/runtime/stop` | JWT | Stop the active room runtime |
+| `DELETE` | `/runtime` | JWT | Delete the active room runtime |
+| `GET` | `/examine` | JWT | Load the current room state |
+| `POST` | `/reset` | JWT | Reset the game to its initial state |
+| `GET` | `/objects/{id}/examine` | JWT | Examine an object |
+| `POST` | `/objects/{id}/interact` | JWT | Interact with an object |
 
-> Die vollständige interaktive API-Dokumentation (OpenAPI/Swagger) ist unter
-> `http://localhost:5001/docs` verfügbar wenn das Backend läuft.
-> Im Azure-Deployment ist das Backend öffentlich über `https://escape.contoso.example/tutorial-room/*` hinter dem zentralen Application Gateway erreichbar.
+Interactive OpenAPI documentation is available at `http://localhost:5001/docs` while the backend runs. In Azure the API is reachable under `/tutorial-room/*` behind the Application Gateway.
 
----
+## Sessions
 
-## Wie funktioniert die Session-Verwaltung?
+The backend is **stateless**: every request has to prove which game it belongs to, using a JSON Web Token.
 
-Das Backend ist **zustandslos** (stateless) – jede HTTP-Anfrage muss beweisen, welches Spiel gemeint ist. Das geschieht über einen **JWT-Token** (JSON Web Token):
-
-```
-1. POST /start  → Backend erstellt Spiel mit UUID, gibt JWT-Token zurück
-2. Alle weiteren Anfragen → Frontend schickt: Authorization: Bearer <token>
-3. Backend prüft Token → extrahiert UUID → lädt Spielzustand aus DB
-4. POST /runtime/stop oder DELETE /runtime → beendet/löscht die aktive Runtime
+```text
+1. POST /start            backend creates a game with a UUID and returns a JWT
+2. every further request  frontend sends  Authorization: Bearer <token>
+3. backend verifies the token, extracts the UUID and loads the game state
+4. POST /runtime/stop or DELETE /runtime ends or deletes the runtime
 ```
 
-**Warum JWT?**
-JWT-Tokens sind selbstenthaltend (der UUID steckt direkt im Token) und müssen nicht in einer Session-Tabelle nachgeschlagen werden. Sie werden mit dem `SECRET_KEY` signiert, damit sie nicht gefälscht werden können.
-→ Quelle: [jwt.io – Introduction to JSON Web Tokens](https://jwt.io/introduction)
+JWTs are self-contained (the UUID is inside the token), so no session table lookup is needed. They are signed with `SECRET_KEY` and cannot be forged.
 
----
+## Data model
 
-## Datenbankmodell
-
-```
-players                room_states              object_states
-────────────           ──────────────────       ──────────────────
-id (PK)                id (PK)                  id (PK)
-name                   game_uuid                object_id
-email                  room_name                visible
-                       started_on               locked
-                       solved                   state
-                       exits_locked             object_name
-                       player_id (FK)           room_state_id (FK)
+```text
+players          room_states         object_states
+-------          -----------         -------------
+id (PK)          id (PK)             id (PK)
+name             game_uuid           object_id
+email            room_name           visible
+                 started_on          locked
+                 solved              state
+                 exits_locked        object_name
+                 player_id (FK)      room_state_id (FK)
 ```
 
-**Beziehungen:**
-- Ein `Player` kann mehrere `RoomState`-Einträge haben (mehrere Spiele)
-- Ein `RoomState` hat mehrere `ObjectState`-Einträge (ein Eintrag pro Objekt im Raum)
+A player can have several games; a game has one object state per object in the room.
 
-→ Quelle: [Flask-SQLAlchemy – Quickstart](https://flask-sqlalchemy.palletsprojects.com/en/3.x/quickstart/)
-
----
-
-## Lokal starten
+## Run locally
 
 ```bash
 cd backend
+pip install -r requirements.txt
 python wsgi.py
-# → http://localhost:5001
-# → http://localhost:5001/docs  (Swagger UI)
+# http://localhost:5001  and  http://localhost:5001/docs
 ```
 
-Die SQLite-Datenbank (`app.db`) wird beim ersten Start automatisch erstellt.
-Im Azure-Deployment wird ebenfalls standardmaessig diese lokale SQLite-Datei verwendet, solange keine `DATABASE_URI` als Umgebungsvariable gesetzt wird.
+The SQLite database `app.db` is created on first start. In Azure the same file-based database is used unless `DATABASE_URI` is set.

@@ -28,13 +28,13 @@ from flask import g
 TEXT = {
     "room.description": {
         "en": (
-            "You're trapped in Prof. Dr. Mike Roservice's office at Contoso after his lecture on distributed systems. "
+            "You're trapped in Prof. Dr. Mike Roservice's office at Contoso University after his lecture on distributed systems. "
             "The room is cluttered with architecture diagrams and stacks of printed API docs — and completely dark. "
             "The exit door is locked with a digital panel. Find the code before he returns! "
             "A first step: INTERACT with the Light Switch."
         ),
         "de": (
-            "Du steckst in Prof. Dr. Mike Roservices Büro an der Contoso fest — nach seiner Vorlesung über verteilte Systeme. "
+            "Du steckst in Prof. Dr. Mike Roservices Büro an der Contoso University fest — nach seiner Vorlesung über verteilte Systeme. "
             "Der Raum ist übersät mit Architekturdiagrammen und Stapeln ausgedruckter API-Dokumentation — und völlig dunkel. "
             "Die Ausgangstür ist mit einem digitalen Panel gesichert. Finde den Code, bevor er zurückkommt! "
             "Ein erster Schritt: INTERAGIERE mit dem Lichtschalter."

@@ -1,150 +1,65 @@
-# Tutorial Room – Spiellogik
+# Tutorial room: game logic
 
-Dieser Ordner enthält den **Tutorial Escape Room**: die einzige fertiggestellte Rauminstanz der Plattform. Er dient als Einführung in das Spielprinzip.
+This folder contains the **tutorial escape room**, the room that introduces the game principle.
 
-> **Herkunft / Lizenz**
-> Die Implementierung dieses Tutorial Rooms basiert auf dem Repository
-> [`ma-room-template`](https://gitlab.com/solvista/ma-room-template),
-> insbesondere auf der Demo-Room-Logik. Das Original steht unter
-> **CC BY-SA 4.0**. Für dieses Projekt wurden Story, Texte und
-> Einbettung in die Cloud-Escape-Lab-Plattform angepasst.
+> **Origin and licence:** the implementation is based on the demo room logic of [`ma-room-template`](https://gitlab.com/solvista/ma-room-template), licensed under **CC BY-SA 4.0**. Story, texts and the integration into the platform were adapted for this project.
 
----
+## Game principle
 
-## Spielprinzip
+The player is locked in a dark office and has to unlock the exit by solving small puzzles. Every object can be examined (`examine`) or used (`interact`). Objects can reveal other objects or change state.
 
-Der Spieler befindet sich in einem dunklen Büro und muss durch das Lösen kleiner Rätsel den Ausgang freischalten. Jedes **Objekt** im Raum kann untersucht (`examine`) oder benutzt (`interact`) werden. Objekte können weitere Objekte sichtbar machen oder Zustände verändern.
+## Objects
 
----
+Internal names come from the template; display names reflect the adapted story.
 
-## Raum-Objekte
+| ID | Internal name | Display name | Visible at start | Role |
+|---|---|---|---|---|
+| 1 | Light Switch | Light Switch | yes | Interact: lights on, desk and exit terminal appear |
+| 2 | Wooden Desk | Professor's Desk | no | Examine: the office key appears; key + desk: the journal appears |
+| 3 | Column | Exit Terminal | no | Enter the four-digit code: the exit opens |
+| 4 | Silver Key | Office Key | no | Used on the desk |
+| 5 | Diary | Research Journal | no | Examine: reveals the code |
 
-| ID | Name | Anfangs sichtbar | Rätsel |
-|---|---|---|---|
-| 1 | Light Switch | ✅ Ja | Interagieren → Licht an, Desk + Column werden sichtbar |
-| 2 | Wooden Desk | ❌ Nein | Untersuchen → Silver Key erscheint; Key + Desk → Diary erscheint |
-| 3 | Column (Stone Column) | ❌ Nein | Code "1234" eingeben → Ausgang öffnet sich |
-| 4 | Silver Key | ❌ Nein | Wird mit Wooden Desk kombiniert |
-| 5 | Diary | ❌ Nein | Untersuchen → zeigt den Code "1234" |
+## Walkthrough (spoiler)
 
----
-
-## Lösungsweg (Spoiler)
-
-```
-1. INTERACT  Light Switch   → Licht geht an, Desk + Column erscheinen
-2. EXAMINE   Wooden Desk    → Silver Key wird entdeckt
-3. INTERACT  Wooden Desk    + Silver Key (Dropdown) → Diary erscheint
-4. EXAMINE   Diary          → Code "1234" wird verraten
-5. INTERACT  Column         + Code "1234" (Eingabefeld) → Ausgang offen → Gewonnen!
+```text
+1. INTERACT  Light Switch                        lights on, desk and terminal appear
+2. EXAMINE   Professor's Desk                    office key found
+3. INTERACT  Professor's Desk + Office Key        research journal appears
+4. EXAMINE   Research Journal                    reveals the code
+5. INTERACT  Exit Terminal + code                exit opens, room solved
 ```
 
----
+## How `routes.py` is organised
 
-## Aufbau von `routes.py`
-
-Die Datei ist in drei Bereiche unterteilt:
-
-### 1. Lokalisierung (`TEXT`-Dictionary)
-
-Alle Spieltexte sind auf **Englisch und Deutsch** hinterlegt:
-
-```python
-TEXT = {
-    "interact.light": {
-        "en": "Click! The lights flicker on ...",
-        "de": "Klick! Das Licht geht an ...",
-    },
-    ...
-}
-```
-
-Die Funktion `t(key)` sucht automatisch die richtige Sprache basierend auf dem `Accept-Language`-HTTP-Header des Browsers.
-
-### 2. Raum-Objekte (`room_objects`)
-
-Eine Python-Liste mit allen Objekten. Jedes Objekt ist ein Dictionary mit:
-- `id`, `name` – Eindeutige Kennung
-- `display_name_en` / `display_name_de` – Angezeigter Name (mehrsprachig)
-- `description_en` / `description_de` – Beschreibungstext
-- `icon` – Bootstrap Icon Name (wird im Frontend angezeigt)
-- `initial-visibility` – Sichtbar beim Start?
-- `initial-locked` – Gesperrt beim Start?
-- `initial-state` – Anfangszustand (z. B. `"untouched"`)
-
-### 3. API-Endpunkte
-
-Jeder Endpunkt folgt dem gleichen Muster:
+1. **Localisation (`TEXT`):** all game texts in English and German; `t(key)` picks the language from the browser's `Accept-Language` header.
+2. **Room objects (`room_objects`):** a list of dictionaries with `id`, `name`, localised display names and descriptions, a Bootstrap icon and the initial visibility, lock and state.
+3. **API endpoints:** each endpoint verifies the JWT, loads the game, applies the rule for the selected object and commits the new state:
 
 ```python
 @bp.post("/objects/<int:object_id>/interact")
-@bp.auth_required(token_auth)   # ← JWT prüfen
+@bp.auth_required(token_auth)
 def interact_with_object(object_id, form_and_files_data):
-    game_uuid = token_auth.current_user   # UUID aus Token
-    game_room = GameRoom(...)             # Spielzustand aus DB laden
-
-    match current_object.name:           # Python match/case = switch
+    game_uuid = token_auth.current_user
+    game_room = GameRoom(...)          # load state from the database
+    match current_object.name:
         case "Light Switch":
-            # Spiellogik hier ...
-
-    db.session.commit()                  # Zustand in DB speichern
-    return game_room.assemble_json_room_state(message)  # JSON zurückgeben
+            ...                        # game rule
+    db.session.commit()
+    return game_room.assemble_json_room_state(message)
 ```
 
----
+## Data flow of an interaction
 
-## Datenfluss bei einer Interaktion
-
-```
-Browser
-  │  POST /tutorial-room/objects/1/interact
-  │  Authorization: Bearer <jwt>
-  │  Body: { object_id: 4 }
-  ▼
-routes.py → interact_with_object(object_id=1)
-  │  token_auth prüft JWT → extrahiert game_uuid
-  │  GameRoom lädt RoomState + ObjectStates aus SQLite
-  │  match "Light Switch": setzt Desk.visible=True, Column.visible=True
-  │  db.session.commit() → speichert in app.db
-  │  assemble_json_room_state() → baut JSON-Antwort
-  ▼
-JSON-Antwort:
-{
-  "objects": [
-    {"id": 2, "name": "Wooden Desk", "icon": "archive-fill", ...},
-    {"id": 3, "name": "Stone Column", "icon": "database-lock", ...}
-  ],
-  "exits_locked": true,
-  "message": "Click! The lights flicker on ..."
-}
-  │
-  ▼
-Frontend (tutorial.html JavaScript)
-  refreshState(data) → renderObjects() → zeigt neue Karten im Browser
+```text
+Browser  POST /tutorial-room/objects/1/interact   Authorization: Bearer <jwt>
+  → routes.py verifies the JWT and extracts the game UUID
+  → GameRoom loads RoomState and ObjectStates from SQLite
+  → the rule for "Light Switch" makes the desk and terminal visible
+  → commit, then a JSON response with objects, exits_locked and message
+  → tutorial.html renders the new object cards
 ```
 
----
+## Why `GameRoom` and `GameObject`
 
-## Wieso `GameRoom` und `GameObject`? (models/gameRoom.py)
-
-Diese Klassen trennen die **Datenbanklogik** von der **Spiellogik**:
-
-- `RoomState` / `ObjectState` → reine Datenbankzeilen (SQLAlchemy-Modelle)
-- `GameRoom` → lädt die DB-Zeilen und bietet einfache Methoden wie `get_object_by_name()`
-- `GameObject` → ein einzelnes Objekt mit Properties (`visible`, `locked`, `state`), die beim Setzen automatisch die DB-Zeile aktualisieren
-
-Das Muster heisst **Repository Pattern** – die Spiellogik muss nicht wissen wie die Datenbank funktioniert.
-→ Quelle: [martinfowler.com – Repository](https://martinfowler.com/eaaCatalog/repository.html)
-
----
-
-## Quellen
-
-| Thema | Quelle |
-|---|---|
-| APIFlask Blueprints | [apiflask.com/docs/blueprint](https://apiflask.com/docs/blueprint/) |
-| Python `match/case` (Structural Pattern Matching) | [PEP 634](https://peps.python.org/pep-0634/) |
-| Flask-SQLAlchemy Relationships | [flask-sqlalchemy.palletsprojects.com](https://flask-sqlalchemy.palletsprojects.com/en/3.x/models/) |
-| JWT in Python | [pyjwt.readthedocs.io](https://pyjwt.readthedocs.io/en/stable/) |
-| REST API Design | [restfulapi.net](https://restfulapi.net/) |
-| Repository Pattern | [martinfowler.com](https://martinfowler.com/eaaCatalog/repository.html) |
+`RoomState` and `ObjectState` are plain database rows. `GameRoom` loads them and offers helpers such as `get_object_by_name()`; `GameObject` exposes `visible`, `locked` and `state` and writes changes back to its row. The game rules therefore do not need to know how the database works ([repository pattern](https://martinfowler.com/eaaCatalog/repository.html)).
